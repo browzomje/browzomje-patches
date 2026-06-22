@@ -1,3 +1,9 @@
+## 1.0.0 (2026-06-22)
+
+### ✨ New Features
+
+* added pinterest patches ([8e253e2](https://github.com/browzomje/browzomje-patches/commit/8e253e20784138c010767266b4c7c16a4c8d9d79))
+
 ## [1.0.2](https://github.com/browzomje/browzomje-patches/compare/v1.0.1...v1.0.2) (2026-06-22)
 
 ### 🐛 Bug Fixes
