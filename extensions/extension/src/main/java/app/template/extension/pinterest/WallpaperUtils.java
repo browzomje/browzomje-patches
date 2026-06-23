@@ -1,7 +1,9 @@
 package app.template.extension.pinterest;
 
+import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
@@ -125,6 +127,38 @@ public final class WallpaperUtils {
             if (isPt) return "Não foi possível definir o papel de parede";
             return "Failed to set wallpaper";
         }
+        if ("dialog_title".equals(key)) {
+            if (isIt) return "Imposta sfondo";
+            if (isEs) return "Establecer fondo de pantalla";
+            if (isFr) return "Définir comme fond d'écran";
+            if (isDe) return "Hintergrundbild festlegen";
+            if (isPt) return "Definir papel de parede";
+            return "Set wallpaper";
+        }
+        if ("option_home".equals(key)) {
+            if (isIt) return "Schermata Home";
+            if (isEs) return "Pantalla de inicio";
+            if (isFr) return "Écran d'accueil";
+            if (isDe) return "Startbildschirm";
+            if (isPt) return "Tela inicial";
+            return "Home screen";
+        }
+        if ("option_lock".equals(key)) {
+            if (isIt) return "Schermata di blocco";
+            if (isEs) return "Pantalla de bloqueo";
+            if (isFr) return "Écran de verrouillage";
+            if (isDe) return "Sperrbildschirm";
+            if (isPt) return "Tela de bloqueio";
+            return "Lock screen";
+        }
+        if ("option_both".equals(key)) {
+            if (isIt) return "Entrambi";
+            if (isEs) return "Ambas";
+            if (isFr) return "Les deux";
+            if (isDe) return "Beide";
+            if (isPt) return "Ambos";
+            return "Both";
+        }
         if ("invalid_image".equals(key)) {
             if (isIt) return "Immagine non valida";
             if (isEs) return "Imagen no válida";
@@ -193,13 +227,7 @@ public final class WallpaperUtils {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Context ctx = v.getContext();
-                Bitmap captured = currentPinBitmap;
-                if (captured != null && !captured.isRecycled()) {
-                    setWallpaperFromBitmap(ctx, captured);
-                } else {
-                    setWallpaperFromUrl(ctx, currentPinImageUrl);
-                }
+                showWallpaperDialog(v.getContext());
             }
         });
         return row;
@@ -283,13 +311,7 @@ public final class WallpaperUtils {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Context ctx = v.getContext();
-                Bitmap captured = currentPinBitmap;
-                if (captured != null && !captured.isRecycled()) {
-                    setWallpaperFromBitmap(ctx, captured);
-                } else {
-                    setWallpaperFromUrl(ctx, currentPinImageUrl);
-                }
+                showWallpaperDialog(v.getContext());
             }
         });
 
@@ -337,8 +359,65 @@ public final class WallpaperUtils {
         return null;
     }
 
+    /** Mostra un dialog per scegliere dove impostare lo sfondo. */
+    private static void showWallpaperDialog(final Context context) {
+        final Bitmap captured = currentPinBitmap;
+        final String url = currentPinImageUrl;
+
+        if ((captured == null || captured.isRecycled()) && (url == null || url.isEmpty())) {
+            final Handler main = new Handler(Looper.getMainLooper());
+            toast(main, context, getString("no_image"));
+            return;
+        }
+
+        final String[] options = {
+            getString("option_home"),
+            getString("option_lock"),
+            getString("option_both")
+        };
+
+        try {
+            new AlertDialog.Builder(context)
+                .setTitle(getString("dialog_title"))
+                .setItems(options, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int flags = 0;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            if (which == 0) {
+                                flags = WallpaperManager.FLAG_SYSTEM;
+                            } else if (which == 1) {
+                                flags = WallpaperManager.FLAG_LOCK;
+                            } else {
+                                flags = WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
+                            }
+                        }
+                        
+                        if (captured != null && !captured.isRecycled()) {
+                            setWallpaperFromBitmap(context, captured, flags);
+                        } else {
+                            setWallpaperFromUrl(context, url, flags);
+                        }
+                    }
+                })
+                .show();
+        } catch (Throwable t) {
+            Log.e(TAG, "Impossibile mostrare il dialog di scelta sfondo", t);
+            // Fallback: imposta entrambi come prima
+            int flags = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                flags = WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
+            }
+            if (captured != null && !captured.isRecycled()) {
+                setWallpaperFromBitmap(context, captured, flags);
+            } else {
+                setWallpaperFromUrl(context, url, flags);
+            }
+        }
+    }
+
     /** Imposta lo sfondo da un bitmap già decodificato (nessun download). */
-    public static void setWallpaperFromBitmap(final Context context, final Bitmap bitmap) {
+    public static void setWallpaperFromBitmap(final Context context, final Bitmap bitmap, final int flags) {
         final Handler main = new Handler(Looper.getMainLooper());
         if (bitmap == null || bitmap.isRecycled()) {
             toast(main, context, getString("no_image"));
@@ -347,7 +426,7 @@ public final class WallpaperUtils {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (applyWallpaper(context, bitmap)) {
+                if (applyWallpaper(context, bitmap, flags)) {
                     toast(main, context, getString("success"));
                 } else {
                     toast(main, context, getString("failed"));
@@ -359,7 +438,7 @@ public final class WallpaperUtils {
     /**
      * Scarica l'immagine all'URL dato e la imposta come sfondo del dispositivo.
      */
-    public static void setWallpaperFromUrl(final Context context, final String url) {
+    public static void setWallpaperFromUrl(final Context context, final String url, final int flags) {
         final Handler main = new Handler(Looper.getMainLooper());
 
         if (url == null || url.isEmpty()) {
@@ -390,7 +469,7 @@ public final class WallpaperUtils {
                         return;
                     }
 
-                    if (applyWallpaper(context, bitmap)) {
+                    if (applyWallpaper(context, bitmap, flags)) {
                         toast(main, context, getString("success"));
                     } else {
                         toast(main, context, getString("failed"));
@@ -407,12 +486,11 @@ public final class WallpaperUtils {
 
     /** Applica il bitmap come sfondo (home + lock su N+). Ritorna true se riuscito. */
     @android.annotation.SuppressLint("MissingPermission")
-    private static boolean applyWallpaper(Context context, Bitmap bitmap) {
+    private static boolean applyWallpaper(Context context, Bitmap bitmap, int flags) {
         try {
             WallpaperManager wm = WallpaperManager.getInstance(context.getApplicationContext());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                wm.setBitmap(bitmap, null, true,
-                        WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
+                wm.setBitmap(bitmap, null, true, flags);
             } else {
                 wm.setBitmap(bitmap);
             }

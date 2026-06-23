@@ -13,6 +13,9 @@ jobs:
   pull-request:
     name: Open pull request
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,3 +27,4 @@ jobs:
           pr_title: 'chore: ${{ env.MESSAGE }}'
           pr_body: 'This pull request will ${{ env.MESSAGE }}.'
           pr_draft: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
