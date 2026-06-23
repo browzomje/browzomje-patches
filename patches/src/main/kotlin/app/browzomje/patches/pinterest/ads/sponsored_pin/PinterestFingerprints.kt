@@ -12,6 +12,11 @@ object PinterestAdsFingerprint : Fingerprint(
     parameters = listOf("Lcom/pinterest/api/model/me;"),
 
     filters = listOf(
+        methodCall(
+            definingClass = "Lcom/pinterest/api/model/me;",
+            returnType = "Ljava/lang/Boolean;"
+        ),
+
         fieldAccess(
             opcode = Opcode.SGET_OBJECT,
             definingClass = "Ljava/lang/Boolean;",
