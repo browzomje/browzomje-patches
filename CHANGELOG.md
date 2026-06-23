@@ -1,3 +1,9 @@
+## [1.0.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2026-06-23)
+
+### 🐛 Bug Fixes
+
+* dev release of the set as wallpaper feature ([4a479b8](https://github.com/browzomje/browzomje-patches/commit/4a479b8e2b7ef4afd80c893134c3388a0f51c9e5))
+
 ## [1.0.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2026-06-22)
 
 ### 🐛 Bug Fixes
