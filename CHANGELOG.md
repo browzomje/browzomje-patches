@@ -1,3 +1,14 @@
+## [1.1.0](https://github.com/browzomje/browzomje-patches/compare/v1.0.0...v1.1.0) (2026-06-23)
+
+### 🐛 Bug Fixes
+
+* dev release of the set as wallpaper feature ([4a479b8](https://github.com/browzomje/browzomje-patches/commit/4a479b8e2b7ef4afd80c893134c3388a0f51c9e5))
+* **pinterest:** fix wallpaper option injection - wasn't working - and clean up comments ([3e11e47](https://github.com/browzomje/browzomje-patches/commit/3e11e479c13cad7c0833c47a7fe2db86eea464cd))
+
+### ✨ New Features
+
+* set as wallpaper is now working ([799b3ca](https://github.com/browzomje/browzomje-patches/commit/799b3cad943dcc007de35db7f72b9b7a2f439299))
+
 ## [1.0.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2026-06-23)
 
 ### ✨ New Features
