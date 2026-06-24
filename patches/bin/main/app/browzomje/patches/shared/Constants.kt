@@ -16,4 +16,16 @@ object Constants {
             )
         )
     )
+
+    val COMPATIBILITY_ALIGHT_MOTION = Compatibility(
+        name = "Alight Motion",
+        packageName = "com.alightcreative.motion",
+        apkFileType = ApkFileType.APKM,
+        appIconColor = 0x00D6C2,
+        targets = listOf(
+            AppTarget(
+                version = "5.0.273.1028425"
+            )
+        )
+    )
 }

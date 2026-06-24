@@ -103,6 +103,31 @@
         }
       ],
       "options": []
+    },
+    {
+      "name": "Spoof signature",
+      "description": "Spoofs the application signature SHA-1 sent during App Integrity checks to bypass server-side signature validation.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pinterest",
+          "name": "Pinterest",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#E60023",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "14.23.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
     }
   ]
 }
