@@ -7,7 +7,6 @@ A collection of patches for Android applications, designed for the [Morphe](http
 This repository provides custom enhancements and modifications for Android apps, currently supporting: 
 - **Pinterest** 
 
-
 These patches allow you to remove advertisements, block tracking, and add new utility features directly to the apps.
 
 ## 🩹 Patches list
