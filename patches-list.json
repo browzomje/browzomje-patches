@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.2.0-dev.1",
+  "version": "1.2.0-dev.2",
   "patches": [
     {
       "name": "Copy direct link",
@@ -29,7 +29,32 @@
     },
     {
       "name": "Disable ads",
-      "description": "Removes sponsored pins.",
+      "description": "Removes sponsored (promoted) pins from the home feed and from search/related/board feeds.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pinterest",
+          "name": "Pinterest",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#E60023",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "14.23.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Download video",
+      "description": "Adds a 'Download video' option to the pin menu for video pins, saving the clip to the Downloads folder.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [
