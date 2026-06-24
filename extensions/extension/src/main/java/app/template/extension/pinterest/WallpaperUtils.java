@@ -50,12 +50,14 @@ public final class WallpaperUtils {
     public static volatile Bitmap currentPinBitmap = null;
 
     /**
-     * URL del video del Pin attualmente in riproduzione. Impostato dall'hook su
-     * PinterestVideoView.u() e azzerato a ogni cambio Pin (setCurrentPinView), così la voce
-     * "Scarica video" compare solo sui Pin che sono effettivamente dei video.
-     * volatile: scritto dal thread UI, letto dal thread di download.
+     * Mappa pinUid -> URL del video, popolata dall'hook su PinterestVideoView.u().
+     * Il VideoMetadata (cu2.l) porta sia l'uid del Pin sia l'URL del video: associandoli, la voce
+     * "Scarica video" e il download restano legati al Pin ESATTO del menu, invece che a uno stato
+     * globale che cambia con l'autoplay della griglia (era questo il motivo per cui il tasto
+     * compariva sul Pin sbagliato e il download diceva "nessun video").
      */
-    public static volatile String currentVideoUrl = null;
+    private static final java.util.Map<String, String> VIDEO_URL_BY_PIN =
+        new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void setCurrentPinImageUrl(String url) {
         if (url != null && !url.isEmpty()) {
@@ -64,9 +66,6 @@ public final class WallpaperUtils {
     }
 
     public static void setCurrentPinView(Object view, Bitmap bitmap) {
-        // Nuovo Pin in primo piano: azzera l'URL video stantio. L'hook sul player lo reimposta
-        // subito dopo se questo Pin contiene un video.
-        currentVideoUrl = null;
         if (bitmap != null) {
             currentPinBitmap = bitmap;
         }
@@ -94,46 +93,88 @@ public final class WallpaperUtils {
     }
 
     /**
-     * Riceve l'oggetto VideoMetadata (cu2.l) dall'hook su PinterestVideoView.u() ed estrae l'URL
-     * del video. Scansiona i campi String dell'oggetto cercando un URL http(s): cercare per nome di
-     * campo sarebbe fragile rispetto all'offuscamento, mentre la scansione per tipo+valore è robusta.
-     * Preferisce un .mp4 (scaricabile direttamente) rispetto a eventuali playlist .m3u8.
+     * Riceve il Pin (me) dall'hook sul builder dei video-tracks (com.bumptech.glide.d.w) ed estrae
+     * un URL .mp4 SCARICABILE dal suo video_list, associandolo all'uid del Pin.
+     *
+     * Perché dal Pin e non dal player: la riproduzione usa HLS/DASH (.m3u8) e scaricare quello dà
+     * solo il manifest (pochi KB, non riproducibile). Le varianti progressive .mp4 stanno nel
+     * video_list del Pin. Catena di reflection (nomi offuscati ma stabili sulla 14.23.0):
+     *   me.getSnapshotUid() -> uid del Pin (coincide col pinUid del menu)
+     *   me.v7()             -> hq (oggetto "videos")
+     *   hq.g()              -> Map&lt;String, jq&gt;  (video_list)
+     *   campo String di jq  -> URL che per le varianti progressive termina in .mp4
      */
-    public static void setCurrentVideoMetadata(Object metadata) {
-        if (metadata == null) {
+    public static void setCurrentVideoPin(Object pin) {
+        if (pin == null) {
             return;
         }
         try {
-            String fallback = null;
-            Class<?> clazz = metadata.getClass();
+            String uid = (String) invokeNoArg(pin, "getSnapshotUid");
+            if (uid == null || uid.isEmpty()) {
+                return;
+            }
+            Object videos = invokeNoArg(pin, "v7"); // hq
+            Object listObj = videos != null ? invokeNoArg(videos, "g") : null; // Map<String, jq>
+            if (!(listObj instanceof java.util.Map)) {
+                return;
+            }
+            String mp4 = pickBestMp4Url((java.util.Map<?, ?>) listObj);
+            if (mp4 != null) {
+                VIDEO_URL_BY_PIN.put(uid, mp4);
+                Log.d(TAG, "MP4 associato al Pin " + uid);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Estrazione MP4 dal Pin fallita", t);
+        }
+    }
+
+    /** Sceglie l'URL .mp4 migliore (preferendo 720p) tra le varianti del video_list. */
+    private static String pickBestMp4Url(java.util.Map<?, ?> videoList) {
+        String preferred = null;
+        String anyMp4 = null;
+        for (Object spec : videoList.values()) {
+            if (spec == null) {
+                continue;
+            }
+            Class<?> clazz = spec.getClass();
             while (clazz != null) {
                 for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                    if (f.getType() == String.class) {
-                        f.setAccessible(true);
-                        Object value = f.get(metadata);
-                        if (value instanceof String) {
-                            String s = (String) value;
-                            if (s.startsWith("http") && (s.contains(".mp4") || s.contains(".m3u8") || s.contains("/video"))) {
-                                if (s.contains(".mp4")) {
-                                    currentVideoUrl = s;
-                                    Log.d(TAG, "URL video catturato: " + s);
-                                    return;
-                                }
-                                if (fallback == null) {
-                                    fallback = s;
-                                }
+                    if (f.getType() != String.class) {
+                        continue;
+                    }
+                    f.setAccessible(true);
+                    Object v;
+                    try {
+                        v = f.get(spec);
+                    } catch (Throwable ignored) {
+                        continue;
+                    }
+                    if (v instanceof String) {
+                        String s = (String) v;
+                        if (s.startsWith("http") && s.contains(".mp4")) {
+                            if (anyMp4 == null) {
+                                anyMp4 = s;
+                            }
+                            if (s.contains("720")) {
+                                preferred = s;
                             }
                         }
                     }
                 }
                 clazz = clazz.getSuperclass();
             }
-            if (fallback != null) {
-                currentVideoUrl = fallback;
-                Log.d(TAG, "URL video catturato (fallback): " + fallback);
-            }
+        }
+        return preferred != null ? preferred : anyMp4;
+    }
+
+    /** Helper reflection: invoca un metodo pubblico senza argomenti; null se non disponibile. */
+    private static Object invokeNoArg(Object target, String methodName) {
+        try {
+            java.lang.reflect.Method m = target.getClass().getMethod(methodName);
+            m.setAccessible(true);
+            return m.invoke(target);
         } catch (Throwable t) {
-            Log.e(TAG, "Cattura URL video fallita", t);
+            return null;
         }
     }
 
@@ -697,9 +738,9 @@ public final class WallpaperUtils {
             Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
             return;
         }
-        // La voce compare SOLO se il Pin corrente è un video: l'hook sul player ha popolato
-        // currentVideoUrl, che setCurrentPinView azzera a ogni cambio Pin.
-        final String videoUrl = currentVideoUrl;
+        // La voce compare SOLO se il Pin di QUESTO menu è un video: cerchiamo, tra i campi String
+        // del menu, un pinUid presente nella mappa popolata dal player. Niente stato globale.
+        final String videoUrl = resolveVideoUrlForMenu(menuContainer);
         if (videoUrl == null || videoUrl.isEmpty()) {
             return;
         }
@@ -713,7 +754,7 @@ public final class WallpaperUtils {
                 @Override
                 public void onClick(View v) {
                     dismissMenu();
-                    downloadVideo(v.getContext());
+                    downloadVideo(v.getContext(), videoUrl);
                 }
             };
             try {
@@ -732,15 +773,46 @@ public final class WallpaperUtils {
     }
 
     /**
-     * Scarica il video corrente nella cartella Download tramite il DownloadManager di sistema.
+     * Cerca tra i campi String del menu (e superclassi) un valore che sia un pinUid presente nella
+     * mappa video. Solo il campo pinUid del menu coinciderà con una chiave (gli uid dei Pin sono
+     * identificatori univoci), quindi non servono nomi di campo offuscati hard-coded.
+     */
+    private static String resolveVideoUrlForMenu(Object menu) {
+        if (menu == null || VIDEO_URL_BY_PIN.isEmpty()) {
+            return null;
+        }
+        try {
+            Class<?> clazz = menu.getClass();
+            while (clazz != null) {
+                for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
+                    if (f.getType() == String.class) {
+                        f.setAccessible(true);
+                        Object value = f.get(menu);
+                        if (value instanceof String) {
+                            String url = VIDEO_URL_BY_PIN.get((String) value);
+                            if (url != null) {
+                                return url;
+                            }
+                        }
+                    }
+                }
+                clazz = clazz.getSuperclass();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Risoluzione URL video per il menu fallita", t);
+        }
+        return null;
+    }
+
+    /**
+     * Scarica il video nella cartella Download tramite il DownloadManager di sistema.
      *
      * Si usa il DownloadManager (anziché HttpURLConnection a mano) perché gestisce da solo il thread
      * di rete, i redirect, la notifica di avanzamento e la registrazione del file in MediaStore su
      * Android 10+ (scoped storage) — eliminando gli errori "impossibile scaricare" del tentativo
      * precedente, dovuti a download sul main thread / permessi di storage.
      */
-    private static void downloadVideo(Context context) {
-        final String url = currentVideoUrl;
+    private static void downloadVideo(Context context, String url) {
         if (url == null || url.isEmpty()) {
             showNativeToast(context, getString("no_video"));
             return;

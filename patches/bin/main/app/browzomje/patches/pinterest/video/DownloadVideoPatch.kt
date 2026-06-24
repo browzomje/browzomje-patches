@@ -18,22 +18,22 @@ val downloadVideoPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        // 1) Capture the playing video URL.
-        //    PinterestVideoView.u(cu2.l metadata, fu2.g, Function0) — `metadata` is parameter p1.
-        //    We hand the whole metadata object to the extension, which reflectively pulls the
-        //    http(s) video URL out of its String fields (resilient to obfuscation).
-        val captureMethod = PinterestVideoViewPlayFingerprint.method
+        // 1) Capture the Pin's downloadable video URL.
+        //    com.bumptech.glide.d.w(me pin, Integer, cu2.n) is STATIC, so `pin` is parameter p0.
+        //    We hand the Pin to the extension, which reads its video_list and stores a real .mp4
+        //    URL keyed by the pin uid.
+        val captureMethod = VideoTracksBuilderFingerprint.method
         val captureImpl = captureMethod.implementation
-            ?: throw Exception("PinterestVideoView.u has no implementation")
+            ?: throw Exception("VideoTracksBuilder (d.w) has no implementation")
         val captureRegisterCount = captureImpl.registerCount
-        val captureParamRegisterCount = captureMethod.parameters.size + 1 // +1 for `this`
-        // p0 = this = registerCount - paramRegisterCount ; metadata (p1) is the next register.
-        val metadataRegister = captureRegisterCount - captureParamRegisterCount + 1
+        val captureParamRegisterCount = captureMethod.parameters.size // static: no `this`
+        // p0 (the Pin) = first parameter register.
+        val pinRegister = captureRegisterCount - captureParamRegisterCount
 
         captureMethod.addInstructions(
             0,
-            "invoke-static/range { v$metadataRegister .. v$metadataRegister }, " +
-                "$EXTENSION_CLASS->setCurrentVideoMetadata(Ljava/lang/Object;)V",
+            "invoke-static/range { v$pinRegister .. v$pinRegister }, " +
+                "$EXTENSION_CLASS->setCurrentVideoPin(Ljava/lang/Object;)V",
         )
 
         // 2) Inject the menu row. Same anchor as Copy direct link: the uz0.z constructor.

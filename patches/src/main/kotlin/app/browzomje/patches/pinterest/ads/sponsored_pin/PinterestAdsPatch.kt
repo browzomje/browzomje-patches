@@ -11,37 +11,34 @@ private const val EXTENSION_CLASS = "Lapp/template/extension/pinterest/Wallpaper
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
     name = "Disable ads",
-    description = "Removes sponsored (promoted) pins from the feed by stripping them from each feed page.",
+    description = "Removes sponsored (promoted) pins from the home feed and from search/related/board feeds.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
     extendWith("extensions/extension.mpe")
 
     execute {
-        // Hook the feed-page constructor (o12.e) and, once the items ArrayList is populated,
-        // hand `this` to the extension which removes every promoted pin from the stored list.
-        // Done at the end of <init> so this.f109367a is already assigned.
-        val method = PinterestAdsFingerprint.method
-        val returnIndex = method.implementation!!.instructions.indexOfFirst {
-            it.opcode == Opcode.RETURN_VOID
-        }
-        val insertIndex = if (returnIndex != -1) {
-            returnIndex
-        } else {
-            method.implementation!!.instructions.size - 1
-        }
+        // At the end of a feed-model constructor, hand `this` to the extension, which strips every
+        // promoted pin from the model's stored item list. Two entry points cover the whole app:
+        //   o12.e   -> the legacy home-feed page
+        //   vr1.i0  -> the generic paged response behind every multi-section grid (search, etc.)
+        for (method in listOf(PinterestAdsFingerprint.method, PagedResponseConstructorFingerprint.method)) {
+            val instructionsList = method.implementation!!.instructions
+            val returnIndex = instructionsList.indexOfFirst { it.opcode == Opcode.RETURN_VOID }
+            val insertIndex = if (returnIndex != -1) returnIndex else instructionsList.size - 1
 
-        val registerCount = method.implementation!!.registerCount
-        val parameterRegisterCount = method.parameters.size + 1 // +1 for `this`
-        val p0RegisterIndex = registerCount - parameterRegisterCount
+            val registerCount = method.implementation!!.registerCount
+            val parameterRegisterCount = method.parameters.size + 1 // +1 for `this`
+            val p0RegisterIndex = registerCount - parameterRegisterCount
 
-        val instructions = InlineSmaliCompiler.compile(
-            "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
-                "$EXTENSION_CLASS->filterSponsoredPinsFromFeed(Ljava/lang/Object;)V",
-            "",
-            registerCount,
-            true,
-        )
-        method.addInstructions(insertIndex, instructions)
+            val compiled = InlineSmaliCompiler.compile(
+                "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
+                    "$EXTENSION_CLASS->filterSponsoredPinsFromFeed(Ljava/lang/Object;)V",
+                "",
+                registerCount,
+                true,
+            )
+            method.addInstructions(insertIndex, compiled)
+        }
     }
 }

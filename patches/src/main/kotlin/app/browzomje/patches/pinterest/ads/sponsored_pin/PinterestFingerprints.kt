@@ -31,3 +31,25 @@ object PinterestAdsFingerprint : Fingerprint(
         classDef.type == "Lo12/e;" && method.name == "<init>"
     }
 )
+
+/**
+ * Constructor of the generic paged-response model `vr1.i0` (PagedResponse):
+ *
+ *     public i0(String bookmark, String str, List models) { ... this.f135430b = models; ... }
+ *
+ * This is what `RetrofitPagedRemoteRequest.parseResponse` produces for EVERY multi-section feed —
+ * search results, related pins, boards, etc. (the surfaces the home-only `o12.e` hook doesn't
+ * cover). `models` is stored directly, so stripping promoted pins from it here removes sponsored
+ * pins from all those grids with a single hook.
+ */
+object PagedResponseConstructorFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf(
+        "Ljava/lang/String;",
+        "Ljava/lang/String;",
+        "Ljava/util/List;",
+    ),
+    custom = { method, classDef ->
+        classDef.type == "Lvr1/i0;" && method.name == "<init>"
+    }
+)

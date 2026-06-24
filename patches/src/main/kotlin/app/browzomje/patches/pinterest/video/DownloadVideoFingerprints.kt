@@ -1,23 +1,23 @@
 package app.template.patches.pinterest.video
 
 import app.morphe.patcher.Fingerprint
-import com.android.tools.smali.dexlib2.AccessFlags
 
 /**
- * Hook used to capture the currently-playing video URL.
+ * The video-tracks builder, invoked with the Pin model whenever a video is set up for playback
+ * (grid autoplay AND closeup):
  *
- *     public final void u(cu2.l metadata, fu2.g gVar, Function0 onFailure)   // PinterestVideoView
+ *     public static final cu2.r w(me pin, Integer num, cu2.n videoSurfaceType)
  *
- * `metadata` (cu2.l, the "VideoMetadata") carries the raw track URL in its String field `g`
- * (= videoTracks.f73567b.url). We pass the whole metadata object to the extension, which scans
- * its String fields for an http(s) video URL — robust against field renaming across versions.
+ * Crucially it receives the Pin (`me`), so the extension can read `me.v7().g()` (the `video_list`)
+ * and pick a real progressive **.mp4** URL. The player metadata (cu2.l) only carries the HLS/DASH
+ * streaming track (`.m3u8`) — downloading that yielded a few-KB, unplayable manifest. We pass the
+ * Pin to the extension keyed by its uid (`me.getSnapshotUid()` == the menu's pinUid).
  */
-object PinterestVideoViewPlayFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "V",
-    parameters = listOf("Lcu2/l;", "Lfu2/g;", "Lkotlin/jvm/functions/Function0;"),
+object VideoTracksBuilderFingerprint : Fingerprint(
+    returnType = "Lcu2/r;",
+    parameters = listOf("Lcom/pinterest/api/model/me;", "Ljava/lang/Integer;", "Lcu2/n;"),
     custom = { method, classDef ->
-        classDef.type == "Lcom/pinterest/video/core/view/PinterestVideoView;" && method.name == "u"
+        classDef.type == "Lcom/bumptech/glide/d;" && method.name == "w"
     }
 )
 
