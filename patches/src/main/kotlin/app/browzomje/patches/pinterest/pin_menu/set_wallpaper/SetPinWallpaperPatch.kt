@@ -63,10 +63,11 @@ val setPinWallpaperPatch = bytecodePatch(
         PinCloseupBitmapFingerprint.methodOrNull?.let { pinMethod ->
             val pinRegisterCount = pinMethod.implementation!!.registerCount
             val pinParameterRegisterCount = pinMethod.parameters.size + 1
-            val p1RegisterIndex = pinRegisterCount - pinParameterRegisterCount + 1
+            val p0RegisterIndex = pinRegisterCount - pinParameterRegisterCount
+            val p1RegisterIndex = p0RegisterIndex + 1
 
             val pinInstructions = InlineSmaliCompiler.compile(
-                "invoke-static/range { v$p1RegisterIndex .. v$p1RegisterIndex }, $EXTENSION_CLASS->setCurrentPinBitmap(Landroid/graphics/Bitmap;)V",
+                "invoke-static/range { v$p0RegisterIndex .. v$p1RegisterIndex }, $EXTENSION_CLASS->setCurrentPinView(Ljava/lang/Object;Landroid/graphics/Bitmap;)V",
                 "",
                 pinRegisterCount,
                 true

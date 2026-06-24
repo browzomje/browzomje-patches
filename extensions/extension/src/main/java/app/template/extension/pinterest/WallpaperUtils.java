@@ -81,10 +81,32 @@ public final class WallpaperUtils {
         }
     }
 
-    /** Chiamato dall'hook che intercetta il bitmap del pin aperto. */
-    public static void setCurrentPinBitmap(Bitmap bitmap) {
+    /** Chiamato dall'hook che intercetta il view e il bitmap del pin aperto. */
+    public static void setCurrentPinView(Object view, Bitmap bitmap) {
         if (bitmap != null) {
             currentPinBitmap = bitmap;
+        }
+        if (view != null) {
+            try {
+                // Scansione riflessiva dei campi String per trovare l'URL dell'immagine in modo robusto rispetto all'offuscamento
+                Class<?> clazz = view.getClass();
+                while (clazz != null) {
+                    for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
+                        if (f.getType() == String.class) {
+                            f.setAccessible(true);
+                            String val = (String) f.get(view);
+                            if (val != null && (val.startsWith("http://") || val.startsWith("https://"))) {
+                                currentPinImageUrl = val;
+                                Log.d(TAG, "Catturato URL immagine via scansione campi: " + currentPinImageUrl);
+                                return;
+                            }
+                        }
+                    }
+                    clazz = clazz.getSuperclass();
+                }
+            } catch (Throwable t) {
+                Log.e(TAG, "Impossibile recuperare URL dal view", t);
+            }
         }
     }
 
@@ -123,6 +145,55 @@ public final class WallpaperUtils {
         boolean isSk = "sk".equals(lang);
         boolean isIw = "iw".equals(lang) || "he".equals(lang);
         boolean isHr = "hr".equals(lang);
+
+        if ("copy_link_label".equals(key)) {
+            if (isIt) return "Copia link diretto";
+            if (isEs) return "Copiar enlace directo";
+            if (isFr) return "Copier le lien direct";
+            if (isDe) return "Direkten Link kopieren";
+            if (isPt) return "Copiar link direto";
+            if (isRu) return "Копировать прямую ссылку";
+            if (isJa) return "直接リンクをコピー";
+            if (isZh) return "复制直链";
+            if (isKo) return "직접 링크 복사";
+            if (isPl) return "Kopiuj bezpośredni link";
+            if (isNl) return "Directe link kopiëren";
+            if (isTr) return "Doğrudan bağlantıyı kopyala";
+            if (isAr) return "نسخ الرابط المباشر";
+            return "Copy direct link";
+        }
+        if ("link_copied".equals(key)) {
+            if (isIt) return "Link copiato ✓";
+            if (isEs) return "Enlace copiado ✓";
+            if (isFr) return "Lien copié ✓";
+            if (isDe) return "Link kopiert ✓";
+            if (isPt) return "Link copiado ✓";
+            if (isRu) return "Ссылка скопирована ✓";
+            if (isJa) return "リンクをコピーしました ✓";
+            if (isZh) return "链接已复制 ✓";
+            if (isKo) return "링크가 복사되었습니다 ✓";
+            if (isPl) return "Skopiowano link ✓";
+            if (isNl) return "Link gekopieerd ✓";
+            if (isTr) return "Bağlantı kopyalandı ✓";
+            if (isAr) return "تم نسخ الرابط ✓";
+            return "Link copied ✓";
+        }
+        if ("no_link".equals(key)) {
+            if (isIt) return "Nessun link disponibile per questo pin";
+            if (isEs) return "No hay enlace disponible para este pin";
+            if (isFr) return "Aucun lien disponible pour ce pin";
+            if (isDe) return "Kein Link für diesen Pin verfügbar";
+            if (isPt) return "Nenhum link disponível para este pin";
+            if (isRu) return "Ссылка недоступна для этого пина";
+            if (isJa) return "このピンのリンクはありません";
+            if (isZh) return "此Pin图没有可用链接";
+            if (isKo) return "이 핀에 사용할 수 있는 링크가 없습니다";
+            if (isPl) return "Brak dostępnego linku dla tego pina";
+            if (isNl) return "Geen link beschikbaar voor deze pin";
+            if (isTr) return "Bu pin için kullanılabilir bağlantı yok";
+            if (isAr) return "لا يوجد رابط متاح لهذا الدبوس";
+            return "No link available for this pin";
+        }
 
         if ("label".equals(key)) {
             if (isIt) return "Imposta come sfondo";
@@ -455,13 +526,19 @@ public final class WallpaperUtils {
         try {
             View row = null;
             String labelText = getString("label");
+            View.OnClickListener onClickListener = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showWallpaperDialog(v.getContext());
+                }
+            };
             try {
                 // Tenta la costruzione tramite reflection per utilizzare i componenti Gestalt nativi di Pinterest
-                row = buildRowReflective(container, labelText);
-                Log.d(TAG, "Riga creata con successo tramite reflection");
+                row = buildRowReflective(container, labelText, "IMAGE", onClickListener);
+                Log.d(TAG, "Riga sfondo creata con successo tramite reflection");
             } catch (Throwable t) {
-                Log.w(TAG, "Errore nella creazione tramite reflection, uso il fallback", t);
-                row = buildRowFallback(context, labelText, container);
+                Log.w(TAG, "Errore nella creazione sfondo tramite reflection, uso il fallback", t);
+                row = buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_gallery, onClickListener);
             }
             if (row != null) {
                 container.addView(row);
@@ -471,15 +548,66 @@ public final class WallpaperUtils {
         }
     }
 
+    public static void addCopyLinkOption(Object menuContainer) {
+        if (!(menuContainer instanceof ViewGroup)) {
+            Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
+            return;
+        }
+        final ViewGroup container = (ViewGroup) menuContainer;
+        final Context context = container.getContext();
+
+        try {
+            View row = null;
+            String labelText = getString("copy_link_label");
+            View.OnClickListener onClickListener = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    copyLinkToClipboard(v.getContext());
+                }
+            };
+            try {
+                // Tenta la costruzione tramite reflection per utilizzare i componenti Gestalt nativi di Pinterest
+                row = buildRowReflective(container, labelText, "LINK", onClickListener);
+                Log.d(TAG, "Riga copia link creata con successo tramite reflection");
+            } catch (Throwable t) {
+                Log.w(TAG, "Errore nella creazione copia link tramite reflection, uso il fallback", t);
+                row = buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_share, onClickListener);
+            }
+            if (row != null) {
+                container.addView(row);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Impossibile aggiungere la voce copia link", t);
+        }
+    }
+
+    private static void copyLinkToClipboard(Context context) {
+        String url = currentPinImageUrl;
+        Handler main = new Handler(Looper.getMainLooper());
+        if (url == null || url.isEmpty()) {
+            toast(main, context, getString("no_link"));
+            return;
+        }
+        try {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newPlainText("Pinterest Direct Link", url);
+            clipboard.setPrimaryClip(clip);
+            toast(main, context, getString("link_copied"));
+        } catch (Throwable t) {
+            Log.e(TAG, "Copia negli appunti fallita", t);
+            toast(main, context, getString("failed"));
+        }
+    }
+
     /** Costruisce la riga del menu usando reflection per chiamare le API native di Pinterest */
-    private static View buildRowReflective(ViewGroup container, String labelText) throws Exception {
+    private static View buildRowReflective(ViewGroup container, String labelText, String iconEnumName, View.OnClickListener onClickListener) throws Exception {
         // 1. Ottiene il viewCreator (uz0.c) chiamando D() su uz0.z (container)
         Method dMethod = container.getClass().getMethod("D");
         Object viewCreator = dMethod.invoke(container);
 
-        // 2. Carica la classe enum delle icone ku1.x e ottiene la costante IMAGE
+        // 2. Carica la classe enum delle icone ku1.x e ottiene la costante desiderata
         Class<?> xClass = Class.forName("ku1.x");
-        Object imageIcon = Enum.valueOf((Class<Enum>) xClass, "IMAGE");
+        Object imageIcon = Enum.valueOf((Class<Enum>) xClass, iconEnumName);
 
         // 3. Ottiene il valore del campo booleano B da uz0.z
         Field bField = container.getClass().getField("B");
@@ -490,17 +618,12 @@ public final class WallpaperUtils {
         RelativeLayout row = (RelativeLayout) aMethod.invoke(viewCreator, labelText, null, imageIcon, z9);
 
         // 5. Imposta il click listener sulla riga
-        row.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showWallpaperDialog(v.getContext());
-            }
-        });
+        row.setOnClickListener(onClickListener);
         return row;
     }
 
     /** Costruisce una riga cliccabile di fallback se la reflection fallisce (copia lo stile da un fratello) */
-    private static View buildRowFallback(Context context, String labelText, ViewGroup container) {
+    private static View buildRowFallback(Context context, String labelText, ViewGroup container, int iconResId, View.OnClickListener onClickListener) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -509,7 +632,7 @@ public final class WallpaperUtils {
 
         ImageView icon = new ImageView(context);
         try {
-            icon.setImageResource(android.R.drawable.ic_menu_gallery);
+            icon.setImageResource(iconResId);
         } catch (Throwable ignored) {}
 
         TextView label = new TextView(context);
@@ -574,12 +697,7 @@ public final class WallpaperUtils {
         row.addView(icon);
         row.addView(label);
 
-        row.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showWallpaperDialog(v.getContext());
-            }
-        });
+        row.setOnClickListener(onClickListener);
 
         return row;
     }
