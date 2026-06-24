@@ -1,4 +1,4 @@
-## [1.1.1-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.0...v1.1.1-dev.1) (2026-06-24)
+## [1.1.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.0...v1.1.1) (2026-06-24)
 
 ### 🐛 Bug Fixes
 
