@@ -18,6 +18,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.RelativeLayout;
+import android.app.Dialog;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
+import android.graphics.drawable.RippleDrawable;
+import android.content.res.ColorStateList;
+import android.graphics.Typeface;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -630,6 +642,174 @@ public final class WallpaperUtils {
         };
 
         try {
+            // Rileva modalità notte per i colori di Pinterest
+            boolean isDark = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                    == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+
+            final int bgColor = isDark ? 0xFF212121 : 0xFFFFFFFF;
+            final int textColor = isDark ? 0xFFFFFFFF : 0xFF111111;
+            final int titleColor = isDark ? 0xFFFFFFFF : 0xFF111111;
+            final int pressedColor = isDark ? 0xFF3D3D3D : 0xFFF0F0F0;
+
+            final Dialog dialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
+
+            // Layout principale a schermo intero (sfondo semi-trasparente)
+            RelativeLayout rootLayout = new RelativeLayout(context);
+            rootLayout.setBackgroundColor(0x99000000); // 60% opacity black dim
+
+            // Dialog Card
+            LinearLayout card = new LinearLayout(context);
+            card.setOrientation(LinearLayout.VERTICAL);
+            
+            // Sfondo arrotondato per la card (Pinterest style)
+            GradientDrawable cardBackground = new GradientDrawable();
+            cardBackground.setColor(bgColor);
+            cardBackground.setCornerRadius(dp(context, 24)); // Bordi molto stondati stile Pinterest
+            card.setBackground(cardBackground);
+            
+            // Padding interno
+            int cardPadding = dp(context, 24);
+            card.setPadding(cardPadding, cardPadding, cardPadding, cardPadding);
+
+            // Titolo
+            TextView titleView = new TextView(context);
+            titleView.setText(getString("dialog_title"));
+            titleView.setTextColor(titleColor);
+            titleView.setTextSize(20);
+            titleView.setTypeface(Typeface.DEFAULT_BOLD);
+            titleView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+            
+            LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            titleLp.bottomMargin = dp(context, 16);
+            card.addView(titleView, titleLp);
+
+            // Opzioni
+            for (int i = 0; i < options.length; i++) {
+                final int index = i;
+                
+                final LinearLayout optionView = new LinearLayout(context);
+                optionView.setOrientation(LinearLayout.HORIZONTAL);
+                optionView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                optionView.setPadding(dp(context, 16), dp(context, 14), dp(context, 16), dp(context, 14));
+                optionView.setClickable(true);
+                optionView.setFocusable(true);
+
+                // Aggiunge icona monocromatica prima di ogni voce
+                ImageView iconView = new ImageView(context);
+                iconView.setImageDrawable(createOptionIcon(context, index, textColor, bgColor));
+                LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(context, 24), dp(context, 24));
+                iconLp.rightMargin = dp(context, 16);
+                optionView.addView(iconView, iconLp);
+
+                // Aggiunge il testo
+                TextView textView = new TextView(context);
+                textView.setText(options[index]);
+                textView.setTextColor(textColor);
+                textView.setTextSize(16);
+                textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                optionView.addView(textView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+
+                // Drawable di sfondo per il click (ripple o fallback color)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    GradientDrawable itemShape = new GradientDrawable();
+                    itemShape.setColor(bgColor);
+                    itemShape.setCornerRadius(dp(context, 12)); // Bordi arrotondati anche per gli item premuti
+                    
+                    ColorStateList rippleColor = ColorStateList.valueOf(pressedColor);
+                    RippleDrawable ripple = new RippleDrawable(
+                        rippleColor,
+                        null, // Content (null means it draws on the background)
+                        itemShape // Mask (constrains ripple to rounded shape)
+                    );
+                    optionView.setBackground(ripple);
+                } else {
+                    StateListDrawable states = new StateListDrawable();
+                    
+                    GradientDrawable pressedShape = new GradientDrawable();
+                    pressedShape.setColor(pressedColor);
+                    pressedShape.setCornerRadius(dp(context, 12));
+                    
+                    GradientDrawable normalShape = new GradientDrawable();
+                    normalShape.setColor(bgColor);
+                    normalShape.setCornerRadius(dp(context, 12));
+                    
+                    states.addState(new int[] {android.R.attr.state_pressed}, pressedShape);
+                    states.addState(new int[] {}, normalShape);
+                    optionView.setBackground(states);
+                }
+
+                optionView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                        
+                        int flags = 0;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            if (index == 0) {
+                                flags = WallpaperManager.FLAG_SYSTEM;
+                            } else if (index == 1) {
+                                flags = WallpaperManager.FLAG_LOCK;
+                            } else {
+                                flags = WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
+                            }
+                        }
+                        
+                        if (captured != null && !captured.isRecycled()) {
+                            setWallpaperFromBitmap(context, captured, flags);
+                        } else {
+                            setWallpaperFromUrl(context, url, flags);
+                        }
+                    }
+                });
+
+                LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                itemLp.bottomMargin = dp(context, 4); // Piccolo spazio tra i pulsanti
+                card.addView(optionView, itemLp);
+            }
+
+            // Aggiunge la card al layout radice, centrata
+            RelativeLayout.LayoutParams cardLp = new RelativeLayout.LayoutParams(
+                dp(context, 300), // Larghezza fissa per somigliare a un dialog di Pinterest
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            cardLp.addRule(RelativeLayout.CENTER_IN_PARENT);
+            rootLayout.addView(card, cardLp);
+
+            // Chiude il dialog cliccando sullo sfondo oscurato
+            rootLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+            // Ma impedisce la chiusura cliccando all'interno della card
+            card.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Do nothing
+                }
+            });
+
+            dialog.setContentView(rootLayout);
+            dialog.show();
+
+        } catch (Throwable t) {
+            Log.e(TAG, "Impossibile mostrare il custom dialog, uso fallback", t);
+            showWallpaperDialogFallback(context, captured, url, options);
+        }
+    }
+
+    private static void showWallpaperDialogFallback(final Context context, final Bitmap captured, final String url, String[] options) {
+        try {
             new AlertDialog.Builder(context)
                 .setTitle(getString("dialog_title"))
                 .setItems(options, new DialogInterface.OnClickListener() {
@@ -655,7 +835,7 @@ public final class WallpaperUtils {
                 })
                 .show();
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile mostrare il dialog di scelta sfondo", t);
+            Log.e(TAG, "Fallback fallito", t);
             int flags = 0;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 flags = WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
@@ -765,5 +945,71 @@ public final class WallpaperUtils {
     private static int dp(Context context, int value) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round(value * density);
+    }
+
+    private static Drawable createOptionIcon(Context context, int index, int color, int bgColor) {
+        int size = dp(context, 24);
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(color);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dp(context, 2));
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+
+        if (index == 0) { // Home Screen: clean modern house outline
+            Path path = new Path();
+            // Roof
+            path.moveTo(size * 0.5f, size * 0.18f);
+            path.lineTo(size * 0.18f, size * 0.46f);
+            path.lineTo(size * 0.82f, size * 0.46f);
+            path.close();
+            // Walls
+            path.moveTo(size * 0.26f, size * 0.46f);
+            path.lineTo(size * 0.26f, size * 0.82f);
+            path.lineTo(size * 0.74f, size * 0.82f);
+            path.lineTo(size * 0.74f, size * 0.46f);
+            canvas.drawPath(path, paint);
+            // Door
+            Path door = new Path();
+            door.moveTo(size * 0.44f, size * 0.82f);
+            door.lineTo(size * 0.44f, size * 0.62f);
+            door.lineTo(size * 0.56f, size * 0.62f);
+            door.lineTo(size * 0.56f, size * 0.82f);
+            canvas.drawPath(door, paint);
+        } else if (index == 1) { // Lock Screen: body + shackle + keyhole
+            // Body (rounded rect)
+            RectF body = new RectF(size * 0.25f, size * 0.46f, size * 0.75f, size * 0.82f);
+            canvas.drawRoundRect(body, dp(context, 3), dp(context, 3), paint);
+            // Shackle
+            RectF shackle = new RectF(size * 0.34f, size * 0.18f, size * 0.66f, size * 0.52f);
+            canvas.drawArc(shackle, 180, 180, false, paint);
+            // Keyhole pin
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(size * 0.5f, size * 0.6f, dp(context, 2), paint);
+            paint.setStyle(Paint.Style.STROKE);
+            canvas.drawLine(size * 0.5f, size * 0.6f + dp(context, 2), size * 0.5f, size * 0.72f, paint);
+        } else { // Both: overlapping home and lock screen elements or two vertical phone screen outlines
+            // Screen 1 (back, shifted left/top)
+            RectF screen1 = new RectF(size * 0.18f, size * 0.18f, size * 0.52f, size * 0.68f);
+            canvas.drawRoundRect(screen1, dp(context, 3), dp(context, 3), paint);
+            
+            // Screen 2 (front, shifted right/bottom)
+            RectF screen2 = new RectF(size * 0.48f, size * 0.32f, size * 0.82f, size * 0.82f);
+            // Clear overlapping region using background color
+            Paint clearPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            clearPaint.setColor(bgColor);
+            clearPaint.setStyle(Paint.Style.FILL);
+            canvas.drawRoundRect(screen2, dp(context, 3), dp(context, 3), clearPaint);
+            
+            // Draw front screen stroke
+            canvas.drawRoundRect(screen2, dp(context, 3), dp(context, 3), paint);
+            
+            // Add a small home indicator line at the bottom of the front screen
+            canvas.drawLine(size * 0.58f, size * 0.76f, size * 0.72f, size * 0.76f, paint);
+        }
+
+        return new BitmapDrawable(context.getResources(), bitmap);
     }
 }
