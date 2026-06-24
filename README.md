@@ -1,11 +1,14 @@
-# 👋🧩 Morphe Patches template
+# 🧩 browzomje's Morphe Patches
 
-Template repository for Morphe Patches.
+A collection of patches for Android applications, designed for the [Morphe](https://morphe.software) patcher.
 
 ## ❓ About
 
-This is a template to create a new Morphe Patches repository.
-TODO: Update this about section with a brief introduction/summary about this repo and what it offers.
+This repository provides custom enhancements and modifications for Android apps, currently supporting: 
+- **Pinterest** 
+
+
+These patches allow you to remove advertisements, block tracking, and add new utility features directly to the apps.
 
 ## 🩹 Patches list
 
