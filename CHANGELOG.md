@@ -1,3 +1,14 @@
+## [1.2.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.1...v1.2.0-dev.2) (2026-06-24)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** now ads in the search feed are also hidden ([2a5fc2f](https://github.com/browzomje/browzomje-patches/commit/2a5fc2f157ae4d50619ae425967109b73c0b49e2))
+
+### ✨ New Features
+
+* **pinterest:** added download video button ([83d3a7e](https://github.com/browzomje/browzomje-patches/commit/83d3a7ecc248bbb626ecb5f0912da3d9691313e3))
+* **pinterest:** added spoofing pinterest apk signature ([2e45123](https://github.com/browzomje/browzomje-patches/commit/2e45123a337d1f926493a5aa6e5b19012fb0d067))
+
 ## [1.2.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.1...v1.2.0-dev.1) (2026-06-24)
 
 ### ✨ New Features
