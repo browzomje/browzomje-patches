@@ -1,3 +1,9 @@
+## [1.2.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.2...v1.2.0-dev.3) (2026-06-24)
+
+### 🐛 Bug Fixes
+
+* fixed ads removal - now also ads in the search carousel and search feed are hidden ([7cdf5ee](https://github.com/browzomje/browzomje-patches/commit/7cdf5ee8a3944e06ed2908d1e4a5fe8f813ec27e))
+
 ## [1.2.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.1...v1.2.0-dev.2) (2026-06-24)
 
 ### 🐛 Bug Fixes
