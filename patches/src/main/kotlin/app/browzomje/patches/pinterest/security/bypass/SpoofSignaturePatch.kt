@@ -18,10 +18,13 @@ val spoofSignaturePatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
+        // Il fingerprint individua il metodo PER CONTENUTO (qualunque metodo di
+        // com/pinterest/security/ che invochi Signature->toByteArray): resiste ai
+        // rinomini di classe/metodo tra le versioni di Pinterest.
         val method = AppIntegrityFingerprint.method
         val implementation = method.implementation ?: throw Exception("AppIntegrity method has no implementation")
         val instructions = implementation.instructions
-        
+
         val targetIndex = instructions.indexOfFirst { instruction ->
             if (instruction is ReferenceInstruction) {
                 val ref = instruction.reference
