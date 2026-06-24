@@ -1,3 +1,9 @@
+## [1.2.1-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.2.0...v1.2.1-dev.1) (2026-06-24)
+
+### 🐛 Bug Fixes
+
+* in spoofing signature ([8361508](https://github.com/browzomje/browzomje-patches/commit/83615088c1d4aa571df4a9779592cd153e7f3967))
+
 ## [1.2.0](https://github.com/browzomje/browzomje-patches/compare/v1.1.1...v1.2.0) (2026-06-24)
 
 ### 🐛 Bug Fixes
