@@ -109,7 +109,13 @@ public final class PinterestUtils {
             return;
         }
         try {
-            String uid = (String) invokeNoArg(pin, "getSnapshotUid");
+            String uid = (String) invokeNoArg(pin, "d");
+            if (uid == null || uid.isEmpty()) {
+                uid = (String) invokeNoArg(pin, "getSnapshotUid");
+            }
+            if (uid == null || uid.isEmpty()) {
+                uid = (String) invokeNoArg(pin, "getProfileSnapshotUid");
+            }
             if (uid == null || uid.isEmpty()) {
                 return;
             }
@@ -151,7 +157,7 @@ public final class PinterestUtils {
                     }
                     if (v instanceof String) {
                         String s = (String) v;
-                        if (s.startsWith("http") && s.contains(".mp4")) {
+                        if (s.startsWith("http") && s.contains(".mp4") && !s.contains(".mpd") && !s.contains(".m3u8")) {
                             if (anyMp4 == null) {
                                 anyMp4 = s;
                             }
