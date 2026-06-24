@@ -1,3 +1,9 @@
+## [1.2.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.1...v1.2.0-dev.1) (2026-06-24)
+
+### ✨ New Features
+
+* **pinterest:** add copy direct link patch ([d2a9748](https://github.com/browzomje/browzomje-patches/commit/d2a974885451506b883e9faa03ca08aa8679d9a2))
+
 ## [1.1.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.0...v1.1.1) (2026-06-24)
 
 ### 🐛 Bug Fixes
