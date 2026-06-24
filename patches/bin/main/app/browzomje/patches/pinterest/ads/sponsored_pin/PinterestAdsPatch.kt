@@ -6,8 +6,8 @@ import app.template.patches.shared.Constants.COMPATIBILITY_PINTEREST
 
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
-    name = "Pinterest sponsored ad removed",
-    description = "Inhibiting sponsored pin detection (AdCheckUtils).",
+    name = "Disable ads",
+    description = "Removes sponsored pins.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
