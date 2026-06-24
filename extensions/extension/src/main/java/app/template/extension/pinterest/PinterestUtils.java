@@ -49,13 +49,6 @@ public final class PinterestUtils {
 
     public static volatile Bitmap currentPinBitmap = null;
 
-    /**
-     * Mappa pinUid -> URL del video, popolata dall'hook su PinterestVideoView.u().
-     * Il VideoMetadata (cu2.l) porta sia l'uid del Pin sia l'URL del video: associandoli, la voce
-     * "Scarica video" e il download restano legati al Pin ESATTO del menu, invece che a uno stato
-     * globale che cambia con l'autoplay della griglia (era questo il motivo per cui il tasto
-     * compariva sul Pin sbagliato e il download diceva "nessun video").
-     */
     private static final java.util.Map<String, String> VIDEO_URL_BY_PIN =
         new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -92,18 +85,21 @@ public final class PinterestUtils {
         }
     }
 
-    /**
-     * Riceve il Pin (me) dall'hook sul builder dei video-tracks (com.bumptech.glide.d.w) ed estrae
-     * un URL .mp4 SCARICABILE dal suo video_list, associandolo all'uid del Pin.
-     *
-     * Perché dal Pin e non dal player: la riproduzione usa HLS/DASH (.m3u8) e scaricare quello dà
-     * solo il manifest (pochi KB, non riproducibile). Le varianti progressive .mp4 stanno nel
-     * video_list del Pin. Catena di reflection (nomi offuscati ma stabili sulla 14.23.0):
-     *   me.getSnapshotUid() -> uid del Pin (coincide col pinUid del menu)
-     *   me.v7()             -> hq (oggetto "videos")
-     *   hq.g()              -> Map&lt;String, jq&gt;  (video_list)
-     *   campo String di jq  -> URL che per le varianti progressive termina in .mp4
-     */
+    public static void setCurrentVideoTracks(String uid, java.util.Map<?, ?> videoList) {
+        if (uid == null || uid.isEmpty() || videoList == null || videoList.isEmpty()) {
+            return;
+        }
+        try {
+            String mp4 = pickBestMp4Url(videoList);
+            if (mp4 != null) {
+                VIDEO_URL_BY_PIN.put(uid, mp4);
+                Log.d(TAG, "MP4 associato al Pin (via tracks) " + uid);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Estrazione MP4 dalle tracce fallita", t);
+        }
+    }
+
     public static void setCurrentVideoPin(Object pin) {
         if (pin == null) {
             return;
@@ -119,61 +115,79 @@ public final class PinterestUtils {
             if (uid == null || uid.isEmpty()) {
                 return;
             }
-            Object videos = invokeNoArg(pin, "v7"); // hq
-            Object listObj = videos != null ? invokeNoArg(videos, "g") : null; // Map<String, jq>
-            if (!(listObj instanceof java.util.Map)) {
-                return;
-            }
-            String mp4 = pickBestMp4Url((java.util.Map<?, ?>) listObj);
-            if (mp4 != null) {
-                VIDEO_URL_BY_PIN.put(uid, mp4);
-                Log.d(TAG, "MP4 associato al Pin " + uid);
+            Object videos = invokeNoArg(pin, "v7");
+            Object listObj = videos != null ? invokeNoArg(videos, "g") : null;
+            if (listObj instanceof java.util.Map) {
+                setCurrentVideoTracks(uid, (java.util.Map<?, ?>) listObj);
             }
         } catch (Throwable t) {
             Log.e(TAG, "Estrazione MP4 dal Pin fallita", t);
         }
     }
 
-    /** Sceglie l'URL .mp4 migliore (preferendo 720p) tra le varianti del video_list. */
     private static String pickBestMp4Url(java.util.Map<?, ?> videoList) {
-        String preferred = null;
-        String anyMp4 = null;
-        for (Object spec : videoList.values()) {
+        String bestUrl = null;
+        int maxRes = -1;
+        for (java.util.Map.Entry<?, ?> entry : videoList.entrySet()) {
+            Object spec = entry.getValue();
             if (spec == null) {
                 continue;
             }
-            Class<?> clazz = spec.getClass();
-            while (clazz != null) {
-                for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                    if (f.getType() != String.class) {
-                        continue;
-                    }
-                    f.setAccessible(true);
-                    Object v;
-                    try {
-                        v = f.get(spec);
-                    } catch (Throwable ignored) {
-                        continue;
-                    }
-                    if (v instanceof String) {
-                        String s = (String) v;
-                        if (s.startsWith("http") && s.contains(".mp4") && !s.contains(".mpd") && !s.contains(".m3u8")) {
-                            if (anyMp4 == null) {
-                                anyMp4 = s;
-                            }
-                            if (s.contains("720")) {
-                                preferred = s;
-                            }
+            String key = String.valueOf(entry.getKey()).toUpperCase();
+            if (key.contains("HLS") || key.contains("DASH")) {
+                continue;
+            }
+
+            String url = null;
+            if (spec.getClass().getName().equals("com.pinterest.api.model.jq")) {
+                url = (String) invokeNoArg(spec, "s");
+            }
+            if (url == null || url.isEmpty()) {
+                Class<?> clazz = spec.getClass();
+                while (clazz != null && clazz != Object.class) {
+                    for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
+                        if (f.getType() == String.class) {
+                            try {
+                                f.setAccessible(true);
+                                Object v = f.get(spec);
+                                if (v instanceof String) {
+                                    String s = (String) v;
+                                    if (s.startsWith("http") && s.contains(".mp4") && !s.contains(".mpd") && !s.contains(".m3u8")) {
+                                        url = s;
+                                        break;
+                                    }
+                                }
+                            } catch (Throwable ignored) {}
                         }
                     }
+                    if (url != null) {
+                        break;
+                    }
+                    clazz = clazz.getSuperclass();
                 }
-                clazz = clazz.getSuperclass();
+            }
+
+            if (url != null && !url.isEmpty()) {
+                if (url.startsWith("http") && url.contains(".mp4") && !url.contains(".mpd") && !url.contains(".m3u8")) {
+                    int res = 0;
+                    if (key.contains("1080")) res = 1080;
+                    else if (key.contains("720")) res = 720;
+                    else if (key.contains("480")) res = 480;
+                    else if (key.contains("360")) res = 360;
+                    else if (key.contains("240")) res = 240;
+
+                    if (res > maxRes) {
+                        maxRes = res;
+                        bestUrl = url;
+                    } else if (bestUrl == null) {
+                        bestUrl = url;
+                    }
+                }
             }
         }
-        return preferred != null ? preferred : anyMp4;
+        return bestUrl;
     }
 
-    /** Helper reflection: invoca un metodo pubblico senza argomenti; null se non disponibile. */
     private static Object invokeNoArg(Object target, String methodName) {
         try {
             java.lang.reflect.Method m = target.getClass().getMethod(methodName);
@@ -739,50 +753,82 @@ public final class PinterestUtils {
         }
     }
 
-    public static void addDownloadVideoOption(Object menuContainer) {
+    public static void addDownloadVideoOption(final Object menuContainer) {
         if (!(menuContainer instanceof ViewGroup)) {
             Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
-            return;
-        }
-        // La voce compare SOLO se il Pin di QUESTO menu è un video: cerchiamo, tra i campi String
-        // del menu, un pinUid presente nella mappa popolata dal player. Niente stato globale.
-        final String videoUrl = resolveVideoUrlForMenu(menuContainer);
-        if (videoUrl == null || videoUrl.isEmpty()) {
             return;
         }
         final ViewGroup container = (ViewGroup) menuContainer;
         final Context context = container.getContext();
 
         try {
-            View row = null;
-            String labelText = getString("download_video_label");
-            View.OnClickListener onClickListener = new View.OnClickListener() {
+            final String labelText = getString("download_video_label");
+            final View[] rowHolder = new View[1];
+            final View.OnClickListener dummyListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    dismissMenu();
-                    downloadVideo(v.getContext(), videoUrl);
                 }
             };
+
             try {
-                row = buildRowReflective(container, labelText, "ARROW_DOWN", onClickListener);
-                Log.d(TAG, "Riga scarica video creata con successo tramite reflection");
+                rowHolder[0] = buildRowReflective(container, labelText, "ARROW_DOWN", dummyListener);
             } catch (Throwable t) {
-                Log.w(TAG, "Errore nella creazione scarica video tramite reflection, uso il fallback", t);
-                row = buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_save, onClickListener);
+                rowHolder[0] = buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_save, dummyListener);
             }
-            if (row != null) {
-                container.addView(row);
+
+            if (rowHolder[0] == null) {
+                return;
             }
+
+            final View row = rowHolder[0];
+            row.setEnabled(false);
+            row.setAlpha(0.5f);
+            container.addView(row);
+
+            final ImageView icon = findImageView(row);
+            if (icon != null) {
+                icon.animate().rotationBy(3600).setDuration(10000).start();
+            }
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String resolved = extractVideoUrlFromMenuPin(menuContainer);
+                    if (resolved == null || resolved.isEmpty()) {
+                        resolved = resolveVideoUrlForMenu(menuContainer);
+                    }
+
+                    final String videoUrl = resolved;
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (videoUrl == null || videoUrl.isEmpty()) {
+                                container.removeView(row);
+                            } else {
+                                row.setEnabled(true);
+                                row.setAlpha(1.0f);
+                                if (icon != null) {
+                                    icon.animate().cancel();
+                                    icon.setRotation(0);
+                                }
+                                row.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dismissMenu();
+                                        downloadVideo(v.getContext(), videoUrl);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }).start();
+
         } catch (Throwable t) {
             Log.e(TAG, "Impossibile aggiungere la voce scarica video", t);
         }
     }
 
-    /**
-     * Cerca tra i campi String del menu (e superclassi) un valore che sia un pinUid presente nella
-     * mappa video. Solo il campo pinUid del menu coinciderà con una chiave (gli uid dei Pin sono
-     * identificatori univoci), quindi non servono nomi di campo offuscati hard-coded.
-     */
     private static String resolveVideoUrlForMenu(Object menu) {
         if (menu == null || VIDEO_URL_BY_PIN.isEmpty()) {
             return null;
@@ -810,14 +856,91 @@ public final class PinterestUtils {
         return null;
     }
 
-    /**
-     * Scarica il video nella cartella Download tramite il DownloadManager di sistema.
-     *
-     * Si usa il DownloadManager (anziché HttpURLConnection a mano) perché gestisce da solo il thread
-     * di rete, i redirect, la notifica di avanzamento e la registrazione del file in MediaStore su
-     * Android 10+ (scoped storage) — eliminando gli errori "impossibile scaricare" del tentativo
-     * precedente, dovuti a download sul main thread / permessi di storage.
-     */
+    private static String extractVideoUrlFromMenuPin(Object menu) {
+        if (menu == null) {
+            return null;
+        }
+        try {
+            return scanForMp4(menu, 0,
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Object, Boolean>()));
+        } catch (Throwable t) {
+            Log.e(TAG, "Estrazione on-demand mp4 dal menu fallita", t);
+            return null;
+        }
+    }
+
+    private static String scanForMp4(Object obj, int depth, java.util.Set<Object> seen) {
+        if (obj == null || depth > 6 || !seen.add(obj)) {
+            return null;
+        }
+        Class<?> cls = obj.getClass();
+        String cn = cls.getName();
+        if (cn.startsWith("java.") || cn.startsWith("android.") || cn.startsWith("kotlin.")
+                || cn.startsWith("androidx.")) {
+            return null;
+        }
+        if (obj instanceof java.util.Map) {
+            String mp4 = pickBestMp4Url((java.util.Map<?, ?>) obj);
+            if (mp4 != null) {
+                return mp4;
+            }
+        }
+        Object viaG = invokeNoArg(obj, "g");
+        if (viaG instanceof java.util.Map) {
+            String mp4 = pickBestMp4Url((java.util.Map<?, ?>) viaG);
+            if (mp4 != null) {
+                return mp4;
+            }
+        }
+        Object videos = invokeNoArg(obj, "v7");
+        if (videos != null) {
+            Object listObj = invokeNoArg(videos, "g");
+            if (listObj instanceof java.util.Map) {
+                String mp4 = pickBestMp4Url((java.util.Map<?, ?>) listObj);
+                if (mp4 != null) {
+                    return mp4;
+                }
+            }
+        }
+        Class<?> c = cls;
+        while (c != null && c != Object.class) {
+            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                try {
+                    f.setAccessible(true);
+                    Object val = f.get(obj);
+                    if (val == null) {
+                        continue;
+                    }
+                    if (val instanceof String) {
+                        String s = (String) val;
+                        if (s.startsWith("http") && s.contains(".mp4") && !s.contains(".mpd") && !s.contains(".m3u8")) {
+                            return s;
+                        }
+                    } else if (val instanceof java.util.Map) {
+                        String mp4 = pickBestMp4Url((java.util.Map<?, ?>) val);
+                        if (mp4 != null) {
+                            return mp4;
+                        }
+                    } else {
+                        Class<?> ft = val.getClass();
+                        String fn = ft.getName();
+                        if (fn.startsWith("java.") || fn.startsWith("android.") || fn.startsWith("kotlin.")
+                                || fn.startsWith("androidx.")) {
+                            continue;
+                        }
+                        String mp4 = scanForMp4(val, depth + 1, seen);
+                        if (mp4 != null) {
+                            return mp4;
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return null;
+    }
+
     private static void downloadVideo(Context context, String url) {
         if (url == null || url.isEmpty()) {
             showNativeToast(context, getString("no_video"));
@@ -842,7 +965,6 @@ public final class PinterestUtils {
                 android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(true);
-            // Diversi CDN Pinterest rispondono 403 senza uno User-Agent da browser.
             request.addRequestHeader(
                 "User-Agent",
                 "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -1019,7 +1141,7 @@ public final class PinterestUtils {
             final Dialog dialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
 
             RelativeLayout rootLayout = new RelativeLayout(context);
-            rootLayout.setBackgroundColor(0x99000000); // 60% opacity black dim
+            rootLayout.setBackgroundColor(0x99000000);
 
             LinearLayout card = new LinearLayout(context);
             card.setOrientation(LinearLayout.VERTICAL);
@@ -1409,26 +1531,30 @@ public final class PinterestUtils {
         return new BitmapDrawable(context.getResources(), bitmap);
     }
 
-    /**
-     * Rimuove i Pin sponsorizzati (promoted) dalla pagina di feed appena costruita.
-     *
-     * Chiamato dalla patch bytecode in coda al costruttore di o12.e (il modello di pagina del feed),
-     * che memorizza una COPIA ArrayList mutabile degli elementi: la attraversiamo e togliamo i Pin
-     * il cui flag is_promoted è true. Agendo sul costruttore copriamo primo caricamento, paginazione
-     * e pull-to-refresh con un unico aggancio. Eventuali errori vengono assorbiti: nel peggiore dei
-     * casi l'annuncio resta, ma il feed non va mai in crash.
-     */
     public static void filterSponsoredPinsFromFeed(Object feedPage) {
+        if (feedPage == null) {
+            return;
+        }
         filterSponsoredPinsFromFeedRecursive(feedPage, 0);
     }
 
     private static void filterSponsoredPinsFromFeedRecursive(Object obj, int depth) {
-        if (obj == null || depth > 3) {
+        if (obj == null || depth > 6) {
             return;
         }
+        String className = obj.getClass().getName();
+        if (className.equals("com.pinterest.api.model.me") || className.endsWith(".Pin") || className.equals("com.pinterest.api.model.Pin")) {
+            return;
+        }
+
         try {
             Class<?> clazz = obj.getClass();
             while (clazz != null) {
+                String cn = clazz.getName();
+                if (cn.startsWith("java.") || cn.startsWith("android.") || cn.startsWith("kotlin.") || cn.startsWith("androidx.")) {
+                    break;
+                }
+
                 for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
                     if (java.util.List.class.isAssignableFrom(f.getType())) {
                         f.setAccessible(true);
@@ -1436,6 +1562,20 @@ public final class PinterestUtils {
                         if (value instanceof java.util.List) {
                             java.util.List<?> items = (java.util.List<?>) value;
                             if (items != null && !items.isEmpty()) {
+                                boolean isMainFeedList = className.equals("o12.e");
+                                if (isMainFeedList) {
+                                    int total = items.size();
+                                    int promoted = 0;
+                                    for (Object item : items) {
+                                        if (isPromotedPin(item)) {
+                                            promoted++;
+                                        }
+                                    }
+                                    if (promoted >= total) {
+                                        continue;
+                                    }
+                                }
+
                                 int removed = 0;
                                 java.util.Iterator<?> it = items.iterator();
                                 while (it.hasNext()) {
@@ -1445,7 +1585,6 @@ public final class PinterestUtils {
                                             it.remove();
                                             removed++;
                                         } catch (Throwable ignored) {
-                                            // List is immutable/unmodifiable, ignore and don't crash
                                         }
                                     } else {
                                         filterSponsoredPinsFromFeedRecursive(item, depth + 1);
@@ -1465,17 +1604,12 @@ public final class PinterestUtils {
         }
     }
 
-    /**
-     * True se l'elemento del feed è un Pin o modulo promosso/sponsorizzato.
-     * Cerca in reflection diversi getter e campi comuni.
-     */
     private static boolean isPromotedPin(Object item) {
         if (item == null) {
             return false;
         }
         Class<?> clazz = item.getClass();
 
-        // 1. Prova il metodo "I5" (getter offuscato della classe Pin/me)
         try {
             java.lang.reflect.Method m = clazz.getMethod("I5");
             Object result = m.invoke(item);
@@ -1484,7 +1618,6 @@ public final class PinterestUtils {
             }
         } catch (Throwable ignored) {}
 
-        // 2. Prova il metodo "getIsPromoted" (standard Kotlin getter)
         try {
             java.lang.reflect.Method m = clazz.getMethod("getIsPromoted");
             Object result = m.invoke(item);
@@ -1493,7 +1626,6 @@ public final class PinterestUtils {
             }
         } catch (Throwable ignored) {}
 
-        // 3. Prova il metodo "isPromoted"
         try {
             java.lang.reflect.Method m = clazz.getMethod("isPromoted");
             Object result = m.invoke(item);
@@ -1502,7 +1634,6 @@ public final class PinterestUtils {
             }
         } catch (Throwable ignored) {}
 
-        // 4. Scansiona i campi dichiarati alla ricerca di "isPromoted" o "is_promoted"
         while (clazz != null) {
             for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
                 String name = f.getName();
