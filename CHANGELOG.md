@@ -1,3 +1,9 @@
+## [1.2.0-dev.5](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.4...v1.2.0-dev.5) (2026-06-24)
+
+### ✨ New Features
+
+* **pinterest:** download videos is properly working, some sources are not available tho ([30d7219](https://github.com/browzomje/browzomje-patches/commit/30d7219de8fd5d37b3b31a2aa940bd2ea8a0bd51))
+
 ## [1.2.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.3...v1.2.0-dev.4) (2026-06-24)
 
 ### ✨ New Features
