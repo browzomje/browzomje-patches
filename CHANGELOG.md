@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/browzomje/browzomje-patches/compare/v1.1.0...v1.1.1) (2026-06-24)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** added monochrome icons to wallpaper dialog and smoothed out corners ([1ea0c61](https://github.com/browzomje/browzomje-patches/commit/1ea0c6120b63b35bda73f468e60ea58a101bbf83))
+
 ## [1.1.0](https://github.com/browzomje/browzomje-patches/compare/v1.0.0...v1.1.0) (2026-06-23)
 
 ### 🐛 Bug Fixes
