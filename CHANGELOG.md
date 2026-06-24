@@ -1,3 +1,9 @@
+## [1.2.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.3...v1.2.0-dev.4) (2026-06-24)
+
+### ✨ New Features
+
+* added download video patch ([f4a6603](https://github.com/browzomje/browzomje-patches/commit/f4a660373ba7d0cc7a59688b5bb9380d5ed7b14d))
+
 ## [1.2.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.2.0-dev.2...v1.2.0-dev.3) (2026-06-24)
 
 ### 🐛 Bug Fixes
