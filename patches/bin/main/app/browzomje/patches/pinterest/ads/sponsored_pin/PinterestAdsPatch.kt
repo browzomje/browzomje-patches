@@ -22,7 +22,11 @@ val pinterestAdsPatch = bytecodePatch(
         // promoted pin from the model's stored item list. Two entry points cover the whole app:
         //   o12.e   -> the legacy home-feed page
         //   vr1.i0  -> the generic paged response behind every multi-section grid (search, etc.)
-        for (method in listOf(PinterestAdsFingerprint.method, PagedResponseConstructorFingerprint.method)) {
+        for (method in listOf(
+            PinterestAdsFingerprint.method,
+            PagedResponseConstructorFingerprint.method,
+            ModelListWithBookmarkConstructorFingerprint.method
+        )) {
             val instructionsList = method.implementation!!.instructions
             val returnIndex = instructionsList.indexOfFirst { it.opcode == Opcode.RETURN_VOID }
             val insertIndex = if (returnIndex != -1) returnIndex else instructionsList.size - 1

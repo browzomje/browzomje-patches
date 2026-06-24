@@ -1413,64 +1413,107 @@ public final class PinterestUtils {
      * casi l'annuncio resta, ma il feed non va mai in crash.
      */
     public static void filterSponsoredPinsFromFeed(Object feedPage) {
-        if (feedPage == null) {
+        filterSponsoredPinsFromFeedRecursive(feedPage, 0);
+    }
+
+    private static void filterSponsoredPinsFromFeedRecursive(Object obj, int depth) {
+        if (obj == null || depth > 3) {
             return;
         }
         try {
-            java.util.List<?> items = null;
-            Class<?> clazz = feedPage.getClass();
-            while (clazz != null && items == null) {
+            Class<?> clazz = obj.getClass();
+            while (clazz != null) {
                 for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
                     if (java.util.List.class.isAssignableFrom(f.getType())) {
                         f.setAccessible(true);
-                        Object value = f.get(feedPage);
+                        Object value = f.get(obj);
                         if (value instanceof java.util.List) {
-                            items = (java.util.List<?>) value;
-                            break;
+                            java.util.List<?> items = (java.util.List<?>) value;
+                            if (items != null && !items.isEmpty()) {
+                                int removed = 0;
+                                java.util.Iterator<?> it = items.iterator();
+                                while (it.hasNext()) {
+                                    Object item = it.next();
+                                    if (isPromotedPin(item)) {
+                                        try {
+                                            it.remove();
+                                            removed++;
+                                        } catch (Throwable ignored) {
+                                            // List is immutable/unmodifiable, ignore and don't crash
+                                        }
+                                    } else {
+                                        filterSponsoredPinsFromFeedRecursive(item, depth + 1);
+                                    }
+                                }
+                                if (removed > 0) {
+                                    Log.d(TAG, "Rimossi " + removed + " pin sponsorizzati (profondità " + depth + ")");
+                                }
+                            }
                         }
                     }
                 }
                 clazz = clazz.getSuperclass();
             }
-            if (items == null || items.isEmpty()) {
-                return;
-            }
-            int removed = 0;
-            java.util.Iterator<?> it = items.iterator();
-            while (it.hasNext()) {
-                if (isPromotedPin(it.next())) {
-                    try {
-                        it.remove();
-                        removed++;
-                    } catch (Throwable ignored) {
-                        // lista non modificabile: lascia l'elemento, niente crash
-                    }
-                }
-            }
-            if (removed > 0) {
-                Log.d(TAG, "Rimossi " + removed + " pin sponsorizzati dal feed");
-            }
         } catch (Throwable t) {
-            Log.e(TAG, "Filtro ads del feed fallito", t);
+            Log.e(TAG, "Filtro ads ricorsivo fallito a profondità " + depth, t);
         }
     }
 
     /**
-     * True se l'elemento del feed è un Pin promosso. Identifichiamo il Pin chiamando in reflection
-     * il getter is_promoted `me.I5()` (lasciato intatto dalla patch, così riporta il valore reale);
-     * gli elementi che non sono Pin non hanno quel metodo → eccezione catturata → mantenuti.
+     * True se l'elemento del feed è un Pin o modulo promosso/sponsorizzato.
+     * Cerca in reflection diversi getter e campi comuni.
      */
     private static boolean isPromotedPin(Object item) {
         if (item == null) {
             return false;
         }
+        Class<?> clazz = item.getClass();
+
+        // 1. Prova il metodo "I5" (getter offuscato della classe Pin/me)
         try {
-            java.lang.reflect.Method m = item.getClass().getMethod("I5");
+            java.lang.reflect.Method m = clazz.getMethod("I5");
             Object result = m.invoke(item);
-            return (result instanceof Boolean) && ((Boolean) result);
-        } catch (Throwable t) {
-            return false;
+            if (result instanceof Boolean) {
+                return (Boolean) result;
+            }
+        } catch (Throwable ignored) {}
+
+        // 2. Prova il metodo "getIsPromoted" (standard Kotlin getter)
+        try {
+            java.lang.reflect.Method m = clazz.getMethod("getIsPromoted");
+            Object result = m.invoke(item);
+            if (result instanceof Boolean) {
+                return (Boolean) result;
+            }
+        } catch (Throwable ignored) {}
+
+        // 3. Prova il metodo "isPromoted"
+        try {
+            java.lang.reflect.Method m = clazz.getMethod("isPromoted");
+            Object result = m.invoke(item);
+            if (result instanceof Boolean) {
+                return (Boolean) result;
+            }
+        } catch (Throwable ignored) {}
+
+        // 4. Scansiona i campi dichiarati alla ricerca di "isPromoted" o "is_promoted"
+        while (clazz != null) {
+            for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
+                String name = f.getName();
+                if (name.equals("isPromoted") || name.equals("is_promoted")) {
+                    try {
+                        f.setAccessible(true);
+                        Object val = f.get(item);
+                        if (val instanceof Boolean) {
+                            return (Boolean) val;
+                        }
+                    } catch (Throwable ignored) {}
+                }
+            }
+            clazz = clazz.getSuperclass();
         }
+
+        return false;
     }
 
     public static byte[] getSignatureBytes(android.content.pm.Signature sig) {

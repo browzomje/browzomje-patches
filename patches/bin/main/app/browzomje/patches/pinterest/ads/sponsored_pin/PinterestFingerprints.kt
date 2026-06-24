@@ -53,3 +53,23 @@ object PagedResponseConstructorFingerprint : Fingerprint(
         classDef.type == "Lvr1/i0;" && method.name == "<init>"
     }
 )
+
+/**
+ * Constructor of the generic model-list response `vg2.b` (ModelListWithBookmark):
+ *
+ *     public b(List models, String str) { ... this.f134630a = models; ... }
+ *
+ * This is returned by the coroutine network response for endpoints like `search/tab/`
+ * (search discover / search landing page feed). Stripping promoted pins from here prevents
+ * sponsored pins from appearing in the search discovery tab before searching a query.
+ */
+object ModelListWithBookmarkConstructorFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf(
+        "Ljava/util/List;",
+        "Ljava/lang/String;",
+    ),
+    custom = { method, classDef ->
+        classDef.type == "Lvg2/b;" && method.name == "<init>"
+    }
+)
