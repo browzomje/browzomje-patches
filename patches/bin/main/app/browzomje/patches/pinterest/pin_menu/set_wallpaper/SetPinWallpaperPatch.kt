@@ -7,7 +7,7 @@ import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.template.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import com.android.tools.smali.dexlib2.Opcode
 
-private const val EXTENSION_CLASS = "Lapp/template/extension/pinterest/WallpaperUtils;"
+private const val EXTENSION_CLASS = "Lapp/template/extension/pinterest/PinterestUtils;"
 
 private val addWallpaperPermissionPatch = resourcePatch(
     description = "Adds android.permission.SET_WALLPAPER to the manifest."

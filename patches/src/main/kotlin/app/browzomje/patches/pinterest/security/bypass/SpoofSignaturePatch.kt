@@ -40,7 +40,7 @@ val spoofSignaturePatch = bytecodePatch(
             
             method.replaceInstruction(
                 targetIndex,
-                "invoke-static { $register }, Lapp/template/extension/pinterest/WallpaperUtils;->getSignatureBytes(Landroid/content/pm/Signature;)[B"
+                "invoke-static { $register }, Lapp/template/extension/pinterest/PinterestUtils;->getSignatureBytes(Landroid/content/pm/Signature;)[B"
             )
         } else {
             throw Exception("Could not find Signature->toByteArray call in AppIntegrity check")

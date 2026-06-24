@@ -39,11 +39,11 @@ import java.net.URL;
 import java.util.Locale;
 
 @SuppressWarnings("unused")
-public final class WallpaperUtils {
+public final class PinterestUtils {
 
     private static final String TAG = "MorpheWallpaper";
 
-    private WallpaperUtils() {}
+    private PinterestUtils() {}
 
     public static volatile String currentPinImageUrl = null;
 
