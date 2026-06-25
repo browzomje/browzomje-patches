@@ -18,10 +18,6 @@ val pinterestAdsPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        // At the end of a feed-model constructor, hand `this` to the extension, which strips every
-        // promoted pin from the model's stored item list. Two entry points cover the whole app:
-        //   o12.e   -> the legacy home-feed page
-        //   vr1.i0  -> the generic paged response behind every multi-section grid (search, etc.)
         for (method in listOf(
             PinterestAdsFingerprint.method,
             PagedResponseConstructorFingerprint.method,
