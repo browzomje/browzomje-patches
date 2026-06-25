@@ -1,3 +1,9 @@
+## [1.2.2-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.2.1...v1.2.2-dev.1) (2026-06-25)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** use project package name instead of template ([afae9ca](https://github.com/browzomje/browzomje-patches/commit/afae9ca16352ca5fbe7852cf62cfe614b89f68f0))
+
 ## [1.2.1](https://github.com/browzomje/browzomje-patches/compare/v1.2.0...v1.2.1) (2026-06-25)
 
 ### 🐛 Bug Fixes
