@@ -1,3 +1,9 @@
+## [1.2.1-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.2.1-dev.1...v1.2.1-dev.2) (2026-06-25)
+
+### 🐛 Bug Fixes
+
+* removed fingerprint spoofing - causing bugs ([e22b4e7](https://github.com/browzomje/browzomje-patches/commit/e22b4e79d1056a323133386b43a77b2fb78a616f))
+
 ## [1.2.1-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.2.0...v1.2.1-dev.1) (2026-06-24)
 
 ### 🐛 Bug Fixes
