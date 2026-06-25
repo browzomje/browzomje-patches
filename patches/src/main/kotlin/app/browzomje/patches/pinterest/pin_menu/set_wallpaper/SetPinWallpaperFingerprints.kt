@@ -1,4 +1,4 @@
-package app.template.patches.pinterest.pin_menu.set_wallpaper
+package app.browzomje.patches.pinterest.pin_menu.set_wallpaper
 
 import app.morphe.patcher.Fingerprint
 

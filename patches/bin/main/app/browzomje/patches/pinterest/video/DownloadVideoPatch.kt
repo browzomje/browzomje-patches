@@ -1,12 +1,12 @@
-package app.template.patches.pinterest.video
+package app.browzomje.patches.pinterest.video
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
-import app.template.patches.shared.Constants.COMPATIBILITY_PINTEREST
+import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import com.android.tools.smali.dexlib2.Opcode
 
-private const val EXTENSION_CLASS = "Lapp/template/extension/pinterest/PinterestUtils;"
+private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 
 @Suppress("unused")
 val downloadVideoPatch = bytecodePatch(

@@ -1,4 +1,4 @@
-package app.template.patches.pinterest.pin_menu.copy_link
+package app.browzomje.patches.pinterest.pin_menu.copy_link
 
 import app.morphe.patcher.Fingerprint
 

@@ -1,4 +1,4 @@
-package app.template.extension.pinterest;
+package app.browzomje.extension.pinterest;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

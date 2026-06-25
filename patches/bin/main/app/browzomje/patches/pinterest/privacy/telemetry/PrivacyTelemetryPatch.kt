@@ -1,8 +1,8 @@
-package app.template.patches.pinterest.privacy.telemetry
+package app.browzomje.patches.pinterest.privacy.telemetry
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
-import app.template.patches.shared.Constants.COMPATIBILITY_PINTEREST
+import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 
 @Suppress("unused")
 val privacyTelemetryPatch = bytecodePatch(

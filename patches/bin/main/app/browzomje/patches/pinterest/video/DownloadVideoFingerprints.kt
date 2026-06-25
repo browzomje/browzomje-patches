@@ -1,4 +1,4 @@
-package app.template.patches.pinterest.video
+package app.browzomje.patches.pinterest.video
 
 import app.morphe.patcher.Fingerprint
 

@@ -1,4 +1,4 @@
-package app.template.patches.pinterest.privacy.telemetry
+package app.browzomje.patches.pinterest.privacy.telemetry
 
 import app.morphe.patcher.Fingerprint
 import com.android.tools.smali.dexlib2.AccessFlags

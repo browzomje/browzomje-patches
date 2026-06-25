@@ -1,12 +1,12 @@
-package app.template.patches.pinterest
+package app.browzomje.patches.pinterest
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
-import app.template.patches.shared.Constants.COMPATIBILITY_PINTEREST
+import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import com.android.tools.smali.dexlib2.Opcode
 
-private const val EXTENSION_CLASS = "Lapp/template/extension/pinterest/PinterestUtils;"
+private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
@@ -28,7 +28,7 @@ val pinterestAdsPatch = bytecodePatch(
             val insertIndex = if (returnIndex != -1) returnIndex else instructionsList.size - 1
 
             val registerCount = method.implementation!!.registerCount
-            val parameterRegisterCount = method.parameters.size + 1 // +1 for `this`
+            val parameterRegisterCount = method.parameters.size + 1
             val p0RegisterIndex = registerCount - parameterRegisterCount
 
             val compiled = InlineSmaliCompiler.compile(

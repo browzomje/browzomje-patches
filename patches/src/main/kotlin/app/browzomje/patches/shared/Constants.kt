@@ -1,4 +1,4 @@
-package app.template.patches.shared
+package app.browzomje.patches.shared
 
 import app.morphe.patcher.patch.ApkFileType
 import app.morphe.patcher.patch.AppTarget
@@ -25,6 +25,18 @@ object Constants {
         targets = listOf(
             AppTarget(
                 version = "5.0.273.1028425"
+            )
+        )
+    )
+
+    val COMPATIBILITY_BETTER_LAUNCHER = Compatibility(
+        name = "BetterLauncher",
+        packageName = "TODO_PACKAGE_NAME", 
+        apkFileType = ApkFileType.APK,
+        appIconColor = 0x00BCD4, 
+        targets = listOf(
+            AppTarget(
+                version = "TODO_VERSION" 
             )
         )
     )
