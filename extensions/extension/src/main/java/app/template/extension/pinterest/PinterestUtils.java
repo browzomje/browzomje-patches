@@ -314,16 +314,40 @@ public final class PinterestUtils {
             @Override
             public void run() {
                 try {
-                    Class<?> tClass = Class.forName("fb0.t");
-                    java.lang.reflect.Field aField = tClass.getField("a");
-                    Object eventManager = aField.get(null);
+                    Object eventManager = null;
+                    try {
+                        Class<?> qClass = Class.forName("fb0.q");
+                        java.lang.reflect.Field aField = qClass.getField("a");
+                        eventManager = aField.get(null);
+                    } catch (Throwable e) {
+                        Class<?> tClass = Class.forName("fb0.t");
+                        java.lang.reflect.Field aField = tClass.getField("a");
+                        eventManager = aField.get(null);
+                    }
                     
-                    Class<?> fClass = Class.forName("ir2.f");
+                    Class<?> fClass;
+                    try {
+                        fClass = Class.forName("jr2.e");
+                    } catch (ClassNotFoundException e) {
+                        fClass = Class.forName("ir2.f");
+                    }
                     java.lang.reflect.Constructor<?> fCtor = fClass.getConstructor(String.class, int.class);
                     Object toastObj = fCtor.newInstance(message, 7000);
                     
-                    Class<?> hClass = Class.forName("ir2.h");
-                    Class<?> oClass = Class.forName("ww1.o");
+                    Class<?> hClass;
+                    try {
+                        hClass = Class.forName("jr2.g");
+                    } catch (ClassNotFoundException e) {
+                        hClass = Class.forName("ir2.h");
+                    }
+                    
+                    Class<?> oClass;
+                    try {
+                        oClass = Class.forName("kw1.p");
+                    } catch (ClassNotFoundException e) {
+                        oClass = Class.forName("ww1.o");
+                    }
+                    
                     java.lang.reflect.Constructor<?> hCtor = hClass.getConstructor(oClass);
                     Object eventObj = hCtor.newInstance(toastObj);
                     
@@ -343,16 +367,27 @@ public final class PinterestUtils {
             @Override
             public void run() {
                 try {
-                    Class<?> tClass = Class.forName("fb0.t");
-                    java.lang.reflect.Field aField = tClass.getField("a");
-                    Object eventManager = aField.get(null);
+                    Object eventManager = null;
+                    try {
+                        Class<?> qClass = Class.forName("fb0.q");
+                        java.lang.reflect.Field aField = qClass.getField("a");
+                        eventManager = aField.get(null);
+                    } catch (Throwable e) {
+                        Class<?> tClass = Class.forName("fb0.t");
+                        java.lang.reflect.Field aField = tClass.getField("a");
+                        eventManager = aField.get(null);
+                    }
                     
-                    Class<?> uClass = Class.forName("ai0.u");
-                    java.lang.reflect.Constructor<?> constructor = uClass.getConstructor(int.class, boolean.class);
-                    Object dismissEvent = constructor.newInstance(0, true);
+                    Class<?> uClass;
+                    try {
+                        uClass = Class.forName("bi0.p");
+                    } catch (ClassNotFoundException e) {
+                        uClass = Class.forName("ai0.u");
+                    }
+                    Object dismissEventObj = uClass.newInstance();
                     
                     java.lang.reflect.Method dMethod = eventManager.getClass().getMethod("d", Object.class);
-                    dMethod.invoke(eventManager, dismissEvent);
+                    dMethod.invoke(eventManager, dismissEventObj);
                     Log.d(TAG, "Menu dismissed via EventManager.");
                 } catch (Throwable t) {
                     Log.e(TAG, "Errore nella dismissione del menu tramite EventManager", t);
