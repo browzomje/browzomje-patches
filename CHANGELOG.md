@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/browzomje/browzomje-patches/compare/v1.2.2...v1.3.0) (2026-07-01)
+
+### ✨ New Features
+
+* **pinterest:** add support for 14.24.0 ([07afd6a](https://github.com/browzomje/browzomje-patches/commit/07afd6a21f14aa065036d0cde2b55750bc30fa1f))
+
 ## [1.2.2](https://github.com/browzomje/browzomje-patches/compare/v1.2.1...v1.2.2) (2026-06-25)
 
 ### 🐛 Bug Fixes
