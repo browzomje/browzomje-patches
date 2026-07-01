@@ -11,7 +11,7 @@ object PinterestAdsFingerprint : Fingerprint(
         "Ljava/util/List;",
     ),
     custom = { method, classDef ->
-        classDef.type == "Lo12/e;" && method.name == "<init>"
+        (classDef.type == "Lo12/e;" || classDef.type == "Lf12/e;") && method.name == "<init>"
     }
 )
 
@@ -23,7 +23,7 @@ object PagedResponseConstructorFingerprint : Fingerprint(
         "Ljava/util/List;",
     ),
     custom = { method, classDef ->
-        classDef.type == "Lvr1/i0;" && method.name == "<init>"
+        (classDef.type == "Lvr1/i0;" || classDef.type == "Llr1/n0;") && method.name == "<init>"
     }
 )
 
