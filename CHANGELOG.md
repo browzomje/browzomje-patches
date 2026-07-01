@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/browzomje/browzomje-patches/compare/v1.3.1...v1.3.2) (2026-07-01)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** fixed snackbar using again the same system of other pinterest features instead of stock android snackbars ([4f14937](https://github.com/browzomje/browzomje-patches/commit/4f14937fad4ef1710bbcd2c64356401c66235993))
+
 ## [1.3.1](https://github.com/browzomje/browzomje-patches/compare/v1.3.0...v1.3.1) (2026-07-01)
 
 ### 🐛 Bug Fixes
