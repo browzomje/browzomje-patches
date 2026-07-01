@@ -88,11 +88,19 @@ public final class PinterestUtils {
     }
 
     public static void setCurrentVideoPin(Object pin) {
-        VideoDownloadHandler.setCurrentVideoPin(pin);
+        try {
+            VideoDownloadHandler.setCurrentVideoPin(pin);
+        } catch (Throwable t) {
+            Log.e(TAG, "Errore durante setCurrentVideoPin", t);
+        }
     }
 
     public static void addDownloadVideoOption(final Object menuContainer) {
-        VideoDownloadHandler.addDownloadVideoOption(menuContainer);
+        try {
+            VideoDownloadHandler.addDownloadVideoOption(menuContainer);
+        } catch (Throwable t) {
+            Log.e(TAG, "Errore durante addDownloadVideoOption", t);
+        }
     }
 
     // Delegate for wallpaper
@@ -354,14 +362,34 @@ public final class PinterestUtils {
     }
 
     static View buildRowReflective(ViewGroup container, String labelText, String iconEnumName, View.OnClickListener onClickListener) throws Exception {
-        Method dMethod = container.getClass().getMethod("D");
+        Method dMethod;
+        try {
+            dMethod = container.getClass().getMethod("y");
+        } catch (NoSuchMethodException e) {
+            dMethod = container.getClass().getMethod("D");
+        }
         Object viewCreator = dMethod.invoke(container);
 
-        Class<?> xClass = Class.forName("ku1.x");
+        Class<?> xClass;
+        try {
+            xClass = Class.forName("zt1.w");
+        } catch (ClassNotFoundException e) {
+            xClass = Class.forName("ku1.x");
+        }
         Object imageIcon = Enum.valueOf((Class<Enum>) xClass, iconEnumName);
 
-        Field bField = container.getClass().getField("B");
-        boolean z9 = bField.getBoolean(container);
+        boolean z9 = false;
+        try {
+            Field yField = container.getClass().getField("y");
+            z9 = yField.getBoolean(container);
+        } catch (NoSuchFieldException e) {
+            try {
+                Field bField = container.getClass().getField("B");
+                z9 = bField.getBoolean(container);
+            } catch (Throwable t) {
+                Log.w(TAG, "Impossibile leggere il campo boolean per la riga, uso false", t);
+            }
+        }
 
         Method aMethod = viewCreator.getClass().getMethod("a", CharSequence.class, String.class, xClass, boolean.class);
         RelativeLayout row = (RelativeLayout) aMethod.invoke(viewCreator, labelText, null, imageIcon, z9);

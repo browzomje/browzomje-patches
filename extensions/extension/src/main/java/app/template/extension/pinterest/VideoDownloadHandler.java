@@ -150,8 +150,9 @@ class VideoDownloadHandler {
             final ViewGroup parent = icon != null ? (ViewGroup) icon.getParent() : null;
             final int iconIndex = parent != null ? parent.indexOfChild(icon) : -1;
             final android.widget.ProgressBar progressBar;
+            final boolean isSafeToSwap = parent != null && !parent.getClass().getName().contains("gestalt");
 
-            if (parent != null && iconIndex != -1) {
+            if (isSafeToSwap && iconIndex != -1) {
                 progressBar = new android.widget.ProgressBar(context, null, android.R.attr.progressBarStyleSmall);
                 ViewGroup.LayoutParams lp = icon.getLayoutParams();
                 if (lp != null) {
@@ -172,7 +173,7 @@ class VideoDownloadHandler {
                         @Override
                         public void run() {
                             // Restore icon from spinner (shared by both success paths).
-                            if (parent != null && iconIndex != -1 && progressBar != null) {
+                            if (isSafeToSwap && iconIndex != -1 && progressBar != null) {
                                 parent.removeView(progressBar);
                                 if (icon.getParent() == null) {
                                     parent.addView(icon, iconIndex);
@@ -417,7 +418,7 @@ class VideoDownloadHandler {
 
     /** Scansione superficiale del Pin (campi String e Map) per la cover. */
     private static String findPinImageHash(Object obj, int depth, Set<Object> seen) {
-        if (obj == null || depth > 3 || !seen.add(obj)) {
+        if (obj == null || depth > 3 || !seen.add(obj) || obj instanceof android.view.View) {
             return null;
         }
         Class<?> cls = obj.getClass();
@@ -555,7 +556,7 @@ class VideoDownloadHandler {
     // -------------------------------------------------------------------------
 
     private static String scanForMp4(Object obj, int depth, Set<Object> seen) {
-        if (obj == null || depth > 6 || !seen.add(obj)) {
+        if (obj == null || depth > 6 || !seen.add(obj) || obj instanceof android.view.View) {
             return null;
         }
         Class<?> cls = obj.getClass();
@@ -716,7 +717,7 @@ class VideoDownloadHandler {
         String streamingUrl = null; // first HLS/DASH URL encountered during scan
 
         String scan(Object obj, int depth, Set<Object> seen) {
-            if (obj == null || depth > 6 || !seen.add(obj)) {
+            if (obj == null || depth > 6 || !seen.add(obj) || obj instanceof android.view.View) {
                 return null;
             }
             Class<?> cls = obj.getClass();
