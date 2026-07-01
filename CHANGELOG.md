@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/browzomje/browzomje-patches/compare/v1.3.0...v1.3.1) (2026-07-01)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** fixed menu crashing the app ([c5442a8](https://github.com/browzomje/browzomje-patches/commit/c5442a89cee3fc39baa3e3cb52a6ceec6346412b))
+
 ## [1.3.0](https://github.com/browzomje/browzomje-patches/compare/v1.2.2...v1.3.0) (2026-07-01)
 
 ### ✨ New Features
