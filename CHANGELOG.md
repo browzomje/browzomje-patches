@@ -1,3 +1,15 @@
+## [1.4.0](https://github.com/browzomje/browzomje-patches/compare/v1.3.2...v1.4.0) (2026-07-29)
+
+### ✨ New Features
+
+* **pinterest:** add support for 14.28.0 ([cf77af0](https://github.com/browzomje/browzomje-patches/commit/cf77af08ad6096df961046feade92724bd7e177a))
+* **pinterest:** add the Morphe settings screen ([d440913](https://github.com/browzomje/browzomje-patches/commit/d440913f305550992ffc644a4198acea1eead657))
+* **pinterest:** download every pin of a board ([705c1cb](https://github.com/browzomje/browzomje-patches/commit/705c1cb80e00d78ba07c0eb2691325c365c2d871))
+* **pinterest:** hide the search history ([b93e1af](https://github.com/browzomje/browzomje-patches/commit/b93e1af5606afcd068ade429ea3e6e8b2de94756))
+* **pinterest:** mark 14.28.0 stable and drop 14.24.0 ([c243d0b](https://github.com/browzomje/browzomje-patches/commit/c243d0bd76d3d43eba2c66796cc03f9233a87d42))
+* **pinterest:** translate patch descriptions to English ([4a42bce](https://github.com/browzomje/browzomje-patches/commit/4a42bceff0a352817b7332ae3f8498b4353d3f1d))
+* **pinterest:** translate patcher log and feedback messages to English ([1893e58](https://github.com/browzomje/browzomje-patches/commit/1893e582d3ed23fca3a429e8c22c02e1ac29a7a3))
+
 ## [1.4.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.4.0-dev.2...v1.4.0-dev.3) (2026-07-29)
 
 ### ✨ New Features
