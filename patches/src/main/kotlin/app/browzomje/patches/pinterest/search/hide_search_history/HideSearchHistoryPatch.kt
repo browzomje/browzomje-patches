@@ -29,9 +29,7 @@ private fun MutableMethod.appendHideRecentSearches(): Int {
 @Suppress("unused")
 val hideSearchHistoryPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Nasconde la sezione \"Ricerche recenti\" sia sulla schermata di ricerca sia " +
-        "nel carosello sotto la barra di ricerca. Non impedisce a Pinterest di registrare le " +
-        "ricerche (lato server), ma fa sì che non vengano più mostrate da nessuna parte nell'app.",
+    description = "Hides the \"Recent searches\" section both on the search screen and in the carousel below the search bar. It does not prevent Pinterest from logging searches (server-side), but stops them from being shown anywhere in the app.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

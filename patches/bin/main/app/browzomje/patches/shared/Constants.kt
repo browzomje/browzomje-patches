@@ -12,9 +12,35 @@ object Constants {
         appIconColor = 0xE60023, 
         targets = listOf(
             AppTarget(
-                version = "14.23.0" 
+                version = "14.23.0"
+            ),
+            AppTarget(
+                version = "14.28.0"
             )
         )
     )
 
+    val COMPATIBILITY_ALIGHT_MOTION = Compatibility(
+        name = "Alight Motion",
+        packageName = "com.alightcreative.motion",
+        apkFileType = ApkFileType.APKM,
+        appIconColor = 0x00D6C2,
+        targets = listOf(
+            AppTarget(
+                version = "5.0.273.1028425"
+            )
+        )
+    )
+
+    val COMPATIBILITY_BETTER_LAUNCHER = Compatibility(
+        name = "BetterLauncher",
+        packageName = "TODO_PACKAGE_NAME", 
+        apkFileType = ApkFileType.APK,
+        appIconColor = 0x00BCD4, 
+        targets = listOf(
+            AppTarget(
+                version = "TODO_VERSION" 
+            )
+        )
+    )
 }

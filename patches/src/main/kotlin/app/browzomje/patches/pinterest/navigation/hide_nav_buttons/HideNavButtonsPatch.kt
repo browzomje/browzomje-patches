@@ -55,20 +55,20 @@ private fun hideNavButtonPatch(name: String, description: String, tabOrdinal: In
 @Suppress("unused")
 val hideCreateNavButtonPatch = hideNavButtonPatch(
     "Hide Create nav button",
-    "Aggancia il tasto \"+\" (crea Pin) della barra di navigazione: nascosto se attivato nelle impostazioni Morphe.",
+    "Hooks the '+' (create Pin) navigation bar button: hidden if enabled in Morphe settings.",
     TAB_ORDINAL_CREATE,
 )
 
 @Suppress("unused")
 val hideNotificationsNavButtonPatch = hideNavButtonPatch(
     "Hide Notifications nav button",
-    "Aggancia il tasto delle notifiche: nascosto se attivato nelle impostazioni Morphe.",
+    "Hooks the notifications button: hidden if enabled in Morphe settings.",
     TAB_ORDINAL_NOTIFICATIONS,
 )
 
 @Suppress("unused")
 val hideSearchNavButtonPatch = hideNavButtonPatch(
     "Hide Search nav button",
-    "Aggancia il tasto Ricerca: nascosto se attivato nelle impostazioni Morphe.",
+    "Hooks the search button: hidden if enabled in Morphe settings.",
     TAB_ORDINAL_SEARCH,
 )

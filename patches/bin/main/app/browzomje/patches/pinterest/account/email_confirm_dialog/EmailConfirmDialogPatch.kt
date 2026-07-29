@@ -4,13 +4,24 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
+import app.browzomje.patches.shared.PatchLog
 import com.android.tools.smali.dexlib2.Opcode
 
-private const val SETTINGS_CLASS = "Lapp/browzomje/extension/pinterest/MorpheSettingsStore;"
+private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
+private const val PATCH_NAME = "Disable email confirmation dialog"
 
+/**
+ * Chiude subito il modale "conferma la tua email" (e i suoi fratelli: collega Google, ecc.).
+ *
+ * La versione precedente chiamava i metodi di chiusura interni di Pinterest (`Z6()`, `fa()`):
+ * nomi offuscati, diversi a ogni release e per giunta dipendenti dallo stato del Fragment
+ * (`fa()` va in NPE se il flusso non è ancora inizializzato). Ora si passa `this` e la View
+ * all'extension, che usa solo API AndroidX (`DialogFragment.dismissAllowingStateLoss()` oppure
+ * una `FragmentTransaction.remove()`), mai rinominate da R8.
+ */
 @Suppress("unused")
 val emailConfirmDialogPatch = bytecodePatch(
-    name = "Disable email confirmation dialog",
+    name = PATCH_NAME,
     description = "Chiude subito il modale \"conferma la tua email\" (e simili: collega Google, " +
         "ecc.) se attivato nelle impostazioni Morphe.",
     default = true,
@@ -19,57 +30,38 @@ val emailConfirmDialogPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        // Hook primario: onViewCreated, prima che il modale carichi il primo step. Z6() (chiudi
-        // fragment) non dipende da f130454s0 come fa(), quindi è chiamabile qui, subito dopo
-        // super.onViewCreated(), senza NPE.
-        val viewCreatedMethod = RecoveryFlowViewCreatedFingerprint.method
-        val vcRegisterCount = viewCreatedMethod.implementation!!.registerCount
-        val vcP0 = vcRegisterCount - (viewCreatedMethod.parameters.size + 1)
-        val superIndex = viewCreatedMethod.implementation!!.instructions.indexOfFirst { it.opcode == Opcode.INVOKE_SUPER }
-        val vcInsertIndex = if (superIndex != -1) superIndex + 1 else 0
+        val method = RecoveryFlowViewCreatedFingerprint.method
+        val implementation = method.implementation!!
+        val registerCount = implementation.registerCount
 
-        // v0 come scratch: siamo appena dopo l'unica invoke-super del metodo, nessuna istruzione
-        // originale ha ancora scritto/letto un registro locale (write-before-read del verifier fa
-        // sì che il codice originale sovrascriva v0 prima di leggerlo più avanti).
-        viewCreatedMethod.addInstructions(
-            vcInsertIndex,
+        // p0 = this (il Fragment), p1 = la View appena creata.
+        val p0 = registerCount - (method.parameters.size + 1)
+        val p1 = p0 + 1
+
+        // Si inserisce subito DOPO l'invoke-super, non prima: il Fragment deve completare
+        // l'inizializzazione di base, altrimenti la rimozione può avvenire su uno stato non
+        // ancora valido.
+        val superIndex = implementation.instructions.indexOfFirst { it.opcode == Opcode.INVOKE_SUPER }
+        val insertIndex = if (superIndex != -1) superIndex + 1 else 0
+        if (superIndex == -1) {
+            PatchLog.warn(
+                PATCH_NAME,
+                "nessun invoke-super in onViewCreated: l'hook viene messo in testa al metodo.",
+            )
+        }
+
+        // p0 e p1 sono contigui e in ordine: si possono passare direttamente con invoke-static/range,
+        // senza registri d'appoggio (p0 può superare v15, quindi la forma /range è obbligatoria).
+        method.addInstructions(
+            insertIndex,
             InlineSmaliCompiler.compile(
-                """
-                invoke-static { }, $SETTINGS_CLASS->isEmailConfirmDialogDisabled()Z
-                move-result v0
-                if-eqz v0, :skip_dismiss
-                invoke-virtual { v$vcP0 }, Lue2/d;->Z6()V
-                return-void
-                :skip_dismiss
-                """.trimIndent(),
+                "invoke-static/range { v$p0 .. v$p1 }, " +
+                    "$EXTENSION_CLASS->suppressRecoveryFlow(Ljava/lang/Object;Ljava/lang/Object;)V",
                 "",
-                vcRegisterCount,
+                registerCount,
                 true,
             ),
         )
-
-        // Difesa in profondità: se il flusso viene comunque raggiunto tramite un evento ve2.a
-        // (es. l'utente lo completa), ea() chiude anche quello, riusando fa() come già faceva
-        // il codice originale.
-        val routerMethod = RecoveryFlowRouterFingerprint.method
-        val routerRegisterCount = routerMethod.implementation!!.registerCount
-        val routerP0 = routerRegisterCount - (routerMethod.parameters.size + 1)
-
-        routerMethod.addInstructions(
-            0,
-            InlineSmaliCompiler.compile(
-                """
-                invoke-static { }, $SETTINGS_CLASS->isEmailConfirmDialogDisabled()Z
-                move-result v0
-                if-eqz v0, :skip_dismiss
-                invoke-virtual { v$routerP0 }, Lue2/d;->fa()V
-                return-void
-                :skip_dismiss
-                """.trimIndent(),
-                "",
-                routerRegisterCount,
-                true,
-            ),
-        )
+        PatchLog.hooked(PATCH_NAME, method, "onViewCreated del flusso recovery")
     }
 }

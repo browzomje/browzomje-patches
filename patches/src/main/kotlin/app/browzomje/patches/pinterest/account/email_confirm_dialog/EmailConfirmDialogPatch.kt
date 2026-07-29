@@ -22,8 +22,7 @@ private const val PATCH_NAME = "Disable email confirmation dialog"
 @Suppress("unused")
 val emailConfirmDialogPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Chiude subito il modale \"conferma la tua email\" (e simili: collega Google, " +
-        "ecc.) se attivato nelle impostazioni Morphe.",
+    description = "Immediately closes the \"confirm your email\" modal (and similar ones: connect Google, etc.) if enabled in Morphe settings.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

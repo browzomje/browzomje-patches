@@ -29,8 +29,7 @@ private const val MORPHE_SETTINGS_THEME = "@android:style/Theme.Material.NoActio
 @Suppress("unused")
 val morpheSettingsManifestPatch = resourcePatch(
     name = "Morphe settings screen (manifest)",
-    description = "Registra l'Activity delle impostazioni Morphe nel manifest, con un intent-filter " +
-        "per lo scheme morphe://.",
+    description = "Registers the Morphe settings Activity in the manifest, with an intent-filter for the morphe:// scheme.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
@@ -142,8 +141,7 @@ private val LOCALISED_VALUES_DIRS = listOf(
 @Suppress("unused")
 val morpheSettingsLabelPatch = resourcePatch(
     name = "Morphe settings screen (label)",
-    description = "Rinomina la string resource riusata per la voce \"Morphe\" nelle Impostazioni, " +
-        "in tutte le lingue.",
+    description = "Renames the reused string resource for the \"Morphe\" entry in Settings, across all languages.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

@@ -30,8 +30,7 @@ private const val PATCH_NAME = "Morphe settings entry"
 @Suppress("unused")
 val morpheSettingsEntryPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Aggiunge la voce \"Morphe\" alla lista delle Impostazioni account, per aprire " +
-        "la schermata dei toggle.",
+    description = "Adds the \"Morphe\" item to the Account Settings list to open the toggle screen.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

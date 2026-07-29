@@ -5,7 +5,8 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
-import com.android.tools.smali.dexlib2.Opcode
+import app.browzomje.patches.shared.PatchLog
+import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 
@@ -43,22 +44,14 @@ val setPinWallpaperPatch = bytecodePatch(
 
     execute {
         val method = OverflowMenuBuilderFingerprint.method
-        val returnVoidIndex = method.implementation!!.instructions.indexOfFirst {
-            it.opcode == Opcode.RETURN_VOID
-        }
-        val insertIndex = if (returnVoidIndex != -1) returnVoidIndex else method.implementation!!.instructions.size - 1
-
         val registerCount = method.implementation!!.registerCount
-        val parameterRegisterCount = method.parameters.size + 1
-        val p0RegisterIndex = registerCount - parameterRegisterCount
+        val p0RegisterIndex = registerCount - (method.parameters.size + 1)
 
-        val instructions = InlineSmaliCompiler.compile(
-            "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, $EXTENSION_CLASS->addWallpaperOption(Ljava/lang/Object;)V",
-            "",
-            registerCount,
-            true
+        val exits = method.addInstructionsBeforeEveryReturn(
+            "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
+                "$EXTENSION_CLASS->addWallpaperOption(Ljava/lang/Object;)V",
         )
-        method.addInstructions(insertIndex, instructions)
+        PatchLog.hooked("Set pin as wallpaper", method, "voce nel menu del pin, $exits uscite")
 
         PinCloseupBitmapFingerprint.methodOrNull?.let { pinMethod ->
             val pinRegisterCount = pinMethod.implementation!!.registerCount
@@ -73,6 +66,11 @@ val setPinWallpaperPatch = bytecodePatch(
                 true
             )
             pinMethod.addInstructions(0, pinInstructions)
-        }
+            PatchLog.hooked("Set pin as wallpaper", pinMethod, "cattura della bitmap del pin")
+        } ?: PatchLog.warn(
+            "Set pin as wallpaper",
+            "punto di cattura della bitmap non trovato: lo sfondo verrà riscaricato dalla rete " +
+                "invece di riusare l'immagine già in memoria.",
+        )
     }
 }

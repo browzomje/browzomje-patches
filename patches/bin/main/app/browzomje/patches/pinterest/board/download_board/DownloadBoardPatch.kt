@@ -26,7 +26,9 @@ private const val PATCH_NAME = "Download board"
 @Suppress("unused")
 val downloadBoardPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Adds an option to the board's \"…\" menu to bulk download images and videos from already loaded pins. Streaming-only videos are reported and skipped.",
+    description = "Aggiunge una voce al menu \"…\" della bacheca per scaricare in blocco le " +
+        "immagini e i video dei pin già caricati. I video disponibili solo in streaming vengono " +
+        "segnalati e saltati.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
