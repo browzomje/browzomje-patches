@@ -1,3 +1,9 @@
+## [1.4.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.4.0-dev.2...v1.4.0-dev.3) (2026-07-29)
+
+### ✨ New Features
+
+* **pinterest:** translate patcher log and feedback messages to English ([1893e58](https://github.com/browzomje/browzomje-patches/commit/1893e582d3ed23fca3a429e8c22c02e1ac29a7a3))
+
 ## [1.4.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-07-29)
 
 ### ✨ New Features
