@@ -1,3 +1,9 @@
+## [1.4.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-07-29)
+
+### ✨ New Features
+
+* **pinterest:** translate patch descriptions to English ([4a42bce](https://github.com/browzomje/browzomje-patches/commit/4a42bceff0a352817b7332ae3f8498b4353d3f1d))
+
 ## [1.4.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.3.2...v1.4.0-dev.1) (2026-07-29)
 
 ### ✨ New Features
