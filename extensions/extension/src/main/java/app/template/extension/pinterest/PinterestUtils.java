@@ -32,11 +32,16 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 public final class PinterestUtils {
@@ -84,41 +89,84 @@ public final class PinterestUtils {
 
     // Delegates for video download
     public static void setCurrentVideoTracks(String uid, java.util.Map<?, ?> videoList) {
-        VideoDownloadHandler.setCurrentVideoTracks(uid, videoList);
+        MorpheLog.hookFired(MorpheLog.VIDEO, "tracce video per uid=" + uid
+                + " (" + (videoList == null ? 0 : videoList.size()) + " formati)");
+        try {
+            VideoDownloadHandler.setCurrentVideoTracks(uid, videoList);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.VIDEO, "salvataggio delle tracce video fallito", t);
+        }
     }
 
     public static void setCurrentVideoPin(Object pin) {
         try {
             VideoDownloadHandler.setCurrentVideoPin(pin);
         } catch (Throwable t) {
-            Log.e(TAG, "Errore durante setCurrentVideoPin", t);
+            MorpheLog.e(MorpheLog.VIDEO, "salvataggio del pin video fallito", t);
         }
     }
 
     public static void addDownloadVideoOption(final Object menuContainer) {
+        MorpheLog.hookFired(MorpheLog.VIDEO,
+                "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
         try {
             VideoDownloadHandler.addDownloadVideoOption(menuContainer);
         } catch (Throwable t) {
-            Log.e(TAG, "Errore durante addDownloadVideoOption", t);
+            MorpheLog.e(MorpheLog.VIDEO, "aggiunta della voce \"scarica video\" fallita", t);
         }
     }
 
     // Delegate for wallpaper
     public static void addWallpaperOption(Object menuContainer) {
-        WallpaperHandler.addWallpaperOption(menuContainer);
+        MorpheLog.hookFired(MorpheLog.WALLPAPER,
+                "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
+        try {
+            WallpaperHandler.addWallpaperOption(menuContainer);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.WALLPAPER, "aggiunta della voce \"imposta sfondo\" fallita", t);
+        }
+    }
+
+    /**
+     * Aggiunge la voce di download al menu "…" **della bacheca** — quello in alto a destra, che
+     * apre il foglio "Opzioni".
+     *
+     * <p>Prima questa voce stava nel menu "…" di un singolo pin, che è il posto in cui nessuno
+     * la cerca; per di più compariva solo se quel menu dichiarava di provenire da una bacheca,
+     * e aprendo un pin spesso dichiara altro (`RELATED_PINS`), quindi in pratica non compariva
+     * quasi mai. Nel menu della bacheca il contesto è invece certo: se quel menu è aperto, sei
+     * dentro una bacheca.
+     *
+     * @param menu il modello del menu appena costruito dall'app.
+     * @return il menu da usare al posto dell'originale. <b>Mai null</b>: questo valore finisce
+     *     dritto nel {@code return} del metodo agganciato.
+     */
+    public static Object decorateBoardOptionsMenu(Object menu) {
+        MorpheLog.hookFired(MorpheLog.BOARD_MENU,
+                "menu " + (menu == null ? "null" : menu.getClass().getName()));
+
+        if (!MorpheSettingsStore.isBoardDownloadEnabled()) {
+            MorpheLog.d(MorpheLog.BOARD_MENU, "opzione disattivata nelle impostazioni Morphe");
+            return menu;
+        }
+        return BoardMenuDecorator.decorate(menu);
     }
 
     // Copy Link Logic
     public static void addCopyLinkOption(Object menuContainer) {
+        MorpheLog.hookFired(MorpheLog.COPY_LINK,
+                menuContainer == null ? "null" : menuContainer.getClass().getName());
+
         if (!(menuContainer instanceof ViewGroup)) {
-            Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
+            MorpheLog.e(MorpheLog.COPY_LINK, "atteso un ViewGroup, ricevuto "
+                    + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
             return;
         }
         final ViewGroup container = (ViewGroup) menuContainer;
         final Context context = container.getContext();
 
         try {
-            View row = null;
+            View row;
             String labelText = getString("copy_link_label");
             View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
@@ -129,16 +177,19 @@ public final class PinterestUtils {
             };
             try {
                 row = buildRowReflective(container, labelText, "LINK", onClickListener);
-                Log.d(TAG, "Riga copia link creata con successo tramite reflection");
+                MorpheLog.ok(MorpheLog.COPY_LINK, "riga aggiunta con lo stile nativo");
             } catch (Throwable t) {
-                Log.w(TAG, "Errore nella creazione copia link tramite reflection, uso il fallback", t);
-                row = buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_share, onClickListener);
+                MorpheLog.w(MorpheLog.COPY_LINK,
+                        "stile nativo non disponibile, uso la riga di fallback", t);
+                row = buildRowFallback(context, labelText, container,
+                        android.R.drawable.ic_menu_share, onClickListener);
+                MorpheLog.setStatus(MorpheLog.COPY_LINK, "ok — riga di fallback (stile diverso)");
             }
             if (row != null) {
                 container.addView(row);
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile aggiungere la voce copia link", t);
+            MorpheLog.e(MorpheLog.COPY_LINK, "impossibile aggiungere la voce copia link", t);
         }
     }
 
@@ -159,127 +210,568 @@ public final class PinterestUtils {
         }
     }
 
-    // Ads filtering logic
+    // ---------------------------------------------------------------- filtro pubblicità
+    //
+    // Issue #15 ("Hide ads fail"): la versione precedente rilevava i pin promossi chiamando
+    // getMethod("I5") sul modello. È un nome offuscato e su 14.24.0 quel getter NON legge
+    // is_promoted, quindi la rilevazione restituiva sempre false: la patch non rimuoveva nulla.
+    // Ora il riconoscimento passa da AdDetector, che legge le annotazioni Gson dei campi — il
+    // nome JSON ("is_promoted", "ad_destination_url", …) è protocollo di rete e non cambia mai.
+    //
+    // Secondo motivo per cui gli annunci "ricomparivano scorrendo": il filtro girava solo nel
+    // costruttore della risposta di rete. Le pagine successive vengono accodate alla lista già
+    // esistente del feed, quindi non passavano più da lì. Per questo la patch aggancia anche
+    // l'accessor della lista (filterSponsoredPinsFromList), che rifiltra a ogni lettura.
+
+    /** Profondità massima di discesa nei campi annidati di una risposta del feed. */
+    private static final int MAX_FILTER_DEPTH = 4;
+
+    /** Contatore globale, solo per diagnostica: quanti annunci sono stati rimossi in totale. */
+    private static volatile int totalAdsRemoved;
+
+    /**
+     * Hook sui costruttori delle risposte del feed (Feed, PagedResponse, ModelListWithBookmark):
+     * rimuove i contenuti sponsorizzati dalle liste che l'oggetto appena costruito contiene.
+     */
     public static void filterSponsoredPinsFromFeed(Object feedPage) {
         if (feedPage == null) {
             return;
         }
-        filterSponsoredPinsFromFeedRecursive(feedPage, 0);
+        MorpheLog.hookFired(MorpheLog.ADS, "risposta " + feedPage.getClass().getName());
+
+        if (MorpheSettingsStore.isAdsDisabled()) {
+            filterRecursive(feedPage, 0, new IdentityHashMap<Object, Boolean>());
+        } else {
+            MorpheLog.d(MorpheLog.ADS, "filtro disattivato nelle impostazioni Morphe");
+        }
+
+        // Si riusa lo stesso hook per memorizzare i pin delle bacheche: sono le uniche
+        // risposte del feed che portano l'URL boards/<id>/pins/. La cattura avviene DOPO il
+        // filtro, così i pin sponsorizzati non finiscono nel download in blocco.
+        if (MorpheSettingsStore.isBoardDownloadEnabled()) {
+            BoardDownloadHandler.captureFeed(feedPage);
+        }
     }
 
-    private static void filterSponsoredPinsFromFeedRecursive(Object obj, int depth) {
-        if (obj == null || depth > 6) {
+    /**
+     * Liste del feed già filtrate, per identità. Vedi {@link #filterSponsoredPinsFromList}.
+     *
+     * <p>Non si può usare una HashSet: {@code ArrayList.hashCode()} dipende dal contenuto,
+     * quindi cambierebbe a ogni pagina caricata. Si usano gli identity hash, e il tetto tiene
+     * la struttura piccola (le liste del feed vive contemporaneamente sono una manciata).
+     */
+    private static final java.util.Set<Integer> ALREADY_FILTERED_LISTS =
+            java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<Integer>());
+
+    private static final int MAX_TRACKED_LISTS = 64;
+
+    /**
+     * Hook sull'accessor della lista del feed: rete di sicurezza per i percorsi che non passano
+     * dai costruttori agganciati sopra.
+     *
+     * <p><b>Filtra solo la prima volta che vede una data lista.</b> Il motivo è la sicurezza:
+     * rimuovere elementi da una lista che un RecyclerView sta già mostrando cambia il numero di
+     * righe senza notificarlo all'adapter, e Android reagisce con un crash
+     * ("Inconsistency detected"). La prima lettura invece avviene quando il repository consegna
+     * il feed al presenter, prima che qualunque adapter lo osservi: lì la modifica è sicura,
+     * ed è lo stesso istante in cui interviene l'hook sul costruttore.
+     */
+    public static void filterSponsoredPinsFromList(Object list) {
+        if (!(list instanceof List)) {
             return;
         }
-        String className = obj.getClass().getName();
-        if (className.equals("com.pinterest.api.model.me") || className.endsWith(".Pin") || className.equals("com.pinterest.api.model.Pin")) {
+        MorpheLog.hookFired(MorpheLog.ADS, "lettura lista feed");
+        if (!MorpheSettingsStore.isAdsDisabled()) {
+            return;
+        }
+
+        Integer identity = System.identityHashCode(list);
+        synchronized (ALREADY_FILTERED_LISTS) {
+            if (!ALREADY_FILTERED_LISTS.add(identity)) {
+                return; // già filtrata: non la tocchiamo più
+            }
+            if (ALREADY_FILTERED_LISTS.size() > MAX_TRACKED_LISTS) {
+                java.util.Iterator<Integer> oldest = ALREADY_FILTERED_LISTS.iterator();
+                oldest.next();
+                oldest.remove();
+            }
+        }
+
+        removeAdsFrom((List<?>) list, 0);
+    }
+
+    private static void filterRecursive(Object obj, int depth, IdentityHashMap<Object, Boolean> seen) {
+        if (obj == null || depth > MAX_FILTER_DEPTH || seen.put(obj, Boolean.TRUE) != null) {
             return;
         }
 
         try {
             Class<?> clazz = obj.getClass();
             while (clazz != null) {
-                String cn = clazz.getName();
-                if (cn.startsWith("java.") || cn.startsWith("android.") || cn.startsWith("kotlin.") || cn.startsWith("androidx.")) {
+                String name = clazz.getName();
+                if (name.startsWith("java.") || name.startsWith("android.")
+                        || name.startsWith("kotlin.") || name.startsWith("androidx.")) {
                     break;
                 }
 
-                for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                    if (java.util.List.class.isAssignableFrom(f.getType())) {
-                        f.setAccessible(true);
-                        Object value = f.get(obj);
-                        if (value instanceof java.util.List) {
-                            java.util.List<?> items = (java.util.List<?>) value;
-                            if (items != null && !items.isEmpty()) {
-                                boolean isMainFeedList = className.equals("o12.e");
-                                if (isMainFeedList) {
-                                    int total = items.size();
-                                    int promoted = 0;
-                                    for (Object item : items) {
-                                        if (isPromotedPin(item)) {
-                                            promoted++;
-                                        }
-                                    }
-                                    if (promoted >= total) {
-                                        continue;
-                                    }
-                                }
-
-                                int removed = 0;
-                                java.util.Iterator<?> it = items.iterator();
-                                while (it.hasNext()) {
-                                    Object item = it.next();
-                                    if (isPromotedPin(item)) {
-                                        try {
-                                            it.remove();
-                                            removed++;
-                                        } catch (Throwable ignored) {
-                                        }
-                                    } else {
-                                        filterSponsoredPinsFromFeedRecursive(item, depth + 1);
-                                    }
-                                }
-                                if (removed > 0) {
-                                    Log.d(TAG, "Rimossi " + removed + " pin sponsorizzati (profondità " + depth + ")");
-                                }
-                            }
-                        }
+                for (Field field : clazz.getDeclaredFields()) {
+                    if (!List.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(obj);
+                    if (value instanceof List) {
+                        removeAdsFrom((List<?>) value, depth);
                     }
                 }
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Filtro ads ricorsivo fallito a profondità " + depth, t);
+            MorpheLog.e(MorpheLog.ADS, "filtro fallito a profondità " + depth, t);
         }
     }
 
-    private static boolean isPromotedPin(Object item) {
-        if (item == null) {
-            return false;
+    /**
+     * Rimuove gli annunci da una lista di modelli.
+     *
+     * <p>La rimozione avviene sotto {@code synchronized} sulla lista: l'accessor del feed può
+     * essere letto da thread diversi e senza questo si rischia una ConcurrentModificationException
+     * durante il rendering.
+     *
+     * <p>Se la pagina è composta <em>solo</em> da annunci non viene svuotata: una lista vuota fa
+     * credere all'app che il feed sia finito e blocca lo scroll infinito.
+     */
+    private static void removeAdsFrom(List<?> items, int depth) {
+        if (items == null || items.isEmpty()) {
+            return;
         }
-        Class<?> clazz = item.getClass();
-
         try {
-            java.lang.reflect.Method m = clazz.getMethod("I5");
-            Object result = m.invoke(item);
-            if (result instanceof Boolean) {
-                return (Boolean) result;
-            }
-        } catch (Throwable ignored) {}
-
-        try {
-            java.lang.reflect.Method m = clazz.getMethod("getIsPromoted");
-            Object result = m.invoke(item);
-            if (result instanceof Boolean) {
-                return (Boolean) result;
-            }
-        } catch (Throwable ignored) {}
-
-        try {
-            java.lang.reflect.Method m = clazz.getMethod("isPromoted");
-            Object result = m.invoke(item);
-            if (result instanceof Boolean) {
-                return (Boolean) result;
-            }
-        } catch (Throwable ignored) {}
-
-        while (clazz != null) {
-            for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                String name = f.getName();
-                if (name.equals("isPromoted") || name.equals("is_promoted")) {
-                    try {
-                        f.setAccessible(true);
-                        Object val = f.get(item);
-                        if (val instanceof Boolean) {
-                            return (Boolean) val;
+            synchronized (items) {
+                int total = items.size();
+                int adCount = 0;
+                for (Object item : items) {
+                    if (AdDetector.isAd(item)) {
+                        adCount++;
+                    }
+                }
+                if (adCount == 0) {
+                    // Nessun annuncio a questo livello: forse sono annidati (caroselli, "story").
+                    if (depth < MAX_FILTER_DEPTH) {
+                        for (Object item : items) {
+                            if (item != null && !AdDetector.isCandidateModel(item.getClass())) {
+                                filterRecursive(item, depth + 1, new IdentityHashMap<Object, Boolean>());
+                            }
                         }
-                    } catch (Throwable ignored) {}
+                    }
+                    return;
+                }
+                if (adCount >= total) {
+                    MorpheLog.w(MorpheLog.ADS, "pagina composta da soli annunci (" + total
+                            + "): non la svuoto, altrimenti l'app crede che il feed sia finito");
+                    return;
+                }
+
+                int removed = 0;
+                java.util.Iterator<?> iterator = items.iterator();
+                while (iterator.hasNext()) {
+                    if (AdDetector.isAd(iterator.next())) {
+                        try {
+                            iterator.remove();
+                            removed++;
+                        } catch (UnsupportedOperationException e) {
+                            MorpheLog.w(MorpheLog.ADS, "lista immutabile ("
+                                    + items.getClass().getName() + "): impossibile rimuovere");
+                            return;
+                        }
+                    }
+                }
+                if (removed > 0) {
+                    totalAdsRemoved += removed;
+                    MorpheLog.i(MorpheLog.ADS, "rimossi " + removed + "/" + total
+                            + " annunci (totale sessione: " + totalAdsRemoved + ")");
+                    MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved
+                            + " annunci rimossi finora");
+                }
+            }
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.ADS, "rimozione dalla lista fallita", t);
+        }
+    }
+
+    // ---------------------------------------------------------------- barra di navigazione
+
+    /**
+     * Nasconde un tasto della barra di navigazione, se attivato nelle impostazioni Morphe.
+     *
+     * <p>Chiamata al termine del metodo che costruisce la barra, con {@code this} e l'ordinale
+     * del tab. Il tasto viene cercato per <em>forma</em>: fra i campi lista della barra si
+     * prende quella i cui elementi espongono un metodo che restituisce l'enum dei tab e uno che
+     * restituisce la View. Nomi come {@code d42.p0.Q()} / {@code t42.l0.P()} cambiano a ogni
+     * versione, la forma no.
+     *
+     * <p>Si nasconde la View invece di rimuovere l'elemento dalla lista: gli indici restano
+     * validi e il resto del codice della barra continua a funzionare.
+     */
+    public static void hideNavBarTab(Object navBar, int tabOrdinal) {
+        String tabName = navTabName(tabOrdinal);
+        MorpheLog.hookFired(MorpheLog.NAVBAR, "tab " + tabName);
+
+        if (!MorpheSettingsStore.isNavTabHidden(tabOrdinal)) {
+            MorpheLog.d(MorpheLog.NAVBAR, "tab " + tabName + " non è da nascondere");
+            return;
+        }
+        if (!(navBar instanceof ViewGroup)) {
+            MorpheLog.e(MorpheLog.NAVBAR, "la barra non è un ViewGroup ma "
+                    + (navBar == null ? "null" : navBar.getClass().getName()));
+            return;
+        }
+
+        try {
+            Object tab = findNavTab(navBar, tabName);
+            if (tab == null) {
+                if (lastSeenNavTabs.isEmpty()) {
+                    // Nessun tab letto: la barra non è più fatta come ci aspettiamo.
+                    MorpheLog.e(MorpheLog.NAVBAR, "nessun tab leggibile nella barra "
+                            + navBar.getClass().getName() + " — il fingerprint punta al metodo "
+                            + "giusto ma la struttura interna è cambiata");
+                } else {
+                    // I tab si leggono, semplicemente questo non c'è: succede, la barra non è
+                    // uguale per tutti gli account. Non è un errore della patch.
+                    MorpheLog.w(MorpheLog.NAVBAR, "il tab " + tabName + " non è presente in questa "
+                            + "barra (ci sono: " + lastSeenNavTabs + "): niente da nascondere");
+                }
+                return;
+            }
+            View tabView = findViewAccessor(tab);
+            if (tabView == null) {
+                MorpheLog.e(MorpheLog.NAVBAR, "nessun accessor View sull'elemento tab "
+                        + tab.getClass().getName());
+                return;
+            }
+            MorpheViews.hidePersistently(tabView, MorpheLog.NAVBAR, "tasto " + tabName);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.NAVBAR, "impossibile nascondere il tab " + tabName, t);
+        }
+    }
+
+    private static String navTabName(int ordinal) {
+        switch (ordinal) {
+            case 0: return "HOME";
+            case 1: return "CREATE";
+            case 2: return "NOTIFICATIONS";
+            case 3: return "PROFILE";
+            case 4: return "SEARCH";
+            default: return "TAB_" + ordinal;
+        }
+    }
+
+    /**
+     * Nomi dei tab visti dall'ultima {@link #findNavTab} — serve solo a distinguere, quando un
+     * tab non si trova, fra "la barra non contiene quel tab" e "non siamo riusciti a leggere la
+     * barra". Il primo caso è normale (non tutti gli account hanno tutti i tab), il secondo è un
+     * problema della patch.
+     */
+    private static final java.util.List<String> lastSeenNavTabs = new java.util.ArrayList<>();
+
+    /** Cerca fra i campi lista della barra l'elemento il cui enum di tab si chiama {@code tabName}. */
+    private static Object findNavTab(Object navBar, String tabName) throws IllegalAccessException {
+        lastSeenNavTabs.clear();
+        Class<?> clazz = navBar.getClass();
+        while (clazz != null && !clazz.getName().startsWith("android.")) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (!Collection.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+                field.setAccessible(true);
+                Object value = field.get(navBar);
+                if (!(value instanceof Collection)) {
+                    continue;
+                }
+                for (Object item : (Collection<?>) value) {
+                    if (item == null) {
+                        continue;
+                    }
+                    String name = enumNameOf(item);
+                    if (name == null) {
+                        break; // questa lista non contiene tab: passa al campo successivo
+                    }
+                    lastSeenNavTabs.add(name);
+                    MorpheLog.d(MorpheLog.NAVBAR, "tab presente: " + name);
+                    if (tabName.equals(name)) {
+                        return item;
+                    }
                 }
             }
             clazz = clazz.getSuperclass();
         }
+        return null;
+    }
 
+    /**
+     * @return il nome della costante enum restituita dall'unico metodo senza argomenti che
+     *     restituisce un enum contenente le costanti dei tab; null se l'oggetto non è un tab.
+     */
+    private static String enumNameOf(Object tab) {
+        for (Method method : tab.getClass().getMethods()) {
+            if (method.getParameterTypes().length != 0 || !method.getReturnType().isEnum()) {
+                continue;
+            }
+            Object[] constants = method.getReturnType().getEnumConstants();
+            if (constants == null || constants.length < 5) {
+                continue;
+            }
+            // L'enum giusto è quello dei tab: contiene HOME e SEARCH.
+            boolean hasHome = false;
+            boolean hasSearch = false;
+            for (Object constant : constants) {
+                String name = ((Enum<?>) constant).name();
+                hasHome |= "HOME".equals(name);
+                hasSearch |= "SEARCH".equals(name);
+            }
+            if (!hasHome || !hasSearch) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                Object value = method.invoke(tab);
+                if (value instanceof Enum) {
+                    return ((Enum<?>) value).name();
+                }
+            } catch (Throwable ignored) {
+                // proviamo il metodo successivo
+            }
+        }
+        return null;
+    }
+
+    /** @return la View restituita dall'unico metodo senza argomenti che ne restituisce una. */
+    private static View findViewAccessor(Object tab) {
+        for (Method method : tab.getClass().getMethods()) {
+            if (method.getParameterTypes().length != 0
+                    || !View.class.isAssignableFrom(method.getReturnType())) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                Object value = method.invoke(tab);
+                if (value instanceof View) {
+                    return (View) value;
+                }
+            } catch (Throwable ignored) {
+                // proviamo il metodo successivo
+            }
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------- cronologia ricerche
+
+    /**
+     * Nasconde una sezione "Ricerche recenti" (issue #11).
+     *
+     * <p>Agganciata sia al costruttore della lista nella schermata di ricerca sia a quello del
+     * carosello sotto la barra di ricerca. Pinterest non offre un modo di disattivare il
+     * salvataggio lato server: qui si impedisce che vengano mostrate nell'app.
+     */
+    /**
+     * Toglie gli elementi di cronologia dalla lista dei suggerimenti di ricerca, prima che
+     * l'adapter li trasformi in righe.
+     *
+     * <p>È l'aggancio principale di "nascondi cronologia ricerche". Nasconderle come view non
+     * bastava: su 14.28 la sezione non è un'unica view ma un'intestazione più N celle di testo
+     * della stessa classe usata anche da "di tendenza", quindi non isolabile. Togliendo gli
+     * elementi, l'intestazione e le righe non vengono proprio costruite.
+     *
+     * <p>Si filtra per <b>tipo di elemento</b>, non per posizione: ogni suggerimento porta un
+     * enum che dice cos'è, e le costanti della cronologia si chiamano {@code RECENT_HISTORY_*}.
+     * I nomi delle costanti di enum sopravvivono all'offuscamento. Tutto il resto della lista —
+     * ricerche di tendenza, completamento automatico, suggerimenti — passa intatto.
+     *
+     * @return la lista da usare al posto dell'originale. <b>Mai null.</b>
+     */
+    public static List<?> filterRecentSearches(List<?> items) {
+        MorpheLog.hookFired(MorpheLog.SEARCH_HISTORY,
+                "elementi suggerimenti: " + (items == null ? "null" : String.valueOf(items.size())));
+
+        if (items == null || items.isEmpty()) {
+            return items;
+        }
+        if (!MorpheSettingsStore.isSearchHistoryHidden()) {
+            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "opzione disattivata nelle impostazioni Morphe");
+            return items;
+        }
+
+        try {
+            java.util.ArrayList<Object> kept = new java.util.ArrayList<>(items.size());
+            int removed = 0;
+            for (Object item : items) {
+                if (isRecentHistoryItem(item)) {
+                    removed++;
+                } else {
+                    kept.add(item);
+                }
+            }
+            if (removed == 0) {
+                MorpheLog.d(MorpheLog.SEARCH_HISTORY, "nessun elemento di cronologia in questa lista");
+                return items;
+            }
+            MorpheLog.ok(MorpheLog.SEARCH_HISTORY, "rimossi " + removed + " elementi di cronologia su "
+                    + items.size());
+            return kept;
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "filtro della cronologia fallito", t);
+            return items;
+        }
+    }
+
+    /**
+     * @return true se l'elemento dichiara, tramite un proprio campo enum, di essere una voce di
+     *     cronologia ({@code RECENT_HISTORY_PIN}, {@code RECENT_HISTORY_PIN_HEADER}, …).
+     */
+    private static boolean isRecentHistoryItem(Object item) throws IllegalAccessException {
+        if (item == null) {
+            return false;
+        }
+        for (Field field : item.getClass().getDeclaredFields()) {
+            if (!field.getType().isEnum()) {
+                continue;
+            }
+            field.setAccessible(true);
+            Object value = field.get(item);
+            if (value instanceof Enum && ((Enum<?>) value).name().startsWith("RECENT_HISTORY")) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    public static void hideRecentSearches(Object view) {
+        MorpheLog.hookFired(MorpheLog.SEARCH_HISTORY,
+                view == null ? "null" : view.getClass().getName());
+
+        if (!MorpheSettingsStore.isSearchHistoryHidden()) {
+            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "opzione disattivata nelle impostazioni Morphe");
+            return;
+        }
+        if (!(view instanceof View)) {
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "atteso un View, ricevuto "
+                    + (view == null ? "null" : view.getClass().getName()));
+            return;
+        }
+        MorpheViews.hidePersistently((View) view, MorpheLog.SEARCH_HISTORY, "ricerche recenti");
+    }
+
+    // ---------------------------------------------------------------- voce Impostazioni
+
+    /**
+     * Accoda la voce "Morphe" alla lista delle Impostazioni account.
+     *
+     * <p>La classe della riga da costruire ha un nome offuscato ({@code i1} su 14.24,
+     * {@code j1} su 14.28): non è hardcodata qui, la risolve la patch leggendo il dex e la
+     * deposita in {@link MorpheRuntimeNames}.
+     *
+     * @param list la {@code java.util.List} mutabile delle voci, presa dal bytecode.
+     */
+    public static void appendMorpheSettingsEntry(Object list) {
+        String rowClassName = MorpheRuntimeNames.settingsRowClass;
+        if (rowClassName == null || rowClassName.isEmpty()) {
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "la patch non ha risolto la classe della riga "
+                    + "(" + MorpheRuntimeNames.describe() + "): voce Morphe non aggiunta. "
+                    + "Apri le impostazioni con: adb shell am start -a android.intent.action.VIEW "
+                    + "-d \"morphe://settings\"");
+            return;
+        }
+        appendMorpheSettingsEntry(list, rowClassName, MorpheRuntimeNames.SETTINGS_URI);
+    }
+
+    static void appendMorpheSettingsEntry(Object list, String rowClassName, String uri) {
+        MorpheLog.hookFired(MorpheLog.SETTINGS_ENTRY, "riga=" + rowClassName + " uri=" + uri);
+
+        if (!(list instanceof List)) {
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "atteso un List, ricevuto "
+                    + (list == null ? "null" : list.getClass().getName()));
+            return;
+        }
+        try {
+            Class<?> rowClass = Class.forName(rowClassName);
+            Constructor<?> ctor = rowClass.getConstructor(String.class);
+            ctor.setAccessible(true);
+            Object row = ctor.newInstance(uri);
+
+            @SuppressWarnings("unchecked")
+            List<Object> entries = (List<Object>) list;
+            entries.add(row);
+            MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "voce Morphe aggiunta alle Impostazioni");
+        } catch (ClassNotFoundException e) {
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "classe della riga " + rowClassName
+                    + " assente: la patch l'ha risolta su un dex diverso da quello installato", e);
+        } catch (UnsupportedOperationException e) {
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "lista delle Impostazioni immutabile", e);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "aggiunta della voce Morphe fallita", t);
+        }
+    }
+
+    // ---------------------------------------------------------------- dialog conferma email
+
+    /**
+     * Chiude il modale "conferma la tua email" (e i suoi fratelli: collega Google, ecc.).
+     *
+     * <p>Agganciata a {@code onViewCreated} del Fragment che ospita il flusso. Non si chiama
+     * più il metodo di chiusura interno di Pinterest (nome offuscato, cambiava a ogni versione):
+     * si usano solo API AndroidX, che non vengono mai rinominate.
+     *
+     * @param fragment il Fragment, cioè {@code this} del metodo agganciato.
+     * @param view la View appena creata, nascosta subito così il modale non lampeggia mentre la
+     *     transazione di rimozione viene eseguita.
+     */
+    public static void suppressRecoveryFlow(Object fragment, Object view) {
+        MorpheLog.hookFired(MorpheLog.EMAIL_DIALOG,
+                fragment == null ? "null" : fragment.getClass().getName());
+
+        if (!MorpheSettingsStore.isEmailConfirmDialogDisabled()) {
+            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "opzione disattivata nelle impostazioni Morphe");
+            return;
+        }
+
+        if (view instanceof View) {
+            ((View) view).setVisibility(View.GONE);
+        }
+        if (fragment == null) {
+            return;
+        }
+
+        try {
+            // 1) DialogFragment: dismissAllowingStateLoss() è la via pulita.
+            Class<?> dialogFragment = Class.forName("androidx.fragment.app.DialogFragment");
+            if (dialogFragment.isInstance(fragment)) {
+                Method dismiss = dialogFragment.getMethod("dismissAllowingStateLoss");
+                dismiss.invoke(fragment);
+                MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "modale chiuso (DialogFragment)");
+                return;
+            }
+        } catch (Throwable t) {
+            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "non è un DialogFragment: " + t);
+        }
+
+        try {
+            // 2) Fragment normale: lo si rimuove dal suo FragmentManager.
+            Class<?> fragmentClass = Class.forName("androidx.fragment.app.Fragment");
+            Method getManager = fragmentClass.getMethod("getParentFragmentManager");
+            Object manager = getManager.invoke(fragment);
+
+            Class<?> managerClass = Class.forName("androidx.fragment.app.FragmentManager");
+            Object transaction = managerClass.getMethod("beginTransaction").invoke(manager);
+
+            Class<?> transactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
+            transactionClass.getMethod("remove", fragmentClass).invoke(transaction, fragment);
+            transactionClass.getMethod("commitAllowingStateLoss").invoke(transaction);
+
+            MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "modale rimosso (FragmentTransaction)");
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.EMAIL_DIALOG, "rimozione del modale fallita; resta comunque "
+                    + "invisibile perché la sua View è stata messa a GONE", t);
+        }
     }
 
 
@@ -313,51 +805,13 @@ public final class PinterestUtils {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Object eventManager = null;
-                    try {
-                        Class<?> qClass = Class.forName("fb0.q");
-                        java.lang.reflect.Field aField = qClass.getField("a");
-                        eventManager = aField.get(null);
-                    } catch (Throwable e) {
-                        Class<?> tClass = Class.forName("fb0.t");
-                        java.lang.reflect.Field aField = tClass.getField("a");
-                        eventManager = aField.get(null);
-                    }
-                    
-                    Class<?> fClass;
-                    try {
-                        fClass = Class.forName("jr2.e");
-                    } catch (ClassNotFoundException e) {
-                        fClass = Class.forName("ir2.f");
-                    }
-                    java.lang.reflect.Constructor<?> fCtor = fClass.getConstructor(String.class, int.class);
-                    Object toastObj = fCtor.newInstance(message, 7000);
-                    
-                    Class<?> hClass;
-                    try {
-                        hClass = Class.forName("jr2.g");
-                    } catch (ClassNotFoundException e) {
-                        hClass = Class.forName("ir2.h");
-                    }
-                    
-                    Class<?> oClass;
-                    try {
-                        oClass = Class.forName("kw1.p");
-                    } catch (ClassNotFoundException e) {
-                        oClass = Class.forName("ww1.o");
-                    }
-                    
-                    java.lang.reflect.Constructor<?> hCtor = hClass.getConstructor(oClass);
-                    Object eventObj = hCtor.newInstance(toastObj);
-                    
-                    java.lang.reflect.Method dMethod = eventManager.getClass().getMethod("d", Object.class);
-                    dMethod.invoke(eventManager, eventObj);
-                    Log.d(TAG, "Native toast shown: " + message);
-                } catch (Throwable t) {
-                    Log.e(TAG, "Errore nella visualizzazione del native toast, uso fallback", t);
-                    Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                if (PinterestReflection.showGestaltToast(message, 7000)) {
+                    MorpheLog.d(MorpheLog.REFLECTION, "toast nativo mostrato: " + message);
+                    return;
                 }
+                MorpheLog.w(MorpheLog.REFLECTION,
+                        "toast nativo non disponibile, uso quello di sistema: " + message);
+                Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -366,70 +820,27 @@ public final class PinterestUtils {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Object eventManager = null;
-                    try {
-                        Class<?> qClass = Class.forName("fb0.q");
-                        java.lang.reflect.Field aField = qClass.getField("a");
-                        eventManager = aField.get(null);
-                    } catch (Throwable e) {
-                        Class<?> tClass = Class.forName("fb0.t");
-                        java.lang.reflect.Field aField = tClass.getField("a");
-                        eventManager = aField.get(null);
-                    }
-                    
-                    Class<?> uClass;
-                    try {
-                        uClass = Class.forName("bi0.p");
-                    } catch (ClassNotFoundException e) {
-                        uClass = Class.forName("ai0.u");
-                    }
-                    Object dismissEventObj = uClass.newInstance();
-                    
-                    java.lang.reflect.Method dMethod = eventManager.getClass().getMethod("d", Object.class);
-                    dMethod.invoke(eventManager, dismissEventObj);
-                    Log.d(TAG, "Menu dismissed via EventManager.");
-                } catch (Throwable t) {
-                    Log.e(TAG, "Errore nella dismissione del menu tramite EventManager", t);
+                if (PinterestReflection.dismissContextualMenu()) {
+                    MorpheLog.d(MorpheLog.REFLECTION, "menu contestuale chiuso");
                 }
             }
         });
     }
 
-    static View buildRowReflective(ViewGroup container, String labelText, String iconEnumName, View.OnClickListener onClickListener) throws Exception {
-        Method dMethod;
-        try {
-            dMethod = container.getClass().getMethod("y");
-        } catch (NoSuchMethodException e) {
-            dMethod = container.getClass().getMethod("D");
+    /**
+     * Costruisce una riga di menu con lo stile nativo di Pinterest.
+     *
+     * @throws Exception se la costruzione nativa non è possibile: il chiamante ripiega su
+     *     {@link #buildRowFallback}.
+     */
+    static View buildRowReflective(ViewGroup container, String labelText, String iconEnumName,
+                                   View.OnClickListener onClickListener) throws Exception {
+        View row = PinterestReflection.buildNativeMenuRow(
+                container, labelText, iconEnumName, onClickListener);
+        if (row == null) {
+            throw new IllegalStateException(
+                    "costruzione nativa della riga non riuscita su " + container.getClass().getName());
         }
-        Object viewCreator = dMethod.invoke(container);
-
-        Class<?> xClass;
-        try {
-            xClass = Class.forName("zt1.w");
-        } catch (ClassNotFoundException e) {
-            xClass = Class.forName("ku1.x");
-        }
-        Object imageIcon = Enum.valueOf((Class<Enum>) xClass, iconEnumName);
-
-        boolean z9 = false;
-        try {
-            Field yField = container.getClass().getField("y");
-            z9 = yField.getBoolean(container);
-        } catch (NoSuchFieldException e) {
-            try {
-                Field bField = container.getClass().getField("B");
-                z9 = bField.getBoolean(container);
-            } catch (Throwable t) {
-                Log.w(TAG, "Impossibile leggere il campo boolean per la riga, uso false", t);
-            }
-        }
-
-        Method aMethod = viewCreator.getClass().getMethod("a", CharSequence.class, String.class, xClass, boolean.class);
-        RelativeLayout row = (RelativeLayout) aMethod.invoke(viewCreator, labelText, null, imageIcon, z9);
-
-        row.setOnClickListener(onClickListener);
         return row;
     }
 
@@ -555,7 +966,8 @@ public final class PinterestUtils {
 
     // Localization maps
     static String getString(String key) {
-        String lang = Locale.getDefault().getLanguage();
+        // La lingua dell'app, non quella di sistema: vedi MorpheStrings.language().
+        String lang = MorpheStrings.language();
         boolean isIt = "it".equals(lang);
         boolean isEs = "es".equals(lang);
         boolean isFr = "fr".equals(lang);
@@ -649,6 +1061,97 @@ public final class PinterestUtils {
             if (isTr) return "Video indirme başladı…";
             if (isAr) return "بدأ تنزيل الفيديو…";
             return "Video download started…";
+        }
+        if ("board_download_label".equals(key)) {
+            if (isIt) return "Scarica tutta la bacheca";
+            if (isEs) return "Descargar todo el tablero";
+            if (isFr) return "Télécharger tout le tableau";
+            if (isDe) return "Ganze Pinnwand herunterladen";
+            if (isPt) return "Baixar a pasta inteira";
+            if (isRu) return "Скачать всю доску";
+            if (isJa) return "ボード全体をダウンロード";
+            if (isZh) return "下载整个画板";
+            if (isKo) return "보드 전체 다운로드";
+            if (isPl) return "Pobierz całą tablicę";
+            if (isNl) return "Hele bord downloaden";
+            if (isTr) return "Tüm panoyu indir";
+            if (isAr) return "تنزيل اللوحة بالكامل";
+            return "Download whole board";
+        }
+        if ("board_no_pins".equals(key)) {
+            if (isIt) return "Nessun pin in memoria: scorri la bacheca e riprova";
+            if (isEs) return "No hay pines en memoria: desplázate por el tablero e inténtalo de nuevo";
+            if (isFr) return "Aucun pin en mémoire : faites défiler le tableau et réessayez";
+            if (isDe) return "Keine Pins im Speicher: scrolle die Pinnwand und versuche es erneut";
+            if (isPt) return "Nenhum pin na memória: role a pasta e tente de novo";
+            if (isRu) return "Нет пинов в памяти: прокрутите доску и повторите";
+            if (isJa) return "メモリにピンがありません。ボードをスクロールしてからもう一度お試しください";
+            if (isZh) return "内存中没有 Pin：请先滚动画板后重试";
+            if (isKo) return "메모리에 핀이 없습니다. 보드를 스크롤한 후 다시 시도하세요";
+            if (isNl) return "Geen pins in geheugen: scroll door het bord en probeer opnieuw";
+            if (isTr) return "Bellekte pin yok: panoyu kaydırıp tekrar deneyin";
+            if (isAr) return "لا توجد دبابيس في الذاكرة: مرّر اللوحة وأعد المحاولة";
+            return "No pins in memory: scroll the board and try again";
+        }
+        if ("board_download_started".equals(key)) {
+            if (isIt) return "Download di %d pin avviato…";
+            if (isEs) return "Descarga de %d pines iniciada…";
+            if (isFr) return "Téléchargement de %d pins lancé…";
+            if (isDe) return "Download von %d Pins gestartet…";
+            if (isPt) return "Download de %d pins iniciado…";
+            if (isRu) return "Загрузка %d пинов начата…";
+            if (isJa) return "%d 件のピンのダウンロードを開始しました…";
+            if (isZh) return "已开始下载 %d 个 Pin…";
+            if (isKo) return "%d개 핀 다운로드를 시작했습니다…";
+            if (isNl) return "Downloaden van %d pins gestart…";
+            if (isTr) return "%d pin indirme başladı…";
+            if (isAr) return "بدأ تنزيل %d دبوس…";
+            return "Started downloading %d pins…";
+        }
+        if ("board_download_done".equals(key)) {
+            if (isIt) return "Scaricate %1 immagini e %2 video.";
+            if (isEs) return "Descargadas %1 imágenes y %2 vídeos.";
+            if (isFr) return "%1 images et %2 vidéos téléchargées.";
+            if (isDe) return "%1 Bilder und %2 Videos heruntergeladen.";
+            if (isPt) return "Baixadas %1 imagens e %2 vídeos.";
+            if (isRu) return "Скачано %1 изображений и %2 видео.";
+            if (isJa) return "画像 %1 件、動画 %2 件をダウンロードしました。";
+            if (isZh) return "已下载 %1 张图片和 %2 个视频。";
+            if (isKo) return "이미지 %1개, 동영상 %2개를 다운로드했습니다.";
+            if (isNl) return "%1 afbeeldingen en %2 video's gedownload.";
+            if (isTr) return "%1 resim ve %2 video indirildi.";
+            if (isAr) return "تم تنزيل %1 صورة و%2 فيديو.";
+            return "Downloaded %1 images and %2 videos.";
+        }
+        if ("board_download_skipped".equals(key)) {
+            if (isIt) return "%d video saltati: richiedono un'app esterna (yt-dlp).";
+            if (isEs) return "%d vídeos omitidos: requieren una app externa (yt-dlp).";
+            if (isFr) return "%d vidéos ignorées : elles nécessitent une app externe (yt-dlp).";
+            if (isDe) return "%d Videos übersprungen: benötigen eine externe App (yt-dlp).";
+            if (isPt) return "%d vídeos ignorados: exigem um app externo (yt-dlp).";
+            if (isRu) return "%d видео пропущено: нужно внешнее приложение (yt-dlp).";
+            if (isJa) return "%d 件の動画をスキップしました: 外部アプリ (yt-dlp) が必要です。";
+            if (isZh) return "已跳过 %d 个视频：需要外部应用 (yt-dlp)。";
+            if (isKo) return "동영상 %d개 건너뜀: 외부 앱(yt-dlp)이 필요합니다.";
+            if (isNl) return "%d video's overgeslagen: vereisen een externe app (yt-dlp).";
+            if (isTr) return "%d video atlandı: harici uygulama (yt-dlp) gerekiyor.";
+            if (isAr) return "تم تخطي %d فيديو: تتطلب تطبيقًا خارجيًا (yt-dlp).";
+            return "%d videos skipped: they need an external app (yt-dlp).";
+        }
+        if ("board_download_failed".equals(key)) {
+            if (isIt) return "%d falliti.";
+            if (isEs) return "%d fallidos.";
+            if (isFr) return "%d échecs.";
+            if (isDe) return "%d fehlgeschlagen.";
+            if (isPt) return "%d falharam.";
+            if (isRu) return "%d не удалось.";
+            if (isJa) return "%d 件失敗しました。";
+            if (isZh) return "%d 个失败。";
+            if (isKo) return "%d개 실패.";
+            if (isNl) return "%d mislukt.";
+            if (isTr) return "%d başarısız.";
+            if (isAr) return "%d فشل.";
+            return "%d failed.";
         }
         if ("no_video".equals(key)) {
             if (isIt) return "Nessun video disponibile per questo pin";
@@ -964,7 +1467,8 @@ public final class PinterestUtils {
     }
 
     static String getLocalizedError(String key) {
-        String lang = Locale.getDefault().getLanguage();
+        // La lingua dell'app, non quella di sistema: vedi MorpheStrings.language().
+        String lang = MorpheStrings.language();
         boolean isIt = "it".equals(lang);
         boolean isEs = "es".equals(lang);
         boolean isFr = "fr".equals(lang);

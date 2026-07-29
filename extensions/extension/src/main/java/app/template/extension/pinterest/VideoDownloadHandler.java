@@ -80,7 +80,10 @@ class VideoDownloadHandler {
             return;
         }
         try {
-            String uid = (String) PinterestUtils.invokeNoArg(pin, "d");
+            // L'id del pin si legge dal campo con nome JSON "id": il getter è offuscato e
+            // cambia versione per versione (era `d()` su 14.23), il nome sul filo no.
+            Object idValue = AdDetector.fieldValueBySerializedName(pin, "id");
+            String uid = idValue instanceof String ? (String) idValue : null;
             if (uid == null || uid.isEmpty()) {
                 uid = (String) PinterestUtils.invokeNoArg(pin, "getSnapshotUid");
             }
@@ -88,8 +91,11 @@ class VideoDownloadHandler {
                 uid = (String) PinterestUtils.invokeNoArg(pin, "getProfileSnapshotUid");
             }
             if (uid == null || uid.isEmpty()) {
+                MorpheLog.w(MorpheLog.VIDEO, "id del pin non ricavabile da "
+                        + pin.getClass().getName());
                 return;
             }
+            MorpheLog.d(MorpheLog.VIDEO, "pin video corrente: " + uid);
             final String pinPageUrl = "https://www.pinterest.com/pin/" + uid + "/";
             PIN_PAGE_URL_BY_PIN.put(uid, pinPageUrl);
 
@@ -101,13 +107,12 @@ class VideoDownloadHandler {
                 IMAGE_HASH_TO_PIN_URL.put(coverHash, pinPageUrl);
             }
 
-            Object videos = PinterestUtils.invokeNoArg(pin, "v7");
-            Object listObj = videos != null ? PinterestUtils.invokeNoArg(videos, "g") : null;
-            if (listObj instanceof Map) {
-                setCurrentVideoTracks(uid, (Map<?, ?>) listObj);
+            Map<?, ?> tracks = PinterestReflection.findVideoTracks(pin);
+            if (tracks != null) {
+                setCurrentVideoTracks(uid, tracks);
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Estrazione URL dal Pin fallita", t);
+            MorpheLog.e(MorpheLog.VIDEO, "estrazione dei formati video dal pin fallita", t);
         }
     }
 
@@ -144,6 +149,12 @@ class VideoDownloadHandler {
             final View row = rowHolder[0];
             row.setEnabled(false);
             row.setAlpha(0.5f);
+
+            // La riga nasce NASCOSTA e viene mostrata solo se la risoluzione trova davvero un
+            // video. Prima veniva aggiunta subito e, per i pin immagine, restava lì con
+            // l'etichetta "Scarica con app esterna (yt-dlp)": una voce inutile e fuorviante su
+            // un post che video non è. Ora, se non c'è nulla da scaricare, viene rimossa.
+            row.setVisibility(View.GONE);
             container.addView(row);
 
             final ImageView icon = PinterestUtils.findImageView(row);
@@ -180,12 +191,12 @@ class VideoDownloadHandler {
                                 }
                             }
 
-                            // Il tasto resta SEMPRE visibile e azionabile.
                             row.setEnabled(true);
                             row.setAlpha(1.0f);
 
                             if (resResult.videoUrl != null && !resResult.videoUrl.isEmpty()) {
                                 // ── MP4 diretto: download via DownloadManager ─────
+                                row.setVisibility(View.VISIBLE);
                                 row.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -193,11 +204,14 @@ class VideoDownloadHandler {
                                         downloadVideo(v.getContext(), resResult.videoUrl);
                                     }
                                 });
+                                MorpheLog.ok(MorpheLog.VIDEO, "MP4 diretto disponibile");
 
                             } else if (resResult.streamingUrl != null
                                     && !resResult.streamingUrl.isEmpty()) {
-                                // ── Tutto il resto (HLS/DASH o estrazione fallita):
-                                //    delega all'app esterna yt-dlp ──────────────────
+                                // ── È un video, ma in formato streaming (HLS/DASH): non si può
+                                //    scaricare con DownloadManager, si delega a yt-dlp. La voce
+                                //    ha senso perché un video c'è davvero.
+                                row.setVisibility(View.VISIBLE);
                                 TextView tvLabel = PinterestUtils.findTextView(row);
                                 if (tvLabel != null) {
                                     tvLabel.setText(PinterestUtils.getString("download_video_external_label"));
@@ -209,24 +223,18 @@ class VideoDownloadHandler {
                                         shareLinkToDownloader(v.getContext(), resResult.streamingUrl);
                                     }
                                 });
+                                MorpheLog.ok(MorpheLog.VIDEO, "solo streaming: voce yt-dlp");
 
                             } else {
-                                // ── Nessun URL e nessun UID: tasto comunque presente.
-                                //    Al click mostra la diagnostica, senza sparire. ──
-                                TextView tvLabel = PinterestUtils.findTextView(row);
-                                if (tvLabel != null) {
-                                    tvLabel.setText(PinterestUtils.getString("download_video_external_label"));
+                                // ── Nessun video: il pin è un'immagine (o l'estrazione è
+                                //    fallita). La voce viene TOLTA dal menu invece di restare
+                                //    lì a proporre un download impossibile.
+                                ViewGroup rowParent = (ViewGroup) row.getParent();
+                                if (rowParent != null) {
+                                    rowParent.removeView(row);
                                 }
-                                final String diag = resResult.errorMsg;
-                                row.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        PinterestUtils.dismissMenu();
-                                        if (diag != null && !diag.isEmpty()) {
-                                            PinterestUtils.showNativeToast(v.getContext(), diag);
-                                        }
-                                    }
-                                });
+                                MorpheLog.d(MorpheLog.VIDEO, "nessun video su questo pin: voce "
+                                        + "rimossa dal menu (" + resResult.errorMsg + ")");
                             }
                         }
                     });
@@ -569,18 +577,15 @@ class VideoDownloadHandler {
             String mp4 = pickBestMp4Url((Map<?, ?>) obj);
             if (mp4 != null) return mp4;
         }
-        Object viaG = PinterestUtils.invokeNoArg(obj, "g");
-        if (viaG instanceof Map) {
-            String mp4 = pickBestMp4Url((Map<?, ?>) viaG);
+        Map<?, ?> viaG = PinterestReflection.findMapAccessor(obj);
+        if (viaG != null) {
+            String mp4 = pickBestMp4Url(viaG);
             if (mp4 != null) return mp4;
         }
-        Object videos = PinterestUtils.invokeNoArg(obj, "v7");
-        if (videos != null) {
-            Object listObj = PinterestUtils.invokeNoArg(videos, "g");
-            if (listObj instanceof Map) {
-                String mp4 = pickBestMp4Url((Map<?, ?>) listObj);
-                if (mp4 != null) return mp4;
-            }
+        Map<?, ?> tracks = PinterestReflection.findVideoTracks(obj);
+        if (tracks != null) {
+            String mp4 = pickBestMp4Url(tracks);
+            if (mp4 != null) return mp4;
         }
         Class<?> c = cls;
         while (c != null && c != Object.class) {
@@ -613,6 +618,15 @@ class VideoDownloadHandler {
             c = c.getSuperclass();
         }
         return null;
+    }
+
+    /**
+     * Il miglior MP4 scaricabile fra i formati disponibili, o null se il video esiste solo in
+     * streaming. Esposto per il download in blocco di una bacheca
+     * (vedi {@link BoardDownloadHandler}).
+     */
+    static String bestMp4Url(Map<?, ?> videoList) {
+        return pickBestMp4Url(videoList);
     }
 
     private static String pickBestMp4Url(Map<?, ?> videoList) {
@@ -735,26 +749,21 @@ class VideoDownloadHandler {
                 captureStreamingUrl(m);
             }
 
-            Object viaG = PinterestUtils.invokeNoArg(obj, "g");
-            if (viaG instanceof Map) {
-                Map<?, ?> m = (Map<?, ?>) viaG;
-                inspectMapKeys(m);
-                String mp4 = pickBestMp4Url(m);
+            Map<?, ?> viaG = PinterestReflection.findMapAccessor(obj);
+            if (viaG != null) {
+                inspectMapKeys(viaG);
+                String mp4 = pickBestMp4Url(viaG);
                 if (mp4 != null) return mp4;
-                captureStreamingUrl(m);
+                captureStreamingUrl(viaG);
             }
 
-            Object videos = PinterestUtils.invokeNoArg(obj, "v7");
-            if (videos != null) {
+            Map<?, ?> tracks = PinterestReflection.findVideoTracks(obj);
+            if (tracks != null) {
                 hasVideoField = true;
-                Object listObj = PinterestUtils.invokeNoArg(videos, "g");
-                if (listObj instanceof Map) {
-                    Map<?, ?> m = (Map<?, ?>) listObj;
-                    inspectMapKeys(m);
-                    String mp4 = pickBestMp4Url(m);
-                    if (mp4 != null) return mp4;
-                    captureStreamingUrl(m);
-                }
+                inspectMapKeys(tracks);
+                String mp4 = pickBestMp4Url(tracks);
+                if (mp4 != null) return mp4;
+                captureStreamingUrl(tracks);
             }
 
             Class<?> c = cls;

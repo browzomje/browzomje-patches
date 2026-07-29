@@ -4,13 +4,17 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
+import app.browzomje.patches.shared.PatchLog
+import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
+private const val PATCH_NAME = "Disable ads"
 
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
-    name = "Disable ads",
+    name = PATCH_NAME,
     description = "Removes sponsored (promoted) pins from the home feed and from search/related/board feeds.",
     default = true
 ) {
@@ -18,27 +22,86 @@ val pinterestAdsPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        for (method in listOf(
-            PinterestAdsFingerprint.method,
-            PagedResponseConstructorFingerprint.method,
-            ModelListWithBookmarkConstructorFingerprint.method
+        // 1) Costruttori delle risposte di rete: filtrano la prima pagina appena arriva.
+        for (fingerprint in listOf(
+            PinterestAdsFingerprint,
+            PagedResponseConstructorFingerprint,
+            ModelListWithBookmarkConstructorFingerprint,
         )) {
-            val instructionsList = method.implementation!!.instructions
-            val returnIndex = instructionsList.indexOfFirst { it.opcode == Opcode.RETURN_VOID }
-            val insertIndex = if (returnIndex != -1) returnIndex else instructionsList.size - 1
+            val method = fingerprint.methodOrNull
+            if (method == null) {
+                PatchLog.warn(
+                    PATCH_NAME,
+                    "${fingerprint.javaClass.simpleName} non trovato: quel percorso del feed " +
+                        "non verrà filtrato. Vedi pinterest/OBFUSCATION_MAP.md per ri-pinnarlo.",
+                )
+                continue
+            }
 
             val registerCount = method.implementation!!.registerCount
-            val parameterRegisterCount = method.parameters.size + 1
-            val p0RegisterIndex = registerCount - parameterRegisterCount
+            val p0RegisterIndex = registerCount - (method.parameters.size + 1)
 
-            val compiled = InlineSmaliCompiler.compile(
+            val exits = method.addInstructionsBeforeEveryReturn(
                 "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
                     "$EXTENSION_CLASS->filterSponsoredPinsFromFeed(Ljava/lang/Object;)V",
-                "",
-                registerCount,
-                true,
             )
-            method.addInstructions(insertIndex, compiled)
+            PatchLog.hooked(PATCH_NAME, method, "costruttore risposta feed, $exits uscite")
+        }
+
+        // 2) Accessor della lista del feed: rifiltra a ogni lettura.
+        //
+        //    Senza questo, le pagine caricate scorrendo vengono accodate alla lista già
+        //    costruita e non ripassano mai dal filtro: è il motivo per cui, nell'issue #15,
+        //    gli annunci "aumentavano man mano che si scorre".
+        //
+        //    L'accessor si cerca DENTRO la classe Feed appena agganciata, non con un
+        //    fingerprint a sé: cercandolo globalmente si finiva su una classe omonima di un
+        //    altro package (su 14.28.0 esiste sia w12.d sia un o12.e non correlato).
+        val accessor = PinterestAdsFingerprint.classDefOrNull?.methods?.firstOrNull { candidate ->
+            candidate.returnType == "Ljava/util/List;" &&
+                candidate.parameters.isEmpty() &&
+                candidate.implementation != null
+        }
+        if (accessor == null) {
+            PatchLog.warn(
+                PATCH_NAME,
+                "accessor della lista del feed non trovato: gli annunci verranno filtrati solo " +
+                    "alla prima pagina e potrebbero ricomparire scorrendo (issue #15).",
+            )
+        } else {
+            val accessorRegisterCount = accessor.implementation!!.registerCount
+            val accessorInstructions = accessor.implementation!!.instructions.toList()
+
+            // Si inserisce prima di OGNI return-object, partendo dall'ultimo: inserire sposta
+            // gli indici successivi, quindi si procede a ritroso per non invalidarli.
+            val returnIndices = accessorInstructions
+                .mapIndexedNotNull { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) index else null
+                }
+                .reversed()
+
+            check(returnIndices.isNotEmpty()) {
+                "L'accessor della lista del feed non ha nessun return-object"
+            }
+
+            for (index in returnIndices) {
+                val listRegister = (accessorInstructions[index] as OneRegisterInstruction).registerA
+                accessor.addInstructions(
+                    index,
+                    InlineSmaliCompiler.compile(
+                        "invoke-static/range { v$listRegister .. v$listRegister }, " +
+                            "$EXTENSION_CLASS->filterSponsoredPinsFromList(Ljava/lang/Object;)V",
+                        "",
+                        accessorRegisterCount,
+                        true,
+                    ),
+                )
+            }
+            PatchLog.hooked(
+                PATCH_NAME,
+                accessor,
+                "accessor lista feed, ${returnIndices.size} punti di uscita",
+            )
         }
     }
 }
