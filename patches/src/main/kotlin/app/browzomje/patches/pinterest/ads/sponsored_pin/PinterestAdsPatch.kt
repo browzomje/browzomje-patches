@@ -32,8 +32,8 @@ val pinterestAdsPatch = bytecodePatch(
             if (method == null) {
                 PatchLog.warn(
                     PATCH_NAME,
-                    "${fingerprint.javaClass.simpleName} non trovato: quel percorso del feed " +
-                        "non verrà filtrato. Vedi pinterest/OBFUSCATION_MAP.md per ri-pinnarlo.",
+                    "${fingerprint.javaClass.simpleName} not found: that feed path " +
+                        "will not be filtered. See pinterest/OBFUSCATION_MAP.md to re-pin it.",
                 )
                 continue
             }
@@ -45,7 +45,7 @@ val pinterestAdsPatch = bytecodePatch(
                 "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
                     "$EXTENSION_CLASS->filterSponsoredPinsFromFeed(Ljava/lang/Object;)V",
             )
-            PatchLog.hooked(PATCH_NAME, method, "costruttore risposta feed, $exits uscite")
+            PatchLog.hooked(PATCH_NAME, method, "feed response constructor, $exits exits")
         }
 
         // 2) Accessor della lista del feed: rifiltra a ogni lettura.
@@ -65,8 +65,8 @@ val pinterestAdsPatch = bytecodePatch(
         if (accessor == null) {
             PatchLog.warn(
                 PATCH_NAME,
-                "accessor della lista del feed non trovato: gli annunci verranno filtrati solo " +
-                    "alla prima pagina e potrebbero ricomparire scorrendo (issue #15).",
+                "feed list accessor not found: ads will only be filtered " +
+                    "on the first page and may reappear when scrolling (issue #15).",
             )
         } else {
             val accessorRegisterCount = accessor.implementation!!.registerCount
@@ -81,7 +81,7 @@ val pinterestAdsPatch = bytecodePatch(
                 .reversed()
 
             check(returnIndices.isNotEmpty()) {
-                "L'accessor della lista del feed non ha nessun return-object"
+                "Feed list accessor has no return-object"
             }
 
             for (index in returnIndices) {
@@ -100,7 +100,7 @@ val pinterestAdsPatch = bytecodePatch(
             PatchLog.hooked(
                 PATCH_NAME,
                 accessor,
-                "accessor lista feed, ${returnIndices.size} punti di uscita",
+                "feed list accessor, ${returnIndices.size} exit points",
             )
         }
     }

@@ -37,18 +37,18 @@ val downloadBoardPatch = bytecodePatch(
         //    è il punto fisso da cui si arriva a tutto il resto.
         val optionsEnum = classDefByOrNull { it.isBoardOptionsEnum() }
         checkNotNull(optionsEnum) {
-            "Enum delle voci del menu bacheca non trovato (costanti attese: Edit, Merge, " +
-                "Archive, Unarchive, PreviewBoard). Vedi pinterest/OBFUSCATION_MAP.md."
+            "Board menu options enum not found (expected constants: Edit, Merge, " +
+                "Archive, Unarchive, PreviewBoard). See pinterest/OBFUSCATION_MAP.md."
         }
-        PatchLog.info(PATCH_NAME, "enum delle voci della bacheca: ${optionsEnum.type}")
+        PatchLog.info(PATCH_NAME, "board menu options enum: ${optionsEnum.type}")
 
         // 2) Il builder che quell'enum lo consuma.
         val builderClass = classDefByOrNull { classDef ->
             classDef.methods.any { it.isBoardOptionsMenuBuilder(optionsEnum.type) }
         }
         checkNotNull(builderClass) {
-            "Builder del menu della bacheca non trovato: nessun metodo statico " +
-                "(List, Function1, …) che usi ${optionsEnum.type}."
+            "Board menu builder not found: no static method " +
+                "(List, Function1, …) using ${optionsEnum.type}."
         }
 
         val method = mutableClassDefBy(builderClass).methods
@@ -57,6 +57,6 @@ val downloadBoardPatch = bytecodePatch(
         val exits = method.addReturnValueTransform(
             "$EXTENSION_CLASS->decorateBoardOptionsMenu(Ljava/lang/Object;)Ljava/lang/Object;",
         )
-        PatchLog.hooked(PATCH_NAME, method, "voce nel menu della bacheca, $exits uscite")
+        PatchLog.hooked(PATCH_NAME, method, "board menu option, $exits exits")
     }
 }

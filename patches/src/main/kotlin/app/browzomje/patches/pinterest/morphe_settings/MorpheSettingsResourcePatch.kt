@@ -171,13 +171,13 @@ val morpheSettingsLabelPatch = resourcePatch(
         }
 
         check(renamed > 0) {
-            "La stringa $REUSED_STRING non è stata trovata in nessun res/values*/strings.xml: " +
-                "la voce Morphe resterebbe senza etichetta riconoscibile."
+            "String $REUSED_STRING was not found in any res/values*/strings.xml: " +
+                "the Morphe entry would remain without a recognizable label."
         }
         PatchLog.info(
             "Morphe settings screen (label)",
-            "etichetta \"Morphe\" applicata in $renamed lingue" +
-                if (missing.isEmpty()) "" else " (${missing.size} cartelle assenti, saltate)",
+            "\"Morphe\" label applied in $renamed languages" +
+                if (missing.isEmpty()) "" else " (${missing.size} missing folders, skipped)",
         )
 
         // Etichetta della voce di download nel menu bacheca. Va aggiunta come risorsa vera:
@@ -212,12 +212,12 @@ val morpheSettingsLabelPatch = resourcePatch(
         }
 
         check(added > 0) {
-            "Impossibile aggiungere la stringa $BOARD_DOWNLOAD_STRING: la voce di download nel " +
-                "menu della bacheca resterebbe senza etichetta."
+            "Could not add string $BOARD_DOWNLOAD_STRING: the download option in " +
+                "the board menu would remain without a label."
         }
         PatchLog.info(
             "Morphe settings screen (label)",
-            "etichetta download bacheca aggiunta in $added lingue",
+            "board download label added in $added languages",
         )
     }
 }

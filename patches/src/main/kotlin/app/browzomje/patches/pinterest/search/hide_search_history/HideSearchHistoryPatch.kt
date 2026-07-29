@@ -57,37 +57,37 @@ val hideSearchHistoryPatch = bytecodePatch(
                     true,
                 ),
             )
-            PatchLog.hooked(PATCH_NAME, method, "elementi della cronologia")
+            PatchLog.hooked(PATCH_NAME, method, "history items")
             hooked++
         } ?: PatchLog.warn(
             PATCH_NAME,
-            "lista degli elementi \"ricerche recenti\" non trovata: si ripiega sul nascondere " +
-                "le view, che copre meno casi.",
+            "\"recent searches\" items list not found: falling back to hiding " +
+                "views, which covers fewer cases.",
         )
 
         // 2) Le due view restano agganciate come rete di sicurezza: se su una schermata la
         //    cronologia arrivasse per un'altra strada, almeno lì viene comunque nascosta.
         SlpRecentSearchesViewFingerprint.methodOrNull?.let { method ->
             val exits = method.appendHideRecentSearches()
-            PatchLog.hooked(PATCH_NAME, method, "lista nella schermata di ricerca, $exits uscite")
+            PatchLog.hooked(PATCH_NAME, method, "search screen list, $exits exits")
             hooked++
         } ?: PatchLog.warn(
             PATCH_NAME,
-            "lista \"Ricerche recenti\" della schermata di ricerca non trovata.",
+            "\"Recent searches\" list on search screen not found.",
         )
 
         SearchTypeaheadRecentSearchesCarouselInitFingerprint.methodOrNull?.let { method ->
             val exits = method.appendHideRecentSearches()
-            PatchLog.hooked(PATCH_NAME, method, "carosello del typeahead, $exits uscite")
+            PatchLog.hooked(PATCH_NAME, method, "typeahead carousel, $exits exits")
             hooked++
         } ?: PatchLog.warn(
             PATCH_NAME,
-            "carosello \"Ricerche recenti\" del typeahead non trovato.",
+            "typeahead \"Recent searches\" carousel not found.",
         )
 
         check(hooked > 0) {
-            "Nessuno dei due punti in cui Pinterest mostra le ricerche recenti è stato trovato: " +
-                "la patch non avrebbe alcun effetto. Vedi pinterest/OBFUSCATION_MAP.md."
+            "Neither of the two points where Pinterest shows recent searches was found: " +
+                "the patch would have no effect. See pinterest/OBFUSCATION_MAP.md."
         }
     }
 }

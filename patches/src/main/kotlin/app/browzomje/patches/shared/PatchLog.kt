@@ -24,13 +24,13 @@ object PatchLog {
     }
 
     fun warn(patch: String, message: String) {
-        println("$PREFIX $patch: ATTENZIONE — $message")
+        println("$PREFIX $patch: WARNING — $message")
     }
 
-    /** Segnala su quale metodo offuscato una patch si è agganciata. */
+    /** Log which obfuscated method a patch hooked into. */
     fun hooked(patch: String, method: MutableMethod, detail: String = "") {
         val where = "${method.definingClass}->${method.name}"
         val suffix = if (detail.isEmpty()) "" else " ($detail)"
-        info(patch, "agganciata a $where$suffix")
+        info(patch, "hooked to $where$suffix")
     }
 }

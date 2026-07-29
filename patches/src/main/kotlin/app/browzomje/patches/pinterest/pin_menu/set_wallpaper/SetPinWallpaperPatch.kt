@@ -51,7 +51,7 @@ val setPinWallpaperPatch = bytecodePatch(
             "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
                 "$EXTENSION_CLASS->addWallpaperOption(Ljava/lang/Object;)V",
         )
-        PatchLog.hooked("Set pin as wallpaper", method, "voce nel menu del pin, $exits uscite")
+        PatchLog.hooked("Set pin as wallpaper", method, "pin menu option, $exits exits")
 
         PinCloseupBitmapFingerprint.methodOrNull?.let { pinMethod ->
             val pinRegisterCount = pinMethod.implementation!!.registerCount
@@ -66,11 +66,11 @@ val setPinWallpaperPatch = bytecodePatch(
                 true
             )
             pinMethod.addInstructions(0, pinInstructions)
-            PatchLog.hooked("Set pin as wallpaper", pinMethod, "cattura della bitmap del pin")
+            PatchLog.hooked("Set pin as wallpaper", pinMethod, "pin bitmap capture")
         } ?: PatchLog.warn(
             "Set pin as wallpaper",
-            "punto di cattura della bitmap non trovato: lo sfondo verrà riscaricato dalla rete " +
-                "invece di riusare l'immagine già in memoria.",
+            "bitmap capture point not found: wallpaper will be re-downloaded from network " +
+                "instead of reusing in-memory image.",
         )
     }
 }

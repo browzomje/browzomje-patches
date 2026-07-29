@@ -40,7 +40,7 @@ val morpheSettingsEntryPatch = bytecodePatch(
     execute {
         val method = SettingsMenuListBuilderFingerprint.method
         val instructions = method.implementation!!.instructions
-        PatchLog.hooked(PATCH_NAME, method, "builder della lista Impostazioni")
+        PatchLog.hooked(PATCH_NAME, method, "Settings list builder")
 
         // 1) Ancora: la costruzione del primo header di sezione, `new <header>(int)`.
         //    Corrisponde a `arrayList.add(new Header(settings_main_header_settings|account))`,
@@ -59,27 +59,27 @@ val morpheSettingsEntryPatch = bytecodePatch(
             .groupingBy { it }
             .eachCount()
         check(intConstructorCounts.isNotEmpty()) {
-            "Nessuna riga delle Impostazioni con costruttore (int) nel builder"
+            "No Settings row with (int) constructor in builder"
         }
 
         val headerClass = intConstructorCounts.maxByOrNull { it.value }!!
         if (headerClass.value < 2) {
             PatchLog.warn(
                 PATCH_NAME,
-                "l'header di sezione candidato (${headerClass.key}) compare una volta sola: " +
-                    "potrebbe essere uno spaziatore dentro un blocco condizionale e la voce " +
-                    "Morphe potrebbe non comparire per tutti gli account.",
+                "candidate section header (${headerClass.key}) appears only once: " +
+                    "it might be a spacer inside a conditional block and the Morphe " +
+                    "option might not appear for all accounts.",
             )
         }
         PatchLog.info(
             PATCH_NAME,
-            "header di sezione: ${headerClass.key} (${headerClass.value} sezioni)",
+            "section header: ${headerClass.key} (${headerClass.value} sections)",
         )
 
         val anchorIndex = instructions.indexOfFirst {
             it.settingsRowConstructorWithParameters(listOf("I")) == headerClass.key
         }
-        check(anchorIndex != -1) { "Header di sezione delle Impostazioni non trovato nel builder" }
+        check(anchorIndex != -1) { "Settings section header not found in builder" }
 
         // 2) Dalla ancora, la prima `List.add(Object)`: aggiunge l'header stesso, e il suo
         //    registro receiver è la lista in cui accodare anche la nostra voce.
@@ -99,13 +99,13 @@ val morpheSettingsEntryPatch = bytecodePatch(
         val rowClassType = instructions
             .firstNotNullOfOrNull { it.settingsRowConstructorWithParameters(listOf("Ljava/lang/String;")) }
         check(rowClassType != null) {
-            "Riga \"link esterno\" delle Impostazioni non trovata: senza di essa non si può " +
-                "costruire la voce Morphe. Vedi pinterest/OBFUSCATION_MAP.md."
+            "Settings \"external link\" row not found: without it the Morphe " +
+                "entry cannot be built. See pinterest/OBFUSCATION_MAP.md."
         }
 
         // Da descrittore JVM (Lcom/pinterest/...;) a nome per Class.forName (com.pinterest....).
         val rowClassName = rowClassType.removePrefix("L").removeSuffix(";").replace('/', '.')
-        PatchLog.info(PATCH_NAME, "classe della riga risolta dal dex: $rowClassName")
+        PatchLog.info(PATCH_NAME, "row class resolved from dex: $rowClassName")
 
         // 4) L'iniezione della voce: una sola invoke, un solo registro (la lista), quindi
         //    nessun registro d'appoggio da trovare in mezzo a un metodo enorme.

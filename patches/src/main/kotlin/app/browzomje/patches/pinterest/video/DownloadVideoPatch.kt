@@ -24,7 +24,7 @@ val downloadVideoPatch = bytecodePatch(
         //    da registerCount - numeroParametri (non c'è "this").
         val captureMethod = VideoTracksBuilderFingerprint.method
         val captureImpl = captureMethod.implementation
-            ?: throw Exception("Il builder delle tracce video non ha implementazione")
+            ?: throw Exception("Video tracks builder has no implementation")
         val captureRegisterCount = captureImpl.registerCount
         val pinRegister = captureRegisterCount - captureMethod.parameters.size
 
@@ -33,12 +33,12 @@ val downloadVideoPatch = bytecodePatch(
             "invoke-static/range { v$pinRegister .. v$pinRegister }, " +
                 "$EXTENSION_CLASS->setCurrentVideoPin(Ljava/lang/Object;)V",
         )
-        PatchLog.hooked(PATCH_NAME, captureMethod, "cattura del pin video")
+        PatchLog.hooked(PATCH_NAME, captureMethod, "video pin capture")
 
         // 2) Cattura della mappa dei formati (uid, formati) — i primi due parametri.
         val captureMethod2 = VideoTracksBuilderFingerprint2.method
         val captureImpl2 = captureMethod2.implementation
-            ?: throw Exception("Il builder delle tracce video (8 parametri) non ha implementazione")
+            ?: throw Exception("Video tracks builder (8 parameters) has no implementation")
         val captureRegisterCount2 = captureImpl2.registerCount
         val uidRegister = captureRegisterCount2 - captureMethod2.parameters.size
         val listRegister = uidRegister + 1
@@ -48,7 +48,7 @@ val downloadVideoPatch = bytecodePatch(
             "invoke-static/range { v$uidRegister .. v$listRegister }, " +
                 "$EXTENSION_CLASS->setCurrentVideoTracks(Ljava/lang/String;Ljava/util/Map;)V",
         )
-        PatchLog.hooked(PATCH_NAME, captureMethod2, "cattura dei formati video")
+        PatchLog.hooked(PATCH_NAME, captureMethod2, "video formats capture")
 
         // 3) La voce di menu vera e propria.
         val menuMethod = VideoOverflowMenuBuilderFingerprint.method
@@ -59,6 +59,6 @@ val downloadVideoPatch = bytecodePatch(
             "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
                 "$EXTENSION_CLASS->addDownloadVideoOption(Ljava/lang/Object;)V",
         )
-        PatchLog.hooked(PATCH_NAME, menuMethod, "voce nel menu del pin, $menuExits uscite")
+        PatchLog.hooked(PATCH_NAME, menuMethod, "pin menu option, $menuExits exits")
     }
 }

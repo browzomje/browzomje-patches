@@ -45,7 +45,7 @@ val emailConfirmDialogPatch = bytecodePatch(
         if (superIndex == -1) {
             PatchLog.warn(
                 PATCH_NAME,
-                "nessun invoke-super in onViewCreated: l'hook viene messo in testa al metodo.",
+                "no invoke-super in onViewCreated: hook placed at method entry.",
             )
         }
 
@@ -61,6 +61,6 @@ val emailConfirmDialogPatch = bytecodePatch(
                 true,
             ),
         )
-        PatchLog.hooked(PATCH_NAME, method, "onViewCreated del flusso recovery")
+        PatchLog.hooked(PATCH_NAME, method, "onViewCreated of recovery flow")
     }
 }

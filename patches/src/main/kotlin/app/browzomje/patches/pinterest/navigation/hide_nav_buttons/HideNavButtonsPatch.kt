@@ -40,7 +40,7 @@ private fun MutableMethod.appendHideNavBarTab(patchName: String, tabOrdinal: Int
         invoke-static/range { v0 .. v1 }, $EXTENSION_CLASS->hideNavBarTab(Ljava/lang/Object;I)V
         """.trimIndent(),
     )
-    PatchLog.hooked(patchName, this, "tab ordinale $tabOrdinal, $injectedAt uscite")
+    PatchLog.hooked(patchName, this, "tab ordinal $tabOrdinal, $injectedAt exits")
 }
 
 private fun hideNavButtonPatch(name: String, description: String, tabOrdinal: Int) =

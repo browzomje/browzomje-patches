@@ -27,6 +27,6 @@ val copyDirectLinkPatch = bytecodePatch(
             "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
                 "$EXTENSION_CLASS->addCopyLinkOption(Ljava/lang/Object;)V",
         )
-        PatchLog.hooked("Copy direct link", method, "voce nel menu del pin, $exits uscite")
+        PatchLog.hooked("Copy direct link", method, "pin menu option, $exits exits")
     }
 }

@@ -25,7 +25,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
  */
 fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
     val implementation = implementation
-        ?: throw IllegalStateException("$definingClass->$name non ha implementazione")
+        ?: throw IllegalStateException("$definingClass->$name has no implementation")
     val registerCount = implementation.registerCount
 
     val returnIndices = implementation.instructions
@@ -36,7 +36,7 @@ fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
 
     if (returnIndices.isEmpty()) {
         throw IllegalStateException(
-            "$definingClass->$name non ha nessuna istruzione di return: impossibile agganciarsi"
+            "$definingClass->$name has no return instruction: cannot hook"
         )
     }
 
@@ -73,7 +73,7 @@ fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
  */
 fun MutableMethod.addReturnValueTransform(transformer: String): Int {
     val implementation = implementation
-        ?: throw IllegalStateException("$definingClass->$name non ha implementazione")
+        ?: throw IllegalStateException("$definingClass->$name has no implementation")
     val registerCount = implementation.registerCount
 
     // I registri vanno letti prima di iniettare: ogni inserimento rimaneggia la lista di
@@ -90,7 +90,7 @@ fun MutableMethod.addReturnValueTransform(transformer: String): Int {
 
     if (returns.isEmpty()) {
         throw IllegalStateException(
-            "$definingClass->$name non ha nessun return-object: non restituisce un oggetto"
+            "$definingClass->$name has no return-object: does not return an object"
         )
     }
 
