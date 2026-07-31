@@ -65,12 +65,12 @@ public final class MorpheLog {
 
     public static void e(String channel, String message, Throwable t) {
         Log.e(TAG, "[" + channel + "] " + message, t);
-        setStatus(channel, "ERRORE: " + message + " (" + describe(t) + ")");
+        setStatus(channel, "ERROR: " + message + " (" + describe(t) + ")");
     }
 
     public static void e(String channel, String message) {
         Log.e(TAG, "[" + channel + "] " + message);
-        setStatus(channel, "ERRORE: " + message);
+        setStatus(channel, "ERROR: " + message);
     }
 
     /**
@@ -84,8 +84,8 @@ public final class MorpheLog {
         int count = previous == null ? 1 : previous + 1;
         HITS.put(channel, count);
         if (count == 1) {
-            Log.i(TAG, "[" + channel + "] hook attivo (prima invocazione) — " + detail);
-            setStatus(channel, "hook attivo");
+            Log.i(TAG, "[" + channel + "] hook live (first call) — " + detail);
+            setStatus(channel, "hook live");
         } else {
             d(channel, "hook #" + count + " — " + detail);
         }

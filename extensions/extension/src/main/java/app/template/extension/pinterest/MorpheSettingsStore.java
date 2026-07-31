@@ -12,6 +12,7 @@ public final class MorpheSettingsStore {
     private static final String PREFS_NAME = "morphe_settings";
 
     public static final String KEY_DISABLE_ADS = "disable_ads";
+    public static final String KEY_HIDE_SHOPPING_PINS = "hide_shopping_pins";
     public static final String KEY_HIDE_SEARCH_HISTORY = "hide_search_history";
     public static final String KEY_HIDE_SEARCH_BUTTON = "hide_search_button";
     public static final String KEY_HIDE_CREATE_BUTTON = "hide_create_button";
@@ -20,6 +21,25 @@ public final class MorpheSettingsStore {
     public static final String KEY_DISABLE_EMAIL_CONFIRM_DIALOG = "disable_email_confirm_dialog";
     public static final String KEY_VERBOSE_LOGGING = "verbose_logging";
     public static final String KEY_BOARD_DOWNLOAD = "board_download";
+
+    /**
+     * Le impostazioni che si esportano e si importano, nell'ordine in cui compaiono a schermo.
+     *
+     * <p>{@link #KEY_HIDE_PROFILE_BUTTON} non c'è: non è più onorata (vedi
+     * {@link #isProfileButtonHidden()}), quindi salvarla in un backup vorrebbe dire promettere
+     * qualcosa che al ripristino non succede.
+     */
+    public static final String[] KEYS = {
+        KEY_DISABLE_ADS,
+        KEY_HIDE_SHOPPING_PINS,
+        KEY_HIDE_SEARCH_HISTORY,
+        KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
+        KEY_BOARD_DOWNLOAD,
+        KEY_HIDE_SEARCH_BUTTON,
+        KEY_HIDE_CREATE_BUTTON,
+        KEY_HIDE_NOTIFICATIONS_BUTTON,
+        KEY_VERBOSE_LOGGING,
+    };
 
     private MorpheSettingsStore() {}
 
@@ -38,7 +58,7 @@ public final class MorpheSettingsStore {
             Object app = activityThreadClass.getMethod("currentApplication").invoke(null);
             return (Application) app;
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile ottenere l'Application corrente", t);
+            Log.e(TAG, "could not get the current Application", t);
             return null;
         }
     }
@@ -68,29 +88,67 @@ public final class MorpheSettingsStore {
             sp.edit().putBoolean(key, value).apply();
             Log.i(MorpheLog.TAG, "[settings] " + key + " = " + value);
         } else {
-            Log.e(MorpheLog.TAG, "[settings] impossibile salvare " + key
-                    + ": SharedPreferences non disponibili");
+            Log.e(MorpheLog.TAG, "[settings] could not save " + key
+                    + ": SharedPreferences not available");
         }
     }
 
+    /**
+     * Valore predefinito di una chiave, cioè quello che vale finché l'utente non tocca il
+     * relativo interruttore.
+     *
+     * <p>Sta tutto qui, in un punto solo, perché lo stesso default serve sia ai metodi
+     * {@code is…()} sia all'esportazione, che deve scrivere nel file il valore effettivo anche
+     * delle opzioni mai toccate.
+     */
+    static boolean defaultOf(String key) {
+        switch (key) {
+            case KEY_DISABLE_ADS:
+            case KEY_HIDE_SHOPPING_PINS:
+            case KEY_DISABLE_EMAIL_CONFIRM_DIALOG:
+            case KEY_BOARD_DOWNLOAD:
+            case KEY_VERBOSE_LOGGING:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /** @return il valore in vigore per questa chiave, salvato o predefinito che sia. */
+    public static boolean effective(String key) {
+        return get(key, defaultOf(key));
+    }
+
     public static boolean isAdsDisabled() {
-        return get(KEY_DISABLE_ADS, true);
+        return effective(KEY_DISABLE_ADS);
+    }
+
+    /**
+     * Pin di catalogo dei negozi (nome del commerciante + titolo del prodotto).
+     *
+     * <p>Resta un interruttore a sé rispetto a {@link #isAdsDisabled()} anche se entrambi sono
+     * accesi per default: quei pin non sono annunci — Pinterest non li marca come promossi e non
+     * ci mette l'etichetta "Promoted" — quindi chi usa Pinterest per comprare deve poterli
+     * riavere senza rinunciare al blocco della pubblicità vera.
+     */
+    public static boolean isShoppingPinsHidden() {
+        return effective(KEY_HIDE_SHOPPING_PINS);
     }
 
     public static boolean isSearchHistoryHidden() {
-        return get(KEY_HIDE_SEARCH_HISTORY, false);
+        return effective(KEY_HIDE_SEARCH_HISTORY);
     }
 
     public static boolean isSearchButtonHidden() {
-        return get(KEY_HIDE_SEARCH_BUTTON, false);
+        return effective(KEY_HIDE_SEARCH_BUTTON);
     }
 
     public static boolean isCreateButtonHidden() {
-        return get(KEY_HIDE_CREATE_BUTTON, false);
+        return effective(KEY_HIDE_CREATE_BUTTON);
     }
 
     public static boolean isNotificationsButtonHidden() {
-        return get(KEY_HIDE_NOTIFICATIONS_BUTTON, false);
+        return effective(KEY_HIDE_NOTIFICATIONS_BUTTON);
     }
 
     /**
@@ -102,7 +160,7 @@ public final class MorpheSettingsStore {
     }
 
     public static boolean isEmailConfirmDialogDisabled() {
-        return get(KEY_DISABLE_EMAIL_CONFIRM_DIALOG, true);
+        return effective(KEY_DISABLE_EMAIL_CONFIRM_DIALOG);
     }
 
     /**
@@ -110,7 +168,7 @@ public final class MorpheSettingsStore {
      * visitate vengono tenuti in memoria per poterli scaricare in blocco.
      */
     public static boolean isBoardDownloadEnabled() {
-        return get(KEY_BOARD_DOWNLOAD, true);
+        return effective(KEY_BOARD_DOWNLOAD);
     }
 
     /**
@@ -119,7 +177,7 @@ public final class MorpheSettingsStore {
      * quale hook non sia scattato.
      */
     public static boolean isVerboseLoggingEnabled() {
-        return get(KEY_VERBOSE_LOGGING, true);
+        return effective(KEY_VERBOSE_LOGGING);
     }
 
     /**

@@ -88,15 +88,15 @@ final class PinterestReflection {
                 method.setAccessible(true);
                 Object creator = method.invoke(container);
                 if (creator != null) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "view creator trovato via "
+                    MorpheLog.d(MorpheLog.REFLECTION, "view creator found via "
                             + container.getClass().getName() + "." + method.getName()
                             + "() -> " + creator.getClass().getName());
                     rememberEventManagerFrom(creator);
                     return creator;
                 }
             } catch (Throwable t) {
-                MorpheLog.d(MorpheLog.REFLECTION, "chiamata a " + method.getName()
-                        + "() fallita: " + t);
+                MorpheLog.d(MorpheLog.REFLECTION, "call to " + method.getName()
+                        + "() failed: " + t);
             }
         }
         return null;
@@ -136,14 +136,14 @@ final class PinterestReflection {
                                    View.OnClickListener onClick) {
         Object creator = findMenuRowViewCreator(container);
         if (creator == null) {
-            MorpheLog.w(MorpheLog.REFLECTION, "nessun view creator sul container "
-                    + container.getClass().getName() + ": si userà la riga di fallback");
+            MorpheLog.w(MorpheLog.REFLECTION, "no view creator on container "
+                    + container.getClass().getName() + ": the fallback row will be used");
             return null;
         }
 
         Method factory = findRowFactoryMethod(creator.getClass());
         if (factory == null) {
-            MorpheLog.w(MorpheLog.REFLECTION, "view creator senza metodo di costruzione riga");
+            MorpheLog.w(MorpheLog.REFLECTION, "view creator has no row-building method");
             return null;
         }
 
@@ -152,8 +152,8 @@ final class PinterestReflection {
         try {
             icon = Enum.valueOf((Class<Enum>) iconEnum, iconName);
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.REFLECTION, "icona " + iconName + " assente da "
-                    + iconEnum.getName() + ": riga senza icona");
+            MorpheLog.w(MorpheLog.REFLECTION, "icon " + iconName + " missing from "
+                    + iconEnum.getName() + ": row without an icon");
         }
 
         try {
@@ -165,7 +165,7 @@ final class PinterestReflection {
             row.setOnClickListener(onClick);
             return row;
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.REFLECTION, "costruzione nativa della riga fallita", t);
+            MorpheLog.w(MorpheLog.REFLECTION, "native row construction failed", t);
             return null;
         }
     }
@@ -196,13 +196,13 @@ final class PinterestReflection {
                 Object candidate = field.get(host);
                 if (candidate != null) {
                     cachedEventManager = candidate;
-                    MorpheLog.i(MorpheLog.REFLECTION, "EventManager individuato: "
+                    MorpheLog.i(MorpheLog.REFLECTION, "EventManager found: "
                             + candidate.getClass().getName());
                     return;
                 }
             }
         } catch (Throwable t) {
-            MorpheLog.d(MorpheLog.REFLECTION, "ricerca EventManager nei campi fallita: " + t);
+            MorpheLog.d(MorpheLog.REFLECTION, "could not look for EventManager in the fields: " + t);
         }
     }
 
@@ -238,7 +238,7 @@ final class PinterestReflection {
                     Object candidate = field.get(null);
                     if (candidate != null) {
                         cachedEventManager = candidate;
-                        MorpheLog.i(MorpheLog.REFLECTION, "EventManager risolto da " + className
+                        MorpheLog.i(MorpheLog.REFLECTION, "EventManager resolved from " + className
                                 + "." + field.getName());
                         return candidate;
                     }
@@ -247,9 +247,9 @@ final class PinterestReflection {
                 }
             }
         }
-        MorpheLog.w(MorpheLog.REFLECTION, "EventManager non risolto: provati "
+        MorpheLog.w(MorpheLog.REFLECTION, "EventManager not resolved: tried "
                 + java.util.Arrays.toString(EVENT_MANAGER_HOLDER_CANDIDATES)
-                + ". Toast nativi e chiusura del menu useranno il fallback.");
+                + ". Native toasts and menu dismissal will use the fallback.");
         return null;
     }
 
@@ -265,8 +265,8 @@ final class PinterestReflection {
             post.invoke(manager, event);
             return true;
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.REFLECTION, "invio evento "
-                    + event.getClass().getName() + " fallito", t);
+            MorpheLog.w(MorpheLog.REFLECTION, "could not send event "
+                    + event.getClass().getName(), t);
             return false;
         }
     }
@@ -277,9 +277,9 @@ final class PinterestReflection {
     static boolean dismissContextualMenu() {
         Object event = newInstanceOfAny(DISMISS_EVENT_CANDIDATES);
         if (event == null) {
-            MorpheLog.w(MorpheLog.REFLECTION, "classe evento \"chiudi menu\" non trovata "
-                    + "(provati " + java.util.Arrays.toString(DISMISS_EVENT_CANDIDATES)
-                    + "): il menu resterà aperto. Va aggiornata PinterestReflection.");
+            MorpheLog.w(MorpheLog.REFLECTION, "\"dismiss menu\" event class not found "
+                    + "(tried " + java.util.Arrays.toString(DISMISS_EVENT_CANDIDATES)
+                    + "): the menu will stay open. PinterestReflection needs updating.");
             return false;
         }
         return postEvent(event);
@@ -296,9 +296,9 @@ final class PinterestReflection {
         Class<?> eventClass = findFirstClass(TOAST_EVENT_CANDIDATES);
         Class<?> baseClass = findFirstClass(TOAST_BASE_CANDIDATES);
         if (toastClass == null || eventClass == null || baseClass == null) {
-            MorpheLog.w(MorpheLog.REFLECTION, "classi del toast Gestalt non risolte (toast="
-                    + toastClass + ", evento=" + eventClass + ", base=" + baseClass
-                    + "): uso il Toast di sistema.");
+            MorpheLog.w(MorpheLog.REFLECTION, "Gestalt toast classes not resolved (toast="
+                    + toastClass + ", event=" + eventClass + ", base=" + baseClass
+                    + "): falling back to the system Toast.");
             return false;
         }
         try {
@@ -307,7 +307,7 @@ final class PinterestReflection {
             Constructor<?> eventCtor = eventClass.getConstructor(baseClass);
             return postEvent(eventCtor.newInstance(toast));
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.REFLECTION, "creazione del toast Gestalt fallita", t);
+            MorpheLog.w(MorpheLog.REFLECTION, "could not create the Gestalt toast", t);
             return false;
         }
     }

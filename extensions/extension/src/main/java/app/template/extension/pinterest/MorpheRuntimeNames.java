@@ -36,12 +36,12 @@ public final class MorpheRuntimeNames {
     /** Chiamata iniettata dalla patch "Morphe settings entry". */
     public static void setSettingsRowClass(String className) {
         settingsRowClass = className;
-        MorpheLog.i(MorpheLog.SETTINGS_ENTRY, "classe della riga risolta dalla patch: " + className);
+        MorpheLog.i(MorpheLog.SETTINGS_ENTRY, "settings row class resolved by the patch: " + className);
     }
 
     /** Log di controllo: mostra cosa la patch è riuscita a risolvere. */
     public static String describe() {
-        return "settingsRowClass=" + (settingsRowClass.isEmpty() ? "<NON RISOLTO>" : settingsRowClass)
+        return "settingsRowClass=" + (settingsRowClass.isEmpty() ? "<UNRESOLVED>" : settingsRowClass)
                 + ", settingsUri=" + SETTINGS_URI;
     }
 }

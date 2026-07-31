@@ -122,15 +122,15 @@ final class BoardDownloadHandler {
                     LinkedHashMap<String, CapturedPin> board = BOARDS.get(detected);
                     total = board == null ? 0 : board.size();
                 }
-                MorpheLog.i(MorpheLog.BOARD, "bacheca corrente " + detected + " (rilevata da "
-                        + (urlBoardId != null ? "URL" : "provenienza dei pin") + "): "
-                        + total + " pin in memoria");
+                MorpheLog.i(MorpheLog.BOARD, "current board " + detected + " (detected from "
+                        + (urlBoardId != null ? "URL" : "where the pins come from") + "): "
+                        + total + " pins in memory");
             } else {
-                MorpheLog.d(MorpheLog.BOARD, "risposta da " + perBoard.size()
-                        + " bacheche diverse: non è la schermata di una bacheca");
+                MorpheLog.d(MorpheLog.BOARD, "response spans " + perBoard.size()
+                        + " different boards: this is not a board screen");
             }
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.BOARD, "cattura dei pin della bacheca fallita", t);
+            MorpheLog.e(MorpheLog.BOARD, "could not capture the pins of the board", t);
         }
     }
 
@@ -320,13 +320,13 @@ final class BoardDownloadHandler {
                         continue;
                     }
                     String name = ((Enum<?>) value).name();
-                    MorpheLog.d(MorpheLog.BOARD, "menu aperto dalla superficie " + name);
+                    MorpheLog.d(MorpheLog.BOARD, "menu opened from surface " + name);
                     return name.startsWith("BOARD");
                 }
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.BOARD, "impossibile determinare la superficie del menu", t);
+            MorpheLog.w(MorpheLog.BOARD, "could not determine which surface the menu belongs to", t);
         }
         return false;
     }
@@ -364,7 +364,7 @@ final class BoardDownloadHandler {
         final String boardId = currentBoardId;
         if (boardId == null) {
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("board_no_pins"));
-            MorpheLog.w(MorpheLog.BOARD, "nessuna bacheca in memoria");
+            MorpheLog.w(MorpheLog.BOARD, "no board in memory");
             return;
         }
 
@@ -374,16 +374,16 @@ final class BoardDownloadHandler {
             if (board == null || board.isEmpty()) {
                 // "Non presente" e "presente ma vuota" hanno cause diverse: la prima è uno
                 // sfratto, la seconda una bacheca di cui non è ancora arrivato nessun pin.
-                MorpheLog.w(MorpheLog.BOARD, "bacheca " + boardId
-                        + (board == null ? " non presente in memoria" : " presente ma vuota")
-                        + " (bacheche in memoria: " + BOARDS.size() + ")");
+                MorpheLog.w(MorpheLog.BOARD, "board " + boardId
+                        + (board == null ? " not in memory" : " in memory but empty")
+                        + " (boards in memory: " + BOARDS.size() + ")");
                 PinterestUtils.showNativeToast(context, PinterestUtils.getString("board_no_pins"));
                 return;
             }
             pins = new ArrayList<>(board.values());
         }
-        MorpheLog.i(MorpheLog.BOARD, "avvio download di " + pins.size()
-                + " pin della bacheca " + boardId);
+        MorpheLog.i(MorpheLog.BOARD, "starting download of " + pins.size()
+                + " pins of board " + boardId);
 
         // Nome leggibile della bacheca per la cartella di destinazione; se manca si ripiega
         // sull'id, che c'è sempre.
@@ -396,8 +396,8 @@ final class BoardDownloadHandler {
         }
         final String folder = name != null ? name : boardId;
 
-        MorpheLog.i(MorpheLog.BOARD, "avvio download di " + pins.size()
-                + " pin dalla bacheca \"" + folder + "\" (" + boardId + ")");
+        MorpheLog.i(MorpheLog.BOARD, "starting download of " + pins.size()
+                + " pins from board \"" + folder + "\" (" + boardId + ")");
         PinterestUtils.showNativeToast(context,
                 PinterestUtils.getString("board_download_started").replace("%d", String.valueOf(pins.size())));
 
@@ -415,7 +415,7 @@ final class BoardDownloadHandler {
                 DownloadManager manager =
                         (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
                 if (manager == null) {
-                    MorpheLog.e(MorpheLog.BOARD, "DownloadManager non disponibile");
+                    MorpheLog.e(MorpheLog.BOARD, "DownloadManager not available");
                     return;
                 }
 
@@ -429,14 +429,14 @@ final class BoardDownloadHandler {
                             // manifest HLS/DASH. Lo si conta e lo si segnala alla fine.
                             streamingSkipped++;
                             MorpheLog.d(MorpheLog.BOARD,
-                                    "pin " + pin.id + ": solo streaming, saltato");
+                                    "pin " + pin.id + ": streaming only, skipped");
                         } else if (pin.imageUrl != null) {
                             enqueue(manager, pin.imageUrl, folder, pin.id + extensionOf(pin.imageUrl));
                             images++;
                         }
                     } catch (Throwable t) {
                         failed++;
-                        MorpheLog.w(MorpheLog.BOARD, "download del pin " + pin.id + " fallito", t);
+                        MorpheLog.w(MorpheLog.BOARD, "download of pin " + pin.id + " failed", t);
                     }
                 }
 
@@ -504,11 +504,11 @@ final class BoardDownloadHandler {
     static String describe() {
         synchronized (BOARDS) {
             if (BOARDS.isEmpty()) {
-                return "nessuna bacheca visitata";
+                return "no board visited";
             }
             StringBuilder sb = new StringBuilder();
             for (Map.Entry<String, LinkedHashMap<String, CapturedPin>> entry : BOARDS.entrySet()) {
-                sb.append(entry.getKey()).append('=').append(entry.getValue().size()).append(" pin; ");
+                sb.append(entry.getKey()).append('=').append(entry.getValue().size()).append(" pins; ");
             }
             return sb.toString().trim();
         }

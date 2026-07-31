@@ -55,3 +55,24 @@ object SearchTypeaheadRecentSearchesCarouselInitFingerprint : Fingerprint(
             method.name == "init"
     }
 )
+
+/**
+ * Il metodo che accende e spegne lo spinner a tutta pagina di `PinterestLoadingLayout`, il
+ * contenitore (`@id/loading_container`) dentro cui `fragment_search_typeahead` avvolge la lista
+ * dei suggerimenti.
+ *
+ * Serve perché togliendo la cronologia la schermata del typeahead resta a girare: Pinterest la
+ * costruisce proprio con i suggerimenti che noi rimuoviamo, e la lista che ne risulta viene letta
+ * dal framework di liste (`x32.d.onStateUpdated`) come "sto ancora caricando".
+ *
+ * La classe non è offuscata, il nome del metodo sì: è `a(Z)V`, l'unico membro dell'interfaccia
+ * `fl0.c` che la classe implementa. Si aggancia quindi per firma — un solo metodo della classe
+ * prende un boolean — e non per nome, così un rename di R8 non lo fa saltare.
+ */
+object PinterestLoadingLayoutFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Z"),
+    custom = { _, classDef ->
+        classDef.type == "Lcom/pinterest/design/brio/widget/progress/PinterestLoadingLayout;"
+    }
+)

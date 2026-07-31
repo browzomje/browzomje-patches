@@ -41,7 +41,7 @@ class WallpaperHandler {
 
     public static void addWallpaperOption(Object menuContainer) {
         if (!(menuContainer instanceof ViewGroup)) {
-            Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
+            Log.w(TAG, "menuContainer is not a ViewGroup: " + menuContainer);
             return;
         }
         final ViewGroup container = (ViewGroup) menuContainer;
@@ -59,16 +59,16 @@ class WallpaperHandler {
             };
             try {
                 row = PinterestUtils.buildRowReflective(container, labelText, "IMAGE", onClickListener);
-                Log.d(TAG, "Riga sfondo creata con successo tramite reflection");
+                Log.d(TAG, "wallpaper row created via reflection");
             } catch (Throwable t) {
-                Log.w(TAG, "Errore nella creazione sfondo tramite reflection, uso il fallback", t);
+                Log.w(TAG, "could not create the wallpaper row via reflection, using the fallback", t);
                 row = PinterestUtils.buildRowFallback(context, labelText, container, android.R.drawable.ic_menu_gallery, onClickListener);
             }
             if (row != null) {
                 container.addView(row);
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile aggiungere la voce sfondo", t);
+            Log.e(TAG, "could not add the wallpaper entry", t);
         }
     }
 
@@ -236,7 +236,7 @@ class WallpaperHandler {
             dialog.show();
 
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile mostrare il custom dialog, uso fallback", t);
+            Log.e(TAG, "could not show the custom dialog, using the fallback", t);
             showWallpaperDialogFallback(context, captured, url, options);
         }
     }
@@ -268,7 +268,7 @@ class WallpaperHandler {
                 })
                 .show();
         } catch (Throwable t) {
-            Log.e(TAG, "Fallback fallito", t);
+            Log.e(TAG, "fallback failed", t);
             int flags = 0;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 flags = WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
@@ -335,7 +335,7 @@ class WallpaperHandler {
                         PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
                     }
                 } catch (Throwable t) {
-                    Log.e(TAG, "setWallpaperFromUrl fallito per " + url, t);
+                    Log.e(TAG, "setWallpaperFromUrl failed for " + url, t);
                     PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
                 } finally {
                     if (conn != null) conn.disconnect();
@@ -355,7 +355,7 @@ class WallpaperHandler {
             }
             return true;
         } catch (Throwable t) {
-            Log.e(TAG, "applyWallpaper fallito", t);
+            Log.e(TAG, "applyWallpaper failed", t);
             return false;
         }
     }

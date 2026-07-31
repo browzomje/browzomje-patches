@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -74,7 +76,7 @@ public final class PinterestUtils {
                             String val = (String) f.get(view);
                             if (val != null && (val.startsWith("http://") || val.startsWith("https://"))) {
                                 currentPinImageUrl = val;
-                                Log.d(TAG, "Catturato URL immagine via scansione campi: " + currentPinImageUrl);
+                                Log.d(TAG, "captured image URL by scanning the fields: " + currentPinImageUrl);
                                 return;
                             }
                         }
@@ -82,19 +84,19 @@ public final class PinterestUtils {
                     clazz = clazz.getSuperclass();
                 }
             } catch (Throwable t) {
-                Log.e(TAG, "Impossibile recuperare URL dal view", t);
+                Log.e(TAG, "could not get the URL from the view", t);
             }
         }
     }
 
     // Delegates for video download
     public static void setCurrentVideoTracks(String uid, java.util.Map<?, ?> videoList) {
-        MorpheLog.hookFired(MorpheLog.VIDEO, "tracce video per uid=" + uid
-                + " (" + (videoList == null ? 0 : videoList.size()) + " formati)");
+        MorpheLog.hookFired(MorpheLog.VIDEO, "video tracks for uid=" + uid
+                + " (" + (videoList == null ? 0 : videoList.size()) + " formats)");
         try {
             VideoDownloadHandler.setCurrentVideoTracks(uid, videoList);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.VIDEO, "salvataggio delle tracce video fallito", t);
+            MorpheLog.e(MorpheLog.VIDEO, "could not store the video tracks", t);
         }
     }
 
@@ -102,7 +104,7 @@ public final class PinterestUtils {
         try {
             VideoDownloadHandler.setCurrentVideoPin(pin);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.VIDEO, "salvataggio del pin video fallito", t);
+            MorpheLog.e(MorpheLog.VIDEO, "could not store the video pin", t);
         }
     }
 
@@ -112,7 +114,7 @@ public final class PinterestUtils {
         try {
             VideoDownloadHandler.addDownloadVideoOption(menuContainer);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.VIDEO, "aggiunta della voce \"scarica video\" fallita", t);
+            MorpheLog.e(MorpheLog.VIDEO, "could not add the \"download video\" entry", t);
         }
     }
 
@@ -123,7 +125,7 @@ public final class PinterestUtils {
         try {
             WallpaperHandler.addWallpaperOption(menuContainer);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.WALLPAPER, "aggiunta della voce \"imposta sfondo\" fallita", t);
+            MorpheLog.e(MorpheLog.WALLPAPER, "could not add the \"set wallpaper\" entry", t);
         }
     }
 
@@ -146,7 +148,7 @@ public final class PinterestUtils {
                 "menu " + (menu == null ? "null" : menu.getClass().getName()));
 
         if (!MorpheSettingsStore.isBoardDownloadEnabled()) {
-            MorpheLog.d(MorpheLog.BOARD_MENU, "opzione disattivata nelle impostazioni Morphe");
+            MorpheLog.d(MorpheLog.BOARD_MENU, "option disabled in the Morphe settings");
             return menu;
         }
         return BoardMenuDecorator.decorate(menu);
@@ -158,7 +160,7 @@ public final class PinterestUtils {
                 menuContainer == null ? "null" : menuContainer.getClass().getName());
 
         if (!(menuContainer instanceof ViewGroup)) {
-            MorpheLog.e(MorpheLog.COPY_LINK, "atteso un ViewGroup, ricevuto "
+            MorpheLog.e(MorpheLog.COPY_LINK, "expected a ViewGroup, got "
                     + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
             return;
         }
@@ -177,19 +179,19 @@ public final class PinterestUtils {
             };
             try {
                 row = buildRowReflective(container, labelText, "LINK", onClickListener);
-                MorpheLog.ok(MorpheLog.COPY_LINK, "riga aggiunta con lo stile nativo");
+                MorpheLog.ok(MorpheLog.COPY_LINK, "row added with the native style");
             } catch (Throwable t) {
                 MorpheLog.w(MorpheLog.COPY_LINK,
-                        "stile nativo non disponibile, uso la riga di fallback", t);
+                        "native style not available, using the fallback row", t);
                 row = buildRowFallback(context, labelText, container,
                         android.R.drawable.ic_menu_share, onClickListener);
-                MorpheLog.setStatus(MorpheLog.COPY_LINK, "ok — riga di fallback (stile diverso)");
+                MorpheLog.setStatus(MorpheLog.COPY_LINK, "ok — fallback row (different style)");
             }
             if (row != null) {
                 container.addView(row);
             }
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.COPY_LINK, "impossibile aggiungere la voce copia link", t);
+            MorpheLog.e(MorpheLog.COPY_LINK, "could not add the copy-link entry", t);
         }
     }
 
@@ -205,7 +207,7 @@ public final class PinterestUtils {
             clipboard.setPrimaryClip(clip);
             showNativeToast(context, getString("direct_link_copied"));
         } catch (Throwable t) {
-            Log.e(TAG, "Copia negli appunti fallita", t);
+            Log.e(TAG, "could not copy to the clipboard", t);
             showNativeToast(context, getString("failed"));
         }
     }
@@ -229,6 +231,14 @@ public final class PinterestUtils {
     /** Contatore globale, solo per diagnostica: quanti annunci sono stati rimossi in totale. */
     private static volatile int totalAdsRemoved;
 
+    /** Come {@link #totalAdsRemoved}, per i pin di prodotto: sono due opzioni distinte. */
+    private static volatile int totalShoppingPinsRemoved;
+
+    /** @return true se almeno una delle due opzioni di filtro del feed è accesa. */
+    private static boolean isFilteringEnabled() {
+        return MorpheSettingsStore.isAdsDisabled() || MorpheSettingsStore.isShoppingPinsHidden();
+    }
+
     /**
      * Hook sui costruttori delle risposte del feed (Feed, PagedResponse, ModelListWithBookmark):
      * rimuove i contenuti sponsorizzati dalle liste che l'oggetto appena costruito contiene.
@@ -237,12 +247,12 @@ public final class PinterestUtils {
         if (feedPage == null) {
             return;
         }
-        MorpheLog.hookFired(MorpheLog.ADS, "risposta " + feedPage.getClass().getName());
+        MorpheLog.hookFired(MorpheLog.ADS, "response " + feedPage.getClass().getName());
 
-        if (MorpheSettingsStore.isAdsDisabled()) {
+        if (isFilteringEnabled()) {
             filterRecursive(feedPage, 0, new IdentityHashMap<Object, Boolean>());
         } else {
-            MorpheLog.d(MorpheLog.ADS, "filtro disattivato nelle impostazioni Morphe");
+            MorpheLog.d(MorpheLog.ADS, "filter disabled in the Morphe settings");
         }
 
         // Si riusa lo stesso hook per memorizzare i pin delle bacheche: sono le uniche
@@ -254,16 +264,47 @@ public final class PinterestUtils {
     }
 
     /**
-     * Liste del feed già filtrate, per identità. Vedi {@link #filterSponsoredPinsFromList}.
+     * Liste del feed già filtrate. Vedi {@link #filterSponsoredPinsFromList}.
      *
-     * <p>Non si può usare una HashSet: {@code ArrayList.hashCode()} dipende dal contenuto,
-     * quindi cambierebbe a ogni pagina caricata. Si usano gli identity hash, e il tetto tiene
-     * la struttura piccola (le liste del feed vive contemporaneamente sono una manciata).
+     * <p>Si tengono <b>riferimenti deboli</b> confrontati per identità, non identity hash con un
+     * tetto. Con un tetto, la lista del feed principale — che è la prima a essere inserita ed è
+     * quella che vive più a lungo — sarebbe la prima a essere dimenticata: alla lettura
+     * successiva verrebbe rifiltrata mentre un RecyclerView la sta già mostrando, cioè
+     * esattamente il crash che questa struttura esiste per evitare. Con i riferimenti deboli una
+     * voce sparisce quando sparisce la lista, quindi mai mentre è ancora a schermo, e la
+     * struttura si mantiene piccola da sola.
+     *
+     * <p>Non si può usare un {@code HashSet} di liste: {@code ArrayList.hashCode()} dipende dal
+     * contenuto e cambierebbe a ogni pagina caricata.
      */
-    private static final java.util.Set<Integer> ALREADY_FILTERED_LISTS =
-            java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<Integer>());
+    private static final java.util.List<java.lang.ref.WeakReference<Object>> ALREADY_FILTERED_LISTS =
+            new java.util.ArrayList<>();
 
-    private static final int MAX_TRACKED_LISTS = 64;
+    /**
+     * Registra una lista come già filtrata, ripulendo intanto le voci morte.
+     *
+     * @return true se non l'avevamo ancora vista, cioè se va filtrata adesso.
+     */
+    private static boolean markAsFiltered(Object list) {
+        synchronized (ALREADY_FILTERED_LISTS) {
+            boolean known = false;
+            java.util.Iterator<java.lang.ref.WeakReference<Object>> iterator =
+                    ALREADY_FILTERED_LISTS.iterator();
+            while (iterator.hasNext()) {
+                Object seen = iterator.next().get();
+                if (seen == null) {
+                    iterator.remove(); // lista raccolta dal GC: la voce non serve più
+                } else if (seen == list) {
+                    known = true;
+                }
+            }
+            if (known) {
+                return false;
+            }
+            ALREADY_FILTERED_LISTS.add(new java.lang.ref.WeakReference<>(list));
+            return true;
+        }
+    }
 
     /**
      * Hook sull'accessor della lista del feed: rete di sicurezza per i percorsi che non passano
@@ -280,21 +321,12 @@ public final class PinterestUtils {
         if (!(list instanceof List)) {
             return;
         }
-        MorpheLog.hookFired(MorpheLog.ADS, "lettura lista feed");
-        if (!MorpheSettingsStore.isAdsDisabled()) {
+        MorpheLog.hookFired(MorpheLog.ADS, "reading the feed list");
+        if (!isFilteringEnabled()) {
             return;
         }
-
-        Integer identity = System.identityHashCode(list);
-        synchronized (ALREADY_FILTERED_LISTS) {
-            if (!ALREADY_FILTERED_LISTS.add(identity)) {
-                return; // già filtrata: non la tocchiamo più
-            }
-            if (ALREADY_FILTERED_LISTS.size() > MAX_TRACKED_LISTS) {
-                java.util.Iterator<Integer> oldest = ALREADY_FILTERED_LISTS.iterator();
-                oldest.next();
-                oldest.remove();
-            }
+        if (!markAsFiltered(list)) {
+            return; // già filtrata: non la tocchiamo più
         }
 
         removeAdsFrom((List<?>) list, 0);
@@ -327,35 +359,41 @@ public final class PinterestUtils {
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.ADS, "filtro fallito a profondità " + depth, t);
+            MorpheLog.e(MorpheLog.ADS, "filter failed at depth " + depth, t);
         }
     }
 
     /**
-     * Rimuove gli annunci da una lista di modelli.
+     * Rimuove da una lista di modelli quello che le opzioni attive dicono di togliere: gli
+     * annunci, i pin di prodotto, o entrambi.
+     *
+     * <p>Le due preferenze si leggono una volta per lista e non per elemento: sono su
+     * SharedPreferences, e una pagina di feed ha decine di pin.
      *
      * <p>La rimozione avviene sotto {@code synchronized} sulla lista: l'accessor del feed può
      * essere letto da thread diversi e senza questo si rischia una ConcurrentModificationException
      * durante il rendering.
      *
-     * <p>Se la pagina è composta <em>solo</em> da annunci non viene svuotata: una lista vuota fa
-     * credere all'app che il feed sia finito e blocca lo scroll infinito.
+     * <p>Se la pagina è composta <em>solo</em> da roba da togliere non viene svuotata: una lista
+     * vuota fa credere all'app che il feed sia finito e blocca lo scroll infinito.
      */
     private static void removeAdsFrom(List<?> items, int depth) {
         if (items == null || items.isEmpty()) {
             return;
         }
+        boolean removeAds = MorpheSettingsStore.isAdsDisabled();
+        boolean removeShopping = MorpheSettingsStore.isShoppingPinsHidden();
         try {
             synchronized (items) {
                 int total = items.size();
-                int adCount = 0;
+                int matching = 0;
                 for (Object item : items) {
-                    if (AdDetector.isAd(item)) {
-                        adCount++;
+                    if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)) {
+                        matching++;
                     }
                 }
-                if (adCount == 0) {
-                    // Nessun annuncio a questo livello: forse sono annidati (caroselli, "story").
+                if (matching == 0) {
+                    // Niente a questo livello: forse è annidato (caroselli, "story").
                     if (depth < MAX_FILTER_DEPTH) {
                         for (Object item : items) {
                             if (item != null && !AdDetector.isCandidateModel(item.getClass())) {
@@ -365,37 +403,58 @@ public final class PinterestUtils {
                     }
                     return;
                 }
-                if (adCount >= total) {
-                    MorpheLog.w(MorpheLog.ADS, "pagina composta da soli annunci (" + total
-                            + "): non la svuoto, altrimenti l'app crede che il feed sia finito");
+                if (matching >= total) {
+                    MorpheLog.w(MorpheLog.ADS, "page made only of items to remove (" + total
+                            + "): leaving it alone, or the app would think the feed is over");
                     return;
                 }
 
-                int removed = 0;
+                int ads = 0;
+                int shopping = 0;
                 java.util.Iterator<?> iterator = items.iterator();
                 while (iterator.hasNext()) {
-                    if (AdDetector.isAd(iterator.next())) {
-                        try {
-                            iterator.remove();
-                            removed++;
-                        } catch (UnsupportedOperationException e) {
-                            MorpheLog.w(MorpheLog.ADS, "lista immutabile ("
-                                    + items.getClass().getName() + "): impossibile rimuovere");
-                            return;
-                        }
+                    Object item = iterator.next();
+                    boolean ad = isAd(item, removeAds);
+                    if (!ad && !isShoppingPin(item, removeShopping)) {
+                        continue;
+                    }
+                    try {
+                        iterator.remove();
+                    } catch (UnsupportedOperationException e) {
+                        MorpheLog.w(MorpheLog.ADS, "immutable list ("
+                                + items.getClass().getName() + "): cannot remove anything");
+                        return;
+                    }
+                    if (ad) {
+                        ads++;
+                    } else {
+                        shopping++;
                     }
                 }
-                if (removed > 0) {
-                    totalAdsRemoved += removed;
-                    MorpheLog.i(MorpheLog.ADS, "rimossi " + removed + "/" + total
-                            + " annunci (totale sessione: " + totalAdsRemoved + ")");
-                    MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved
-                            + " annunci rimossi finora");
+                if (ads + shopping > 0) {
+                    totalAdsRemoved += ads;
+                    totalShoppingPinsRemoved += shopping;
+                    MorpheLog.i(MorpheLog.ADS, "removed " + ads + " ads and " + shopping
+                            + " product pins out of " + total + " (session total: "
+                            + totalAdsRemoved + " ads, " + totalShoppingPinsRemoved
+                            + " product pins)");
+                    MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved + " ads and "
+                            + totalShoppingPinsRemoved + " product pins removed so far");
                 }
             }
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.ADS, "rimozione dalla lista fallita", t);
+            MorpheLog.e(MorpheLog.ADS, "could not remove from the list", t);
         }
+    }
+
+    /** @param enabled se false non si guarda nemmeno il modello: l'opzione è spenta. */
+    private static boolean isAd(Object item, boolean enabled) {
+        return enabled && AdDetector.isAd(item);
+    }
+
+    /** @param enabled se false non si guarda nemmeno il modello: l'opzione è spenta. */
+    private static boolean isShoppingPin(Object item, boolean enabled) {
+        return enabled && AdDetector.isShoppingPin(item);
     }
 
     // ---------------------------------------------------------------- barra di navigazione
@@ -417,11 +476,11 @@ public final class PinterestUtils {
         MorpheLog.hookFired(MorpheLog.NAVBAR, "tab " + tabName);
 
         if (!MorpheSettingsStore.isNavTabHidden(tabOrdinal)) {
-            MorpheLog.d(MorpheLog.NAVBAR, "tab " + tabName + " non è da nascondere");
+            MorpheLog.d(MorpheLog.NAVBAR, "tab " + tabName + " is not one to hide");
             return;
         }
         if (!(navBar instanceof ViewGroup)) {
-            MorpheLog.e(MorpheLog.NAVBAR, "la barra non è un ViewGroup ma "
+            MorpheLog.e(MorpheLog.NAVBAR, "the bar is not a ViewGroup but "
                     + (navBar == null ? "null" : navBar.getClass().getName()));
             return;
         }
@@ -431,26 +490,26 @@ public final class PinterestUtils {
             if (tab == null) {
                 if (lastSeenNavTabs.isEmpty()) {
                     // Nessun tab letto: la barra non è più fatta come ci aspettiamo.
-                    MorpheLog.e(MorpheLog.NAVBAR, "nessun tab leggibile nella barra "
-                            + navBar.getClass().getName() + " — il fingerprint punta al metodo "
-                            + "giusto ma la struttura interna è cambiata");
+                    MorpheLog.e(MorpheLog.NAVBAR, "no readable tab in the bar "
+                            + navBar.getClass().getName() + " — the fingerprint points at the "
+                            + "right method but its internals have changed");
                 } else {
                     // I tab si leggono, semplicemente questo non c'è: succede, la barra non è
                     // uguale per tutti gli account. Non è un errore della patch.
-                    MorpheLog.w(MorpheLog.NAVBAR, "il tab " + tabName + " non è presente in questa "
-                            + "barra (ci sono: " + lastSeenNavTabs + "): niente da nascondere");
+                    MorpheLog.w(MorpheLog.NAVBAR, "tab " + tabName + " is not in this bar "
+                            + "(it has: " + lastSeenNavTabs + "): nothing to hide");
                 }
                 return;
             }
             View tabView = findViewAccessor(tab);
             if (tabView == null) {
-                MorpheLog.e(MorpheLog.NAVBAR, "nessun accessor View sull'elemento tab "
+                MorpheLog.e(MorpheLog.NAVBAR, "no View accessor on tab item "
                         + tab.getClass().getName());
                 return;
             }
             MorpheViews.hidePersistently(tabView, MorpheLog.NAVBAR, "tasto " + tabName);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.NAVBAR, "impossibile nascondere il tab " + tabName, t);
+            MorpheLog.e(MorpheLog.NAVBAR, "could not hide tab " + tabName, t);
         }
     }
 
@@ -496,7 +555,7 @@ public final class PinterestUtils {
                         break; // questa lista non contiene tab: passa al campo successivo
                     }
                     lastSeenNavTabs.add(name);
-                    MorpheLog.d(MorpheLog.NAVBAR, "tab presente: " + name);
+                    MorpheLog.d(MorpheLog.NAVBAR, "tab present: " + name);
                     if (tabName.equals(name)) {
                         return item;
                     }
@@ -591,13 +650,13 @@ public final class PinterestUtils {
      */
     public static List<?> filterRecentSearches(List<?> items) {
         MorpheLog.hookFired(MorpheLog.SEARCH_HISTORY,
-                "elementi suggerimenti: " + (items == null ? "null" : String.valueOf(items.size())));
+                "suggestion items: " + (items == null ? "null" : String.valueOf(items.size())));
 
         if (items == null || items.isEmpty()) {
             return items;
         }
         if (!MorpheSettingsStore.isSearchHistoryHidden()) {
-            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "opzione disattivata nelle impostazioni Morphe");
+            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "option disabled in the Morphe settings");
             return items;
         }
 
@@ -612,14 +671,14 @@ public final class PinterestUtils {
                 }
             }
             if (removed == 0) {
-                MorpheLog.d(MorpheLog.SEARCH_HISTORY, "nessun elemento di cronologia in questa lista");
+                MorpheLog.d(MorpheLog.SEARCH_HISTORY, "no history item in this list");
                 return items;
             }
-            MorpheLog.ok(MorpheLog.SEARCH_HISTORY, "rimossi " + removed + " elementi di cronologia su "
+            MorpheLog.ok(MorpheLog.SEARCH_HISTORY, "removed " + removed + " history items out of "
                     + items.size());
             return kept;
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "filtro della cronologia fallito", t);
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "the history filter failed", t);
             return items;
         }
     }
@@ -650,15 +709,158 @@ public final class PinterestUtils {
                 view == null ? "null" : view.getClass().getName());
 
         if (!MorpheSettingsStore.isSearchHistoryHidden()) {
-            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "opzione disattivata nelle impostazioni Morphe");
+            MorpheLog.d(MorpheLog.SEARCH_HISTORY, "option disabled in the Morphe settings");
             return;
         }
         if (!(view instanceof View)) {
-            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "atteso un View, ricevuto "
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "expected a View, got "
                     + (view == null ? "null" : view.getClass().getName()));
             return;
         }
-        MorpheViews.hidePersistently((View) view, MorpheLog.SEARCH_HISTORY, "ricerche recenti");
+        MorpheViews.hidePersistently((View) view, MorpheLog.SEARCH_HISTORY, "recent searches");
+    }
+
+    /**
+     * The search bar of the typeahead screen. Not obfuscated — Android custom views are inflated
+     * by their full name from XML, so R8 cannot rename it.
+     */
+    private static final String TYPEAHEAD_SEARCH_BAR =
+            "com.pinterest.feature.search.typeahead.view.TypeaheadSearchBarContainer";
+
+    /**
+     * Decides whether the full-screen spinner of a {@code PinterestLoadingLayout} may be shown.
+     *
+     * <p>Hooked at the head of {@code PinterestLoadingLayout.a(boolean)}, whose argument this
+     * replaces. With "hide search history" on, the typeahead screen keeps spinning: Pinterest
+     * builds that screen out of the very suggestions we take away, so its list stays in a state
+     * the app reads as "still loading" (issue #11). The suggestions are gone by design — the
+     * spinner promising they are about to arrive is not.
+     *
+     * <p>Narrow on purpose: the spinner is denied only on that one screen, only while the option
+     * is on, and only while the search box is <b>empty</b> — that is, exactly the state we broke.
+     * Once the user types something the screen is loading real results, and a spinner is an
+     * honest thing to show, so it is left alone.
+     *
+     * @param loadingLayout the {@code PinterestLoadingLayout} the call was made on.
+     * @param loading what Pinterest asked for.
+     * @return what Pinterest gets: {@code false} suppresses the spinner and leaves the children
+     *     of the layout visible.
+     */
+    public static boolean filterLoadingSpinner(Object loadingLayout, boolean loading) {
+        if (!loading || !(loadingLayout instanceof View)) {
+            return loading;
+        }
+        if (!MorpheSettingsStore.isSearchHistoryHidden()) {
+            return true;
+        }
+        try {
+            View searchBar = typeaheadSearchBarNextTo((View) loadingLayout);
+            if (searchBar == null) {
+                return true; // another screen: none of our business
+            }
+            if (!isQueryEmpty(searchBar)) {
+                return true; // a real search is loading
+            }
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "could not tell which screen the spinner "
+                    + "belongs to", t);
+            return true;
+        }
+        MorpheLog.hookFired(MorpheLog.SEARCH_HISTORY, "search spinner suppressed (empty query)");
+        return false;
+    }
+
+    /**
+     * @return the {@link #TYPEAHEAD_SEARCH_BAR} sitting next to this loading layout, or null if
+     *     there is none — in which case this is not the search typeahead screen. Both typeahead
+     *     layouts — {@code fragment_search_typeahead} and its bottom-bar variant — put the two
+     *     under the same parent, and no other screen pairs them.
+     */
+    private static View typeaheadSearchBarNextTo(View loadingLayout) {
+        ViewParent parent = loadingLayout.getParent();
+        if (!(parent instanceof ViewGroup)) {
+            return null;
+        }
+        ViewGroup siblings = (ViewGroup) parent;
+        for (int i = 0; i < siblings.getChildCount(); i++) {
+            View sibling = siblings.getChildAt(i);
+            if (sibling == loadingLayout) {
+                continue;
+            }
+            View searchBar = findTypeaheadSearchBar(sibling, 3);
+            if (searchBar != null) {
+                return searchBar;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param depth how many levels down to look. The search bar is either a direct sibling
+     *     (bottom-bar layout) or one level down inside an {@code AppBarLayout}; the bound keeps
+     *     this from ever walking into the suggestion list.
+     */
+    private static View findTypeaheadSearchBar(View view, int depth) {
+        if (view == null) {
+            return null;
+        }
+        if (TYPEAHEAD_SEARCH_BAR.equals(view.getClass().getName())) {
+            return view;
+        }
+        if (depth <= 0 || !(view instanceof ViewGroup)) {
+            return null;
+        }
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View found = findTypeaheadSearchBar(group.getChildAt(i), depth - 1);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return true if the user has typed nothing in the search bar.
+     *
+     * <p>Read off the {@link EditText} inside the bar rather than from Pinterest's own state:
+     * the bar holds one whichever way it is built — a {@code GestaltSearchField} wraps a
+     * {@code SearchView.SearchAutoComplete}, a {@code GestaltTextComposer} a
+     * {@code TextInputEditText}, and both are {@code EditText} subclasses. Their own classes and
+     * the fields holding them are obfuscated; {@code EditText} is framework, so it is not.
+     *
+     * <p>If no text field turns up, this returns false — spinner shown. Not being able to check
+     * the precondition is not the same as it holding, and the log line says as much, so a future
+     * Pinterest release that changes the bar shows up in the diagnostics panel instead of
+     * silently switching the spinner off everywhere on the screen.
+     */
+    private static boolean isQueryEmpty(View searchBar) {
+        EditText field = findEditText(searchBar, 8);
+        if (field == null) {
+            MorpheLog.e(MorpheLog.SEARCH_HISTORY, "no text field inside "
+                    + searchBar.getClass().getSimpleName() + ": cannot tell whether the search "
+                    + "box is empty, leaving the spinner alone");
+            return false;
+        }
+        CharSequence text = field.getText();
+        return text == null || text.length() == 0;
+    }
+
+    private static EditText findEditText(View view, int depth) {
+        if (view instanceof EditText) {
+            return (EditText) view;
+        }
+        if (view == null || depth <= 0 || !(view instanceof ViewGroup)) {
+            return null;
+        }
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            EditText found = findEditText(group.getChildAt(i), depth - 1);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- voce Impostazioni
@@ -675,9 +877,9 @@ public final class PinterestUtils {
     public static void appendMorpheSettingsEntry(Object list) {
         String rowClassName = MorpheRuntimeNames.settingsRowClass;
         if (rowClassName == null || rowClassName.isEmpty()) {
-            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "la patch non ha risolto la classe della riga "
-                    + "(" + MorpheRuntimeNames.describe() + "): voce Morphe non aggiunta. "
-                    + "Apri le impostazioni con: adb shell am start -a android.intent.action.VIEW "
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "the patch did not resolve the settings row class "
+                    + "(" + MorpheRuntimeNames.describe() + "): Morphe entry not added. "
+                    + "Open the settings with: adb shell am start -a android.intent.action.VIEW "
                     + "-d \"morphe://settings\"");
             return;
         }
@@ -685,10 +887,10 @@ public final class PinterestUtils {
     }
 
     static void appendMorpheSettingsEntry(Object list, String rowClassName, String uri) {
-        MorpheLog.hookFired(MorpheLog.SETTINGS_ENTRY, "riga=" + rowClassName + " uri=" + uri);
+        MorpheLog.hookFired(MorpheLog.SETTINGS_ENTRY, "row=" + rowClassName + " uri=" + uri);
 
         if (!(list instanceof List)) {
-            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "atteso un List, ricevuto "
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "expected a List, got "
                     + (list == null ? "null" : list.getClass().getName()));
             return;
         }
@@ -701,14 +903,14 @@ public final class PinterestUtils {
             @SuppressWarnings("unchecked")
             List<Object> entries = (List<Object>) list;
             entries.add(row);
-            MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "voce Morphe aggiunta alle Impostazioni");
+            MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "Morphe entry added to the Settings");
         } catch (ClassNotFoundException e) {
-            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "classe della riga " + rowClassName
-                    + " assente: la patch l'ha risolta su un dex diverso da quello installato", e);
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "settings row class " + rowClassName
+                    + " missing: the patch resolved it on a dex other than the installed one", e);
         } catch (UnsupportedOperationException e) {
-            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "lista delle Impostazioni immutabile", e);
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "the Settings list is immutable", e);
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "aggiunta della voce Morphe fallita", t);
+            MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "could not add the Morphe entry", t);
         }
     }
 
@@ -730,7 +932,7 @@ public final class PinterestUtils {
                 fragment == null ? "null" : fragment.getClass().getName());
 
         if (!MorpheSettingsStore.isEmailConfirmDialogDisabled()) {
-            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "opzione disattivata nelle impostazioni Morphe");
+            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "option disabled in the Morphe settings");
             return;
         }
 
@@ -747,11 +949,11 @@ public final class PinterestUtils {
             if (dialogFragment.isInstance(fragment)) {
                 Method dismiss = dialogFragment.getMethod("dismissAllowingStateLoss");
                 dismiss.invoke(fragment);
-                MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "modale chiuso (DialogFragment)");
+                MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "dialog dismissed (DialogFragment)");
                 return;
             }
         } catch (Throwable t) {
-            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "non è un DialogFragment: " + t);
+            MorpheLog.d(MorpheLog.EMAIL_DIALOG, "not a DialogFragment: " + t);
         }
 
         try {
@@ -767,10 +969,10 @@ public final class PinterestUtils {
             transactionClass.getMethod("remove", fragmentClass).invoke(transaction, fragment);
             transactionClass.getMethod("commitAllowingStateLoss").invoke(transaction);
 
-            MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "modale rimosso (FragmentTransaction)");
+            MorpheLog.ok(MorpheLog.EMAIL_DIALOG, "dialog removed (FragmentTransaction)");
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.EMAIL_DIALOG, "rimozione del modale fallita; resta comunque "
-                    + "invisibile perché la sua View è stata messa a GONE", t);
+            MorpheLog.e(MorpheLog.EMAIL_DIALOG, "could not remove the dialog; it stays invisible anyway "
+                    + "because its View was set to GONE", t);
         }
     }
 
@@ -806,11 +1008,11 @@ public final class PinterestUtils {
             @Override
             public void run() {
                 if (PinterestReflection.showGestaltToast(message, 7000)) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "toast nativo mostrato: " + message);
+                    MorpheLog.d(MorpheLog.REFLECTION, "native toast shown: " + message);
                     return;
                 }
                 MorpheLog.w(MorpheLog.REFLECTION,
-                        "toast nativo non disponibile, uso quello di sistema: " + message);
+                        "native toast not available, using the system one: " + message);
                 Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -821,7 +1023,7 @@ public final class PinterestUtils {
             @Override
             public void run() {
                 if (PinterestReflection.dismissContextualMenu()) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "menu contestuale chiuso");
+                    MorpheLog.d(MorpheLog.REFLECTION, "context menu dismissed");
                 }
             }
         });

@@ -15,7 +15,9 @@ private const val PATCH_NAME = "Disable ads"
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Removes sponsored (promoted) pins from the home feed and from search/related/board feeds.",
+    description = "Removes sponsored (promoted) pins from the home feed and from search/related/board feeds. " +
+        "Also carries the optional \"Hide product pins\" filter, which is off by default and is turned on " +
+        "from the Morphe settings screen.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

@@ -61,17 +61,17 @@ class VideoDownloadHandler {
             String mp4 = pickBestMp4Url(videoList);
             if (mp4 != null) {
                 VIDEO_URL_BY_PIN.put(uid, mp4);
-                Log.d(TAG, "MP4 associato al Pin (via tracks) " + uid);
+                Log.d(TAG, "MP4 associated with the pin (via tracks) " + uid);
             } else {
                 // No direct MP4 — capture a streaming URL as fallback for yt-dlp.
                 String streaming = pickStreamingUrl(videoList);
                 if (streaming != null) {
                     VIDEO_STREAMING_URL_BY_PIN.put(uid, streaming);
-                    Log.d(TAG, "Streaming URL (HLS/DASH) associato al Pin " + uid);
+                    Log.d(TAG, "streaming URL (HLS/DASH) associated with the pin " + uid);
                 }
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Estrazione URL dalle tracce fallita", t);
+            Log.e(TAG, "could not extract the URL from the tracks", t);
         }
     }
 
@@ -91,11 +91,11 @@ class VideoDownloadHandler {
                 uid = (String) PinterestUtils.invokeNoArg(pin, "getProfileSnapshotUid");
             }
             if (uid == null || uid.isEmpty()) {
-                MorpheLog.w(MorpheLog.VIDEO, "id del pin non ricavabile da "
+                MorpheLog.w(MorpheLog.VIDEO, "could not work out the pin id from "
                         + pin.getClass().getName());
                 return;
             }
-            MorpheLog.d(MorpheLog.VIDEO, "pin video corrente: " + uid);
+            MorpheLog.d(MorpheLog.VIDEO, "current video pin: " + uid);
             final String pinPageUrl = "https://www.pinterest.com/pin/" + uid + "/";
             PIN_PAGE_URL_BY_PIN.put(uid, pinPageUrl);
 
@@ -112,7 +112,7 @@ class VideoDownloadHandler {
                 setCurrentVideoTracks(uid, tracks);
             }
         } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.VIDEO, "estrazione dei formati video dal pin fallita", t);
+            MorpheLog.e(MorpheLog.VIDEO, "could not extract the video formats from the pin", t);
         }
     }
 
@@ -122,7 +122,7 @@ class VideoDownloadHandler {
 
     public static void addDownloadVideoOption(final Object menuContainer) {
         if (!(menuContainer instanceof ViewGroup)) {
-            Log.w(TAG, "menuContainer non è un ViewGroup: " + menuContainer);
+            Log.w(TAG, "menuContainer is not a ViewGroup: " + menuContainer);
             return;
         }
         final ViewGroup container = (ViewGroup) menuContainer;
@@ -204,7 +204,7 @@ class VideoDownloadHandler {
                                         downloadVideo(v.getContext(), resResult.videoUrl);
                                     }
                                 });
-                                MorpheLog.ok(MorpheLog.VIDEO, "MP4 diretto disponibile");
+                                MorpheLog.ok(MorpheLog.VIDEO, "direct MP4 available");
 
                             } else if (resResult.streamingUrl != null
                                     && !resResult.streamingUrl.isEmpty()) {
@@ -223,7 +223,7 @@ class VideoDownloadHandler {
                                         shareLinkToDownloader(v.getContext(), resResult.streamingUrl);
                                     }
                                 });
-                                MorpheLog.ok(MorpheLog.VIDEO, "solo streaming: voce yt-dlp");
+                                MorpheLog.ok(MorpheLog.VIDEO, "streaming only: yt-dlp entry");
 
                             } else {
                                 // ── Nessun video: il pin è un'immagine (o l'estrazione è
@@ -233,8 +233,8 @@ class VideoDownloadHandler {
                                 if (rowParent != null) {
                                     rowParent.removeView(row);
                                 }
-                                MorpheLog.d(MorpheLog.VIDEO, "nessun video su questo pin: voce "
-                                        + "rimossa dal menu (" + resResult.errorMsg + ")");
+                                MorpheLog.d(MorpheLog.VIDEO, "no video on this pin: entry "
+                                        + "removed from the menu (" + resResult.errorMsg + ")");
                             }
                         }
                     });
@@ -242,7 +242,7 @@ class VideoDownloadHandler {
             }).start();
 
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile aggiungere la voce scarica video", t);
+            Log.e(TAG, "could not add the download-video entry", t);
         }
     }
 
@@ -281,7 +281,7 @@ class VideoDownloadHandler {
             dm.enqueue(request);
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("video_download_started"));
         } catch (Throwable t) {
-            Log.e(TAG, "Download video fallito", t);
+            Log.e(TAG, "video download failed", t);
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
         }
     }
@@ -298,7 +298,7 @@ class VideoDownloadHandler {
             context.startActivity(Intent.createChooser(intent,
                 PinterestUtils.getString("download_video_external_label")));
         } catch (Throwable t) {
-            Log.e(TAG, "Impossibile aprire il selettore downloader", t);
+            Log.e(TAG, "could not open the downloader chooser", t);
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
         }
     }
@@ -329,7 +329,7 @@ class VideoDownloadHandler {
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Risoluzione URL video per il menu fallita", t);
+            Log.e(TAG, "could not resolve the video URL for the menu", t);
         }
         return null;
     }
@@ -357,7 +357,7 @@ class VideoDownloadHandler {
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Risoluzione streaming URL per il menu fallita", t);
+            Log.e(TAG, "could not resolve the streaming URL for the menu", t);
         }
         return null;
     }
@@ -393,7 +393,7 @@ class VideoDownloadHandler {
                 clazz = clazz.getSuperclass();
             }
         } catch (Throwable t) {
-            Log.e(TAG, "Risoluzione URL pagina pin per il menu fallita", t);
+            Log.e(TAG, "could not resolve the pin page URL for the menu", t);
         }
         return null;
     }

@@ -22,9 +22,11 @@ final class MorpheStrings {
     static final String SECTION_CONTENT = "section_content";
     static final String SECTION_DOWNLOAD = "section_download";
     static final String SECTION_NAVBAR = "section_navbar";
+    static final String SECTION_BACKUP = "section_backup";
     static final String SECTION_DIAGNOSTICS = "section_diagnostics";
 
     static final String ADS_TITLE = "ads_title";
+    static final String SHOPPING_PINS_TITLE = "shopping_pins_title";
     static final String SEARCH_HISTORY_TITLE = "search_history_title";
     static final String SEARCH_HISTORY_DESCRIPTION = "search_history_description";
     static final String EMAIL_DIALOG_TITLE = "email_dialog_title";
@@ -41,6 +43,15 @@ final class MorpheStrings {
     static final String VERBOSE_DESCRIPTION = "verbose_description";
     static final String DIAGNOSTICS_HINT = "diagnostics_hint";
     static final String DIAGNOSTICS_EMPTY = "diagnostics_empty";
+
+    static final String BACKUP_HINT = "backup_hint";
+    static final String BUTTON_EXPORT = "button_export";
+    static final String BUTTON_IMPORT = "button_import";
+    static final String TOAST_EXPORTED = "toast_exported";
+    static final String TOAST_IMPORTED = "toast_imported";
+    static final String TOAST_EXPORT_FAILED = "toast_export_failed";
+    static final String TOAST_IMPORT_FAILED = "toast_import_failed";
+    static final String TOAST_NO_FILE_PICKER = "toast_no_file_picker";
 
     static final String BUTTON_REFRESH = "button_refresh";
     static final String BUTTON_COPY = "button_copy";
@@ -79,6 +90,12 @@ final class MorpheStrings {
             "ナビゲーションバー", "导航栏", "내비게이션 바", "Pasek nawigacji", "Navigatiebalk",
             "Gezinme çubuğu", "شريط التنقل");
 
+        put(SECTION_BACKUP,
+            "Backup",
+            "Backup", "Copia de seguridad", "Sauvegarde", "Backup", "Cópia de segurança",
+            "Резервная копия", "バックアップ", "备份", "백업", "Kopia zapasowa", "Back-up",
+            "Yedekleme", "النسخ الاحتياطي");
+
         put(SECTION_DIAGNOSTICS,
             "Diagnostics",
             "Diagnostica", "Diagnóstico", "Diagnostic", "Diagnose", "Diagnóstico", "Диагностика",
@@ -91,6 +108,15 @@ final class MorpheStrings {
             "広告を無効にする", "禁用广告", "광고 비활성화", "Wyłącz reklamy",
             "Advertenties uitschakelen", "Reklamları devre dışı bırak", "تعطيل الإعلانات");
 
+        put(SHOPPING_PINS_TITLE,
+            "Hide sponsored products",
+            "Nascondi prodotti sponsorizzati", "Ocultar productos patrocinados",
+            "Masquer les produits sponsorisés", "Gesponserte Produkte ausblenden",
+            "Ocultar produtos patrocinados", "Скрыть спонсируемые товары",
+            "スポンサー商品を非表示", "隐藏赞助商品", "스폰서 제품 숨기기",
+            "Ukryj produkty sponsorowane", "Gesponsorde producten verbergen",
+            "Sponsorlu ürünleri gizle", "إخفاء المنتجات المموّلة");
+
         put(SEARCH_HISTORY_TITLE,
             "Hide search history",
             "Nascondi cronologia ricerche", "Ocultar historial de búsqueda",
@@ -101,42 +127,20 @@ final class MorpheStrings {
             "Arama geçmişini gizle", "إخفاء سجل البحث");
 
         put(SEARCH_HISTORY_DESCRIPTION,
-            "Removes the \"Recent searches\" section from the search screen and from the carousel "
-                + "under the search bar. Pinterest keeps storing them on its server: there is no "
-                + "way, from inside the app, to prevent that.",
-            "Toglie la sezione \"Ricerche recenti\" dalla schermata di ricerca e dal carosello "
-                + "sotto la barra. Pinterest continua a salvarle sul suo server: non esiste un "
-                + "modo, dall'app, per impedirlo.",
-            "Quita la sección «Búsquedas recientes» de la pantalla de búsqueda y del carrusel bajo "
-                + "la barra. Pinterest las sigue guardando en su servidor: desde la app no hay "
-                + "forma de impedirlo.",
-            "Retire la section « Recherches récentes » de l'écran de recherche et du carrousel "
-                + "sous la barre. Pinterest continue de les enregistrer sur son serveur : l'app ne "
-                + "permet pas de l'empêcher.",
-            "Entfernt den Bereich „Letzte Suchanfragen“ aus dem Suchbildschirm und aus dem "
-                + "Karussell unter der Leiste. Pinterest speichert sie weiterhin auf seinem "
-                + "Server: aus der App lässt sich das nicht verhindern.",
-            "Remove a secção \"Pesquisas recentes\" do ecrã de pesquisa e do carrossel abaixo da "
-                + "barra. O Pinterest continua a guardá-las no servidor: pela app não há como "
-                + "impedir.",
-            "Убирает раздел «Недавние запросы» с экрана поиска и из карусели под строкой. "
-                + "Pinterest продолжает сохранять их на сервере: из приложения это не отключить.",
-            "検索画面とバー下のカルーセルから「最近の検索」を非表示にします。Pinterest はサーバーへの保存を続けます。"
-                + "アプリからそれを止める方法はありません。",
-            "从搜索页面和搜索栏下方的轮播中移除“最近搜索”。Pinterest 仍会将其保存在服务器上：应用内无法阻止。",
-            "검색 화면과 검색창 아래 캐러셀에서 \"최근 검색\"을 숨깁니다. Pinterest는 서버에 계속 "
-                + "저장합니다. 앱에서 이를 막을 방법은 없습니다.",
-            "Usuwa sekcję „Ostatnie wyszukiwania” z ekranu wyszukiwania i z karuzeli pod paskiem. "
-                + "Pinterest nadal zapisuje je na serwerze: z poziomu aplikacji nie da się temu "
-                + "zapobiec.",
-            "Verwijdert het gedeelte \"Recente zoekopdrachten\" van het zoekscherm en uit de "
-                + "carrousel onder de balk. Pinterest blijft ze op zijn server opslaan: vanuit de "
-                + "app is dat niet te voorkomen.",
-            "Arama ekranından ve çubuğun altındaki karuselden \"Son aramalar\" bölümünü kaldırır. "
-                + "Pinterest bunları sunucusunda saklamaya devam eder: uygulama içinden bunu "
-                + "engellemenin bir yolu yok.",
-            "يزيل قسم «عمليات البحث الأخيرة» من شاشة البحث ومن الشريط الدوّار أسفل شريط البحث. "
-                + "يواصل Pinterest حفظها على خادمه، ولا سبيل لمنع ذلك من داخل التطبيق.");
+            "Only hides them: Pinterest keeps saving them on its server.",
+            "Le nasconde soltanto: Pinterest continua a salvarle sul suo server.",
+            "Solo las oculta: Pinterest las sigue guardando en su servidor.",
+            "Les masque seulement : Pinterest continue de les enregistrer sur son serveur.",
+            "Blendet sie nur aus: Pinterest speichert sie weiterhin auf seinem Server.",
+            "Apenas as oculta: o Pinterest continua a guardá-las no servidor.",
+            "Только скрывает: Pinterest продолжает сохранять их на сервере.",
+            "隠すだけです。Pinterest はサーバーへの保存を続けます。",
+            "仅隐藏：Pinterest 仍会保存在服务器上。",
+            "숨기기만 합니다. Pinterest는 서버에 계속 저장합니다.",
+            "Tylko je ukrywa: Pinterest nadal zapisuje je na serwerze.",
+            "Verbergt ze alleen: Pinterest blijft ze op zijn server opslaan.",
+            "Yalnızca gizler: Pinterest bunları sunucusunda saklamaya devam eder.",
+            "يخفيها فقط: يواصل Pinterest حفظها على خادمه.");
 
         put(EMAIL_DIALOG_TITLE,
             "Disable the \"confirm your email\" dialog",
@@ -162,34 +166,20 @@ final class MorpheStrings {
             "Hele bord downloaden", "Tüm panoyu indir", "تنزيل اللوحة بالكامل");
 
         put(BOARD_DOWNLOAD_DESCRIPTION,
-            "Adds a download entry to the board's \"…\" menu, top right. It saves the pins already "
-                + "loaded, so scroll the board to the end before using it.",
-            "Aggiunge una voce di download nel menu \"…\" della bacheca, in alto a destra. Scarica "
-                + "i pin già caricati: scorri la bacheca fino in fondo prima di usarla.",
-            "Añade una opción de descarga al menú «…» del tablero, arriba a la derecha. Descarga "
-                + "los pines ya cargados: desplázate hasta el final del tablero antes de usarla.",
-            "Ajoute une entrée de téléchargement au menu « … » du tableau, en haut à droite. "
-                + "Télécharge les pins déjà chargés : faites défiler le tableau jusqu'au bout "
-                + "avant de l'utiliser.",
-            "Fügt dem „…“-Menü der Pinnwand oben rechts einen Download-Eintrag hinzu. Lädt die "
-                + "bereits geladenen Pins herunter: scrolle die Pinnwand vorher bis zum Ende.",
-            "Adiciona uma opção de download ao menu \"…\" da pasta, no canto superior direito. "
-                + "Baixa os pins já carregados: role a pasta até ao fim antes de usar.",
-            "Добавляет пункт загрузки в меню «…» доски, вверху справа. Скачивает уже загруженные "
-                + "пины: прокрутите доску до конца перед использованием.",
-            "ボード右上の「…」メニューにダウンロード項目を追加します。読み込み済みのピンを保存するので、"
-                + "先にボードを最後までスクロールしてください。",
-            "在画板右上角的“…”菜单中添加下载项。只下载已加载的 Pin：请先将画板滚动到底部。",
-            "보드 오른쪽 위 \"…\" 메뉴에 다운로드 항목을 추가합니다. 이미 불러온 핀을 저장하므로 "
-                + "먼저 보드를 끝까지 스크롤하세요.",
-            "Dodaje pozycję pobierania do menu „…” tablicy w prawym górnym rogu. Pobiera już "
-                + "wczytane piny: najpierw przewiń tablicę do końca.",
-            "Voegt een downloadoptie toe aan het \"…\"-menu van het bord, rechtsboven. Downloadt "
-                + "de al geladen pins: scrol het bord eerst helemaal door.",
-            "Panonun sağ üstündeki \"…\" menüsüne bir indirme seçeneği ekler. Yüklenmiş pinleri "
-                + "indirir: önce panoyu sonuna kadar kaydırın.",
-            "يضيف خيار تنزيل إلى قائمة «…» الخاصة باللوحة أعلى اليمين. ينزّل الدبابيس المحمّلة "
-                + "بالفعل: مرّر اللوحة حتى نهايتها أولاً.");
+            "Saves the pins already loaded: scroll the board to the end first.",
+            "Scarica i pin già caricati: scorri prima la bacheca fino in fondo.",
+            "Descarga los pines ya cargados: desplázate antes hasta el final del tablero.",
+            "Télécharge les pins déjà chargés : faites d'abord défiler le tableau jusqu'au bout.",
+            "Lädt die bereits geladenen Pins: scrolle die Pinnwand vorher bis zum Ende.",
+            "Baixa os pins já carregados: role a pasta até ao fim primeiro.",
+            "Скачивает уже загруженные пины: сначала прокрутите доску до конца.",
+            "読み込み済みのピンを保存します。先にボードを最後までスクロールしてください。",
+            "只下载已加载的 Pin：请先将画板滚动到底部。",
+            "이미 불러온 핀을 저장합니다. 먼저 보드를 끝까지 스크롤하세요.",
+            "Pobiera już wczytane piny: najpierw przewiń tablicę do końca.",
+            "Downloadt de al geladen pins: scrol het bord eerst helemaal door.",
+            "Yüklenmiş pinleri indirir: önce panoyu sonuna kadar kaydırın.",
+            "ينزّل الدبابيس المحمّلة بالفعل: مرّر اللوحة حتى نهايتها أولاً.");
 
         put(HIDE_SEARCH_TITLE,
             "Hide Search button",
@@ -216,33 +206,20 @@ final class MorpheStrings {
             "Bildirimler düğmesini gizle", "إخفاء زر الإشعارات");
 
         put(NAVBAR_NOTE,
-            "Home and Profile cannot be hidden: Profile is the only way back into Settings, and "
-                + "therefore into this screen.",
-            "Home e Profilo non si possono nascondere: Profilo è l'unica strada per rientrare "
-                + "nelle Impostazioni, e quindi in questa schermata.",
-            "Inicio y Perfil no se pueden ocultar: Perfil es el único camino de vuelta a Ajustes "
-                + "y, por tanto, a esta pantalla.",
-            "Accueil et Profil ne peuvent pas être masqués : Profil est le seul chemin vers les "
-                + "Réglages, et donc vers cet écran.",
-            "Start und Profil lassen sich nicht ausblenden: Profil ist der einzige Weg zurück in "
-                + "die Einstellungen und damit zu diesem Bildschirm.",
-            "Início e Perfil não podem ser ocultados: Perfil é o único caminho de volta às "
-                + "Definições e, portanto, a este ecrã.",
-            "«Главная» и «Профиль» скрыть нельзя: профиль — единственный путь обратно в "
-                + "настройки, а значит и на этот экран.",
-            "ホームとプロフィールは非表示にできません。設定 — つまりこの画面 — に戻れる唯一の入口が"
-                + "プロフィールだからです。",
-            "首页和个人主页无法隐藏：个人主页是回到设置、也就是回到本页面的唯一入口。",
-            "홈과 프로필은 숨길 수 없습니다. 프로필이 설정으로, 따라서 이 화면으로 돌아오는 유일한 "
-                + "경로이기 때문입니다.",
-            "Strony głównej i Profilu nie można ukryć: Profil to jedyna droga powrotu do Ustawień, "
-                + "a więc i do tego ekranu.",
-            "Home en Profiel kunnen niet worden verborgen: Profiel is de enige weg terug naar "
-                + "Instellingen, en dus naar dit scherm.",
-            "Ana sayfa ve Profil gizlenemez: Ayarlara, dolayısıyla bu ekrana dönmenin tek yolu "
-                + "Profildir.",
-            "لا يمكن إخفاء «الرئيسية» و«الملف الشخصي»: الملف الشخصي هو الطريق الوحيد للعودة إلى "
-                + "الإعدادات، ومن ثَمّ إلى هذه الشاشة.");
+            "Home and Profile cannot be hidden: Profile is the only way back here.",
+            "Home e Profilo non si possono nascondere: da Profilo si torna qui.",
+            "Inicio y Perfil no se pueden ocultar: por Perfil se vuelve aquí.",
+            "Accueil et Profil ne peuvent pas être masqués : on revient ici par Profil.",
+            "Start und Profil lassen sich nicht ausblenden: über Profil kommt man hierher zurück.",
+            "Início e Perfil não podem ser ocultados: por Perfil volta-se aqui.",
+            "«Главная» и «Профиль» скрыть нельзя: через профиль сюда возвращаются.",
+            "ホームとプロフィールは非表示にできません。ここに戻れる入口だからです。",
+            "首页和个人主页无法隐藏：个人主页是回到本页面的唯一入口。",
+            "홈과 프로필은 숨길 수 없습니다. 프로필이 이 화면으로 오는 유일한 경로입니다.",
+            "Strony głównej i Profilu nie można ukryć: przez Profil wraca się tutaj.",
+            "Home en Profiel kunnen niet worden verborgen: via Profiel kom je hier terug.",
+            "Ana sayfa ve Profil gizlenemez: buraya dönüş yolu Profildir.",
+            "لا يمكن إخفاء «الرئيسية» و«الملف الشخصي»: من الملف الشخصي تعود إلى هنا.");
 
         put(VERBOSE_TITLE,
             "Verbose logging in logcat",
@@ -270,49 +247,110 @@ final class MorpheStrings {
             "يسجّل ما يفعله كل تعديل: adb logcat -s Morphe:V");
 
         put(DIAGNOSTICS_HINT,
-            "Hooks that fired in this session. If an entry is missing, that hook never ran: the "
-                + "problem is in the patch, not in the app.",
-            "Hook scattati in questa sessione. Se una voce manca, quell'aggancio non è mai stato "
-                + "eseguito: il problema è nella patch, non nell'app.",
-            "Hooks ejecutados en esta sesión. Si falta una entrada, ese enganche nunca se "
-                + "ejecutó: el problema está en el parche, no en la app.",
-            "Hooks déclenchés pendant cette session. Si une entrée manque, ce point d'accroche "
-                + "n'a jamais été exécuté : le problème vient du patch, pas de l'app.",
-            "In dieser Sitzung ausgelöste Hooks. Fehlt ein Eintrag, wurde dieser Hook nie "
-                + "ausgeführt: das Problem liegt im Patch, nicht in der App.",
-            "Hooks disparados nesta sessão. Se faltar uma entrada, esse gancho nunca correu: o "
-                + "problema está no patch, não na app.",
-            "Хуки, сработавшие в этой сессии. Если записи нет, этот хук ни разу не выполнялся: "
-                + "проблема в патче, а не в приложении.",
-            "このセッションで実行されたフックです。項目がなければ、そのフックは一度も実行されていません。"
-                + "問題はアプリではなくパッチ側にあります。",
-            "本次会话中触发的 hook。若某项缺失，说明该 hook 从未执行：问题出在补丁，而非应用。",
-            "이번 세션에서 실행된 후크입니다. 항목이 없다면 그 후크는 한 번도 실행되지 않은 것입니다. "
-                + "문제는 앱이 아니라 패치에 있습니다.",
-            "Hooki uruchomione w tej sesji. Jeśli pozycji brakuje, ten hook nigdy się nie "
-                + "wykonał: problem jest w łatce, nie w aplikacji.",
-            "Hooks die in deze sessie zijn afgevuurd. Ontbreekt een regel, dan is die hook nooit "
-                + "uitgevoerd: het probleem zit in de patch, niet in de app.",
-            "Bu oturumda tetiklenen hook'lar. Bir satır eksikse o hook hiç çalışmamıştır: sorun "
-                + "uygulamada değil, yamadadır.",
-            "الخطافات التي عملت في هذه الجلسة. إذا غاب أحد البنود فذلك الخطاف لم يُنفَّذ قط: "
-                + "المشكلة في التعديل لا في التطبيق.");
+            "Hooks that fired in this session. A missing entry never ran.",
+            "Hook scattati in questa sessione. Una voce che manca non è mai partita.",
+            "Hooks ejecutados en esta sesión. Una entrada que falta nunca se ejecutó.",
+            "Hooks déclenchés dans cette session. Une entrée absente ne s'est jamais exécutée.",
+            "In dieser Sitzung ausgelöste Hooks. Ein fehlender Eintrag lief nie.",
+            "Hooks disparados nesta sessão. Uma entrada em falta nunca correu.",
+            "Хуки, сработавшие в этой сессии. Отсутствующая запись не выполнялась.",
+            "このセッションで実行されたフックです。項目がなければ一度も実行されていません。",
+            "本次会话中触发的 hook。缺失的项从未执行。",
+            "이번 세션에서 실행된 후크입니다. 없는 항목은 실행된 적이 없습니다.",
+            "Hooki uruchomione w tej sesji. Brakująca pozycja nigdy się nie wykonała.",
+            "Hooks die in deze sessie zijn afgevuurd. Een ontbrekende regel liep nooit.",
+            "Bu oturumda tetiklenen hook'lar. Eksik bir satır hiç çalışmamıştır.",
+            "الخطافات التي عملت في هذه الجلسة. البند الغائب لم يُنفَّذ قط.");
 
         put(DIAGNOSTICS_EMPTY,
-            "No hook has run yet.\nOpen the feed or a pin menu, then come back.",
-            "Nessun hook ancora eseguito.\nApri il feed o il menu di un pin e torna qui.",
-            "Ningún hook se ha ejecutado aún.\nAbre el feed o el menú de un pin y vuelve aquí.",
-            "Aucun hook n'a encore été exécuté.\nOuvrez le feed ou le menu d'un pin, puis revenez.",
-            "Noch kein Hook ausgeführt.\nÖffne den Feed oder das Menü eines Pins und komm zurück.",
-            "Nenhum hook foi executado ainda.\nAbre o feed ou o menu de um pin e volta aqui.",
-            "Ни один хук ещё не выполнялся.\nОткройте ленту или меню пина и вернитесь сюда.",
-            "まだ実行されたフックはありません。\nフィードかピンのメニューを開いてから戻ってください。",
-            "还没有 hook 被执行。\n请打开信息流或某个 Pin 的菜单后再回到这里。",
-            "아직 실행된 후크가 없습니다.\n피드나 핀 메뉴를 연 뒤 다시 돌아오세요.",
-            "Żaden hook jeszcze się nie wykonał.\nOtwórz feed lub menu pina i wróć tutaj.",
-            "Er is nog geen hook uitgevoerd.\nOpen de feed of het menu van een pin en kom terug.",
-            "Henüz çalışan bir hook yok.\nAkışı veya bir pinin menüsünü açıp geri dönün.",
-            "لم يُنفَّذ أي خطاف بعد.\nافتح الموجز أو قائمة أحد الدبابيس ثم عُد إلى هنا.");
+            "No hook has run yet. Open the feed and come back.",
+            "Nessun hook ancora eseguito. Apri il feed e torna qui.",
+            "Ningún hook se ha ejecutado aún. Abre el feed y vuelve aquí.",
+            "Aucun hook exécuté pour l'instant. Ouvrez le feed puis revenez.",
+            "Noch kein Hook ausgeführt. Öffne den Feed und komm zurück.",
+            "Nenhum hook foi executado ainda. Abre o feed e volta aqui.",
+            "Ни один хук ещё не выполнялся. Откройте ленту и вернитесь.",
+            "まだ実行されたフックはありません。フィードを開いてから戻ってください。",
+            "还没有 hook 被执行。请打开信息流后再回来。",
+            "아직 실행된 후크가 없습니다. 피드를 연 뒤 다시 오세요.",
+            "Żaden hook jeszcze się nie wykonał. Otwórz feed i wróć tutaj.",
+            "Er is nog geen hook uitgevoerd. Open de feed en kom terug.",
+            "Henüz çalışan bir hook yok. Akışı açıp geri dönün.",
+            "لم يُنفَّذ أي خطاف بعد. افتح الموجز ثم عُد إلى هنا.");
+
+        put(BACKUP_HINT,
+            "Reinstalling the patched app wipes the switches: export before you repatch.",
+            "Reinstallare l'app patchata azzera gli interruttori: esporta prima di ripatchare.",
+            "Reinstalar la app parcheada borra los interruptores: exporta antes de reparchear.",
+            "Réinstaller l'app patchée efface les réglages : exportez avant de re-patcher.",
+            "Beim Neuinstallieren der gepatchten App gehen die Schalter verloren: vorher exportieren.",
+            "Reinstalar a app com patch apaga os interruptores: exporta antes de repatchar.",
+            "Переустановка пропатченного приложения стирает переключатели: экспортируйте заранее.",
+            "パッチ済みアプリを入れ直すと設定が消えます。再パッチの前にエクスポートを。",
+            "重装打过补丁的应用会清空开关：请在重新打补丁前导出。",
+            "패치된 앱을 다시 설치하면 설정이 지워집니다. 다시 패치하기 전에 내보내세요.",
+            "Ponowna instalacja załatanej aplikacji kasuje przełączniki: wyeksportuj wcześniej.",
+            "Het opnieuw installeren van de gepatchte app wist de schakelaars: exporteer eerst.",
+            "Yamalı uygulamayı yeniden kurmak anahtarları siler: önce dışa aktarın.",
+            "تثبيت التطبيق المعدَّل من جديد يمسح المفاتيح: صدِّرها قبل إعادة التعديل.");
+
+        put(BUTTON_EXPORT,
+            "Export",
+            "Esporta", "Exportar", "Exporter", "Exportieren", "Exportar", "Экспорт",
+            "エクスポート", "导出", "내보내기", "Eksportuj", "Exporteren", "Dışa aktar", "تصدير");
+
+        put(BUTTON_IMPORT,
+            "Import",
+            "Importa", "Importar", "Importer", "Importieren", "Importar", "Импорт",
+            "インポート", "导入", "가져오기", "Importuj", "Importeren", "İçe aktar", "استيراد");
+
+        put(TOAST_EXPORTED,
+            "Settings exported",
+            "Impostazioni esportate", "Ajustes exportados", "Réglages exportés",
+            "Einstellungen exportiert", "Definições exportadas", "Настройки экспортированы",
+            "設定をエクスポートしました", "已导出设置", "설정을 내보냈습니다",
+            "Wyeksportowano ustawienia", "Instellingen geëxporteerd", "Ayarlar dışa aktarıldı",
+            "تم تصدير الإعدادات");
+
+        put(TOAST_IMPORTED,
+            "%d settings imported",
+            "%d impostazioni importate", "%d ajustes importados", "%d réglages importés",
+            "%d Einstellungen importiert", "%d definições importadas", "Импортировано настроек: %d",
+            "%d 件の設定をインポートしました", "已导入 %d 项设置", "설정 %d개를 가져왔습니다",
+            "Zaimportowano ustawienia: %d", "%d instellingen geïmporteerd",
+            "%d ayar içe aktarıldı", "تم استيراد %d من الإعدادات");
+
+        put(TOAST_EXPORT_FAILED,
+            "Export failed: ",
+            "Esportazione non riuscita: ", "No se pudo exportar: ", "Échec de l'export : ",
+            "Export fehlgeschlagen: ", "Não foi possível exportar: ", "Не удалось экспортировать: ",
+            "エクスポートできませんでした: ", "导出失败：", "내보내지 못했습니다: ",
+            "Nie udało się wyeksportować: ", "Exporteren mislukt: ", "Dışa aktarılamadı: ",
+            "تعذّر التصدير: ");
+
+        put(TOAST_IMPORT_FAILED,
+            "Import failed: ",
+            "Importazione non riuscita: ", "No se pudo importar: ", "Échec de l'import : ",
+            "Import fehlgeschlagen: ", "Não foi possível importar: ", "Не удалось импортировать: ",
+            "インポートできませんでした: ", "导入失败：", "가져오지 못했습니다: ",
+            "Nie udało się zaimportować: ", "Importeren mislukt: ", "İçe aktarılamadı: ",
+            "تعذّر الاستيراد: ");
+
+        put(TOAST_NO_FILE_PICKER,
+            "No app on this phone can pick a file",
+            "Nessuna app su questo telefono può scegliere un file",
+            "Ninguna app de este teléfono puede elegir un archivo",
+            "Aucune app de ce téléphone ne permet de choisir un fichier",
+            "Keine App auf diesem Telefon kann eine Datei auswählen",
+            "Nenhuma app deste telemóvel consegue escolher um ficheiro",
+            "На этом телефоне нет приложения для выбора файла",
+            "この端末にはファイルを選べるアプリがありません",
+            "此手机上没有可以选择文件的应用",
+            "이 휴대폰에는 파일을 선택할 수 있는 앱이 없습니다",
+            "Żadna aplikacja na tym telefonie nie umie wybrać pliku",
+            "Geen app op deze telefoon kan een bestand kiezen",
+            "Bu telefonda dosya seçebilecek bir uygulama yok",
+            "لا يوجد على هذا الهاتف تطبيق يمكنه اختيار ملف");
 
         put(BUTTON_REFRESH,
             "Refresh",
@@ -412,8 +450,8 @@ final class MorpheStrings {
     private static void put(String key, String english, String... translations) {
         if (translations.length != LANGUAGES.length) {
             // Una traduzione mancante sfaserebbe tutte le colonne successive: meglio fallire.
-            throw new IllegalStateException("MorpheStrings." + key + ": attese "
-                    + LANGUAGES.length + " traduzioni, trovate " + translations.length);
+            throw new IllegalStateException("MorpheStrings." + key + ": expected "
+                    + LANGUAGES.length + " translations, found " + translations.length);
         }
         String[] values = new String[translations.length + 1];
         values[0] = english;

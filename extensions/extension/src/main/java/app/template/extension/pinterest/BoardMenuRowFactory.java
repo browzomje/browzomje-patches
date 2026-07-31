@@ -49,14 +49,14 @@ final class BoardMenuRowFactory {
         Method indexGetter = noArgIntGetter(rowClass, INDEX_GETTER);
         Method titleGetter = titleResourceGetter(rowClass);
         if (indexGetter == null || titleGetter == null) {
-            MorpheLog.e(MorpheLog.BOARD_MENU, "la voce " + rowClass.getName()
-                    + " non espone i due getter interi attesi (posizione e id del titolo)");
+            MorpheLog.e(MorpheLog.BOARD_MENU, "entry " + rowClass.getName()
+                    + " does not expose the two expected int getters (position and title id)");
             return null;
         }
 
         Constructor<?> constructor = widestConstructor(rowClass);
         if (constructor == null) {
-            MorpheLog.e(MorpheLog.BOARD_MENU, "nessun costruttore utilizzabile su " + rowClass.getName());
+            MorpheLog.e(MorpheLog.BOARD_MENU, "no usable constructor on " + rowClass.getName());
             return null;
         }
         constructor.setAccessible(true);
@@ -96,8 +96,8 @@ final class BoardMenuRowFactory {
             }
         }
 
-        MorpheLog.e(MorpheLog.BOARD_MENU, "nessuna combinazione di parametri produce una voce "
-                + "coerente per " + rowClass.getName() + ": voce non aggiunta");
+        MorpheLog.e(MorpheLog.BOARD_MENU, "no combination of parameters yields a consistent entry "
+                + "for " + rowClass.getName() + ": entry not added");
         return null;
     }
 
@@ -127,8 +127,8 @@ final class BoardMenuRowFactory {
                 }
             }
         }
-        MorpheLog.d(MorpheLog.BOARD_MENU, "nessun enum icona con una costante " + ICON_NAME
-                + ": la voce resta senza icona");
+        MorpheLog.d(MorpheLog.BOARD_MENU, "no icon enum has a " + ICON_NAME + " constant"
+                + ": the entry stays without an icon");
     }
 
     /**

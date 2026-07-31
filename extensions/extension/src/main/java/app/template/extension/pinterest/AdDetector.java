@@ -65,8 +65,27 @@ final class AdDetector {
             "ad_data"
     ));
 
+    /**
+     * Campi che identificano un pin di catalogo di un negozio: il nome e il dominio del
+     * commerciante, e le sue "shopping flags".
+     *
+     * <p>Sono una cosa <em>diversa</em> dai marcatori qui sopra, e la distinzione è il motivo per
+     * cui esistono due opzioni separate. Un pin di prodotto non è un annuncio: Pinterest non lo
+     * marca come promosso e non gli mette l'etichetta "Promoted" che invece mette agli annunci
+     * veri. È contenuto organico, che però nel feed occupa il posto di un annuncio e come tale
+     * viene percepito (issue #15) — da cui l'opzione, spenta per default.
+     */
+    private static final Set<String> SHOPPING_MARKERS = new HashSet<>(Arrays.asList(
+            "canonical_merchant_name",
+            "canonical_merchant_domain",
+            "shopping_flags"
+    ));
+
     /** Cache: classe del modello -> campi marcatore già resi accessibili. */
     private static final Map<Class<?>, List<Field>> MARKER_CACHE = new ConcurrentHashMap<>();
+
+    /** Come {@link #MARKER_CACHE}, per i campi di {@link #SHOPPING_MARKERS}. */
+    private static final Map<Class<?>, List<Field>> SHOPPING_MARKER_CACHE = new ConcurrentHashMap<>();
 
     /** Cache: classe dell'annotazione -> metodo {@code value()}. */
     private static final Map<Class<?>, Method> ANNOTATION_VALUE_CACHE = new ConcurrentHashMap<>();
@@ -78,41 +97,62 @@ final class AdDetector {
 
     /** @return true se il modello è un contenuto sponsorizzato. */
     static boolean isAd(Object model) {
-        if (model == null) {
-            return false;
-        }
-        List<Field> markers = markersFor(model.getClass());
-        if (markers.isEmpty()) {
-            return false;
-        }
+        return matches(model, markersFor(model), "ad");
+    }
+
+    /**
+     * @return true se il modello è un pin di catalogo di un negozio. Vedi {@link #SHOPPING_MARKERS}
+     *     per perché è tenuto distinto da {@link #isAd}.
+     */
+    static boolean isShoppingPin(Object model) {
+        return matches(model, shoppingMarkersFor(model), "product pin");
+    }
+
+    /**
+     * @param markers i campi da esaminare; il primo valorizzato decide.
+     * @param what come chiamare la cosa nel log, per distinguere a colpo d'occhio quale delle due
+     *     opzioni ha tolto un pin.
+     */
+    private static boolean matches(Object model, List<Field> markers, String what) {
         for (Field field : markers) {
             try {
-                Object value = field.get(model);
-                if (value == null) {
-                    continue;
-                }
-                if (value instanceof Boolean) {
-                    if ((Boolean) value) {
-                        MorpheLog.d(MorpheLog.ADS, "annuncio: " + model.getClass().getSimpleName()
-                                + " marcato da " + serializedNameOf(field));
-                        return true;
-                    }
-                } else if (value instanceof CharSequence) {
-                    if (((CharSequence) value).length() > 0) {
-                        MorpheLog.d(MorpheLog.ADS, "annuncio: " + model.getClass().getSimpleName()
-                                + " marcato da " + serializedNameOf(field));
-                        return true;
-                    }
-                } else {
-                    MorpheLog.d(MorpheLog.ADS, "annuncio: " + model.getClass().getSimpleName()
-                            + " marcato da " + serializedNameOf(field));
+                if (isSet(field.get(model))) {
+                    MorpheLog.d(MorpheLog.ADS, what + ": " + model.getClass().getSimpleName()
+                            + " marked by " + serializedNameOf(field));
                     return true;
                 }
             } catch (Throwable t) {
-                MorpheLog.w(MorpheLog.ADS, "lettura del campo " + field.getName() + " fallita", t);
+                MorpheLog.w(MorpheLog.ADS, "could not read field " + field.getName(), t);
             }
         }
         return false;
+    }
+
+    /**
+     * @return true se il campo è valorizzato, cioè se la sua presenza conta come marcatore.
+     *
+     * <p>Un booleano vale se è vero, una stringa se non è vuota, una collezione se ha elementi —
+     * {@code shopping_flags} è una {@code List<Integer>} e una lista vuota significa "nessuna
+     * shopping flag", non "è un prodotto". Qualsiasi altro oggetto vale per il solo fatto di non
+     * essere nullo.
+     */
+    private static boolean isSet(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof CharSequence) {
+            return ((CharSequence) value).length() > 0;
+        }
+        if (value instanceof java.util.Collection) {
+            return !((java.util.Collection<?>) value).isEmpty();
+        }
+        if (value instanceof Map) {
+            return !((Map<?, ?>) value).isEmpty();
+        }
+        return true;
     }
 
     /**
@@ -121,15 +161,33 @@ final class AdDetector {
      *     dentro oggetti che sono già stati valutati.
      */
     static boolean isCandidateModel(Class<?> clazz) {
-        return !markersFor(clazz).isEmpty();
+        return !markersFor(clazz, MARKER_CACHE, "ad markers").isEmpty();
     }
 
-    private static List<Field> markersFor(Class<?> clazz) {
-        List<Field> cached = MARKER_CACHE.get(clazz);
+    private static List<Field> markersFor(Object model) {
+        return model == null
+                ? NO_MARKERS
+                : markersFor(model.getClass(), MARKER_CACHE, "ad markers");
+    }
+
+    private static List<Field> shoppingMarkersFor(Object model) {
+        return model == null
+                ? NO_MARKERS
+                : markersFor(model.getClass(), SHOPPING_MARKER_CACHE, "product markers");
+    }
+
+    /**
+     * @param cache dove memorizzare il risultato: distingue anche <em>quali</em> marcatori
+     *     cercare, dato che ogni cache ne ha una sola specie.
+     */
+    private static List<Field> markersFor(Class<?> clazz, Map<Class<?>, List<Field>> cache,
+                                          String what) {
+        List<Field> cached = cache.get(clazz);
         if (cached != null) {
             return cached;
         }
 
+        boolean shopping = cache == SHOPPING_MARKER_CACHE;
         List<Field> markers = new ArrayList<>();
         try {
             Class<?> current = clazz;
@@ -139,9 +197,11 @@ final class AdDetector {
                     if (serializedName == null) {
                         continue;
                     }
-                    boolean isMarker = BOOLEAN_MARKERS.contains(serializedName)
-                            || STRING_MARKERS.contains(serializedName)
-                            || OBJECT_MARKERS.contains(serializedName);
+                    boolean isMarker = shopping
+                            ? SHOPPING_MARKERS.contains(serializedName)
+                            : BOOLEAN_MARKERS.contains(serializedName)
+                                    || STRING_MARKERS.contains(serializedName)
+                                    || OBJECT_MARKERS.contains(serializedName);
                     if (isMarker) {
                         field.setAccessible(true);
                         markers.add(field);
@@ -150,14 +210,14 @@ final class AdDetector {
                 current = current.getSuperclass();
             }
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.ADS, "scansione dei marcatori su " + clazz.getName() + " fallita", t);
+            MorpheLog.w(MorpheLog.ADS, "could not scan " + clazz.getName() + " for markers", t);
         }
 
         List<Field> result = markers.isEmpty() ? NO_MARKERS : Collections.unmodifiableList(markers);
-        MARKER_CACHE.put(clazz, result);
+        cache.put(clazz, result);
         if (!result.isEmpty()) {
-            MorpheLog.i(MorpheLog.ADS, "modello riconosciuto: " + clazz.getName()
-                    + " con " + result.size() + " marcatori pubblicitari");
+            MorpheLog.i(MorpheLog.ADS, "model recognised: " + clazz.getName()
+                    + " with " + result.size() + " " + what);
         }
         return result;
     }
@@ -221,8 +281,7 @@ final class AdDetector {
             return field.get(model);
         } catch (Throwable t) {
             MorpheLog.w(MorpheLog.REFLECTION,
-                    "lettura del campo \"" + jsonName + "\" da " + model.getClass().getName()
-                            + " fallita", t);
+                    "could not read field \"" + jsonName + "\" from " + model.getClass().getName(), t);
             return null;
         }
     }
@@ -257,21 +316,21 @@ final class AdDetector {
             }
         } catch (Throwable t) {
             MorpheLog.w(MorpheLog.REFLECTION,
-                    "indicizzazione dei campi di " + clazz.getName() + " fallita", t);
+                    "could not index the fields of " + clazz.getName(), t);
         }
 
         Map<String, Field> result = Collections.unmodifiableMap(index);
         FIELD_INDEX_CACHE.put(clazz, result);
-        MorpheLog.d(MorpheLog.REFLECTION, "indicizzati " + result.size()
-                + " campi JSON di " + clazz.getName());
+        MorpheLog.d(MorpheLog.REFLECTION, "indexed " + result.size()
+                + " JSON fields of " + clazz.getName());
         return result;
     }
 
     /** Diagnostica: elenca tutti i nomi JSON "ad-like" di una classe. Usata solo nei log. */
     static String describeMarkers(Class<?> clazz) {
-        List<Field> markers = markersFor(clazz);
+        List<Field> markers = markersFor(clazz, MARKER_CACHE, "ad markers");
         if (markers.isEmpty()) {
-            return clazz.getName() + ": nessun marcatore pubblicitario";
+            return clazz.getName() + ": no ad marker";
         }
         StringBuilder sb = new StringBuilder(clazz.getName()).append(": ");
         for (int i = 0; i < markers.size(); i++) {

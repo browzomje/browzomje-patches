@@ -30,7 +30,7 @@ final class MorpheViews {
      */
     static void hidePersistently(final View view, final String channel, final String what) {
         if (view == null) {
-            MorpheLog.w(channel, "impossibile nascondere " + what + ": view nulla");
+            MorpheLog.w(channel, "could not hide " + what + ": null view");
             return;
         }
 
@@ -46,13 +46,13 @@ final class MorpheViews {
             public void onLayoutChange(View v, int left, int top, int right, int bottom,
                                        int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 if (v.getVisibility() != View.GONE || v.getHeight() != 0) {
-                    MorpheLog.d(channel, what + " ripristinato dall'app: lo rinascondo");
+                    MorpheLog.d(channel, what + " was restored by the app: hiding it again");
                     apply(v);
                 }
             }
         });
 
-        MorpheLog.ok(channel, what + " nascosto (" + view.getClass().getSimpleName() + ")");
+        MorpheLog.ok(channel, what + " hidden (" + view.getClass().getSimpleName() + ")");
     }
 
     /** Rende di nuovo visibile una View precedentemente nascosta (toggle spento a runtime). */

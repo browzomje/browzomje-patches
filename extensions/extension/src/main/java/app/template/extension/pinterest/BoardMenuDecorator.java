@@ -61,7 +61,7 @@ final class BoardMenuDecorator {
             Method itemsGetter = noArgGetterReturning(menuClass, List.class);
             Method handlerGetter = noArgGetterReturning(menuClass, function1Class);
             if (itemsGetter == null || handlerGetter == null) {
-                MorpheLog.e(MorpheLog.BOARD_MENU, "il menu non espone elenco voci e callback: "
+                MorpheLog.e(MorpheLog.BOARD_MENU, "the menu exposes neither an item list nor a callback: "
                         + menuClass.getName());
                 return menu;
             }
@@ -70,13 +70,13 @@ final class BoardMenuDecorator {
             Constructor<?> constructor = findConstructor(menuClass, function1Class);
             if (constructor == null) {
                 MorpheLog.e(MorpheLog.BOARD_MENU,
-                        "nessun costruttore (intestazione, List, Function1) su " + menuClass.getName());
+                        "no (header, List, Function1) constructor on " + menuClass.getName());
                 return menu;
             }
 
             List<?> items = (List<?>) itemsGetter.invoke(menu);
             if (items == null || items.isEmpty()) {
-                MorpheLog.d(MorpheLog.BOARD_MENU, "menu senza voci: niente da decorare");
+                MorpheLog.d(MorpheLog.BOARD_MENU, "menu has no items: nothing to decorate");
                 return menu;
             }
 
@@ -87,7 +87,7 @@ final class BoardMenuDecorator {
             int labelResource = labelResource();
             if (labelResource == 0) {
                 MorpheLog.e(MorpheLog.BOARD_MENU,
-                        "string resource \"" + LABEL_STRING_RESOURCE + "\" non trovata nell'APK");
+                        "string resource \"" + LABEL_STRING_RESOURCE + "\" not found in the APK");
                 return menu;
             }
 
@@ -107,12 +107,12 @@ final class BoardMenuDecorator {
                     new DownloadAwareHandler(handler, downloadIndex));
 
             Object result = constructor.newInstance(header, decorated, wrappedHandler);
-            MorpheLog.ok(MorpheLog.BOARD_MENU, "voce di download aggiunta al menu della bacheca "
-                    + "(posizione " + downloadIndex + ")");
+            MorpheLog.ok(MorpheLog.BOARD_MENU, "download entry added to the board menu "
+                    + "(position " + downloadIndex + ")");
             return result;
         } catch (Throwable t) {
             // Qualunque cosa vada storta, l'app deve continuare a mostrare il suo menu.
-            MorpheLog.e(MorpheLog.BOARD_MENU, "impossibile decorare il menu della bacheca", t);
+            MorpheLog.e(MorpheLog.BOARD_MENU, "could not decorate the board menu", t);
             return menu;
         }
     }
@@ -142,7 +142,7 @@ final class BoardMenuDecorator {
                     && (Integer) args[0] == downloadIndex;
 
             if (isOurRow) {
-                MorpheLog.i(MorpheLog.BOARD_MENU, "voce di download toccata");
+                MorpheLog.i(MorpheLog.BOARD_MENU, "download entry tapped");
                 Context context = MorpheSettingsStore.appContext();
                 if (context != null) {
                     PinterestUtils.dismissMenu();

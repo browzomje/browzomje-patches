@@ -12,6 +12,33 @@ private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/Pinteres
 private const val PATCH_NAME = "Hide search history"
 
 /**
+ * Fa passare il `boolean` in ingresso attraverso l'extension, che può cambiarlo, prima che il
+ * metodo lo usi. Il parametro viene riscritto sul posto: è il primo uso del registro, quindi
+ * sovrascriverlo non perde nulla e non serve un registro libero.
+ *
+ * @param filter riferimento smali a un metodo statico `(Ljava/lang/Object;Z)Z`, che riceve
+ *     anche il `this` del metodo agganciato per sapere su quale oggetto sta decidendo.
+ */
+private fun MutableMethod.filterBooleanParameter(filter: String) {
+    val registerCount = implementation!!.registerCount
+    val p0 = registerCount - (parameters.size + 1)
+    val p1 = p0 + 1
+
+    addInstructions(
+        0,
+        InlineSmaliCompiler.compile(
+            """
+            invoke-static/range { v$p0 .. v$p1 }, $filter
+            move-result v$p1
+            """.trimIndent(),
+            "",
+            registerCount,
+            true,
+        ),
+    )
+}
+
+/**
  * Accoda `hideRecentSearches(this)` prima del return-void, cioè quando la view ha finito di
  * costruirsi. L'hook è sempre iniettato: è l'extension, guidata dalla schermata Morphe, a
  * decidere a runtime se nascondere davvero.
@@ -83,6 +110,22 @@ val hideSearchHistoryPatch = bytecodePatch(
         } ?: PatchLog.warn(
             PATCH_NAME,
             "typeahead \"Recent searches\" carousel not found.",
+        )
+
+        // 3) Lo spinner della schermata di ricerca. Togliendo la cronologia la lista dei
+        //    suggerimenti resta in uno stato che l'app legge come "sto ancora caricando", e lo
+        //    spinner a tutta pagina gira all'infinito (issue #11). L'extension lo spegne solo su
+        //    quella schermata e solo a opzione attiva.
+        PinterestLoadingLayoutFingerprint.methodOrNull?.let { method ->
+            method.filterBooleanParameter(
+                "$EXTENSION_CLASS->filterLoadingSpinner(Ljava/lang/Object;Z)Z",
+            )
+            PatchLog.hooked(PATCH_NAME, method, "search screen spinner")
+            hooked++
+        } ?: PatchLog.warn(
+            PATCH_NAME,
+            "loading spinner not found: the search screen may keep spinning after the " +
+                "history is removed.",
         )
 
         check(hooked > 0) {
