@@ -1,3 +1,9 @@
+## [1.4.1](https://github.com/browzomje/browzomje-patches/compare/v1.4.0...v1.4.1) (2026-07-31)
+
+### 🐛 Bug Fixes
+
+* polished morphe section, ad detecting logic and import/export of settings ([a97a49f](https://github.com/browzomje/browzomje-patches/commit/a97a49fdd08a2bf4666143a5fb278d116b0402bc))
+
 ## [1.4.0](https://github.com/browzomje/browzomje-patches/compare/v1.3.2...v1.4.0) (2026-07-29)
 
 ### ✨ New Features
