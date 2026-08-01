@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/browzomje/browzomje-patches/compare/v1.4.1...v1.5.0) (2026-08-01)
+
+### ✨ New Features
+
+* added easysudoku patch ([c24e74c](https://github.com/browzomje/browzomje-patches/commit/c24e74cb0e05415da1da9178a78cc08e270357eb))
+
 ## [1.4.1](https://github.com/browzomje/browzomje-patches/compare/v1.4.0...v1.4.1) (2026-07-31)
 
 ### 🐛 Bug Fixes

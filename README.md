@@ -12,7 +12,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.4.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;14 patches total
+> **[v1.5.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.5.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;19 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;14 patches</summary>
 <br>
@@ -38,6 +38,25 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Morphe settings screen (manifest)](#morphe-settings-screen-manifest) | Registers the Morphe settings Activity in the manifest, with an intent-filter for the morphe:// scheme. |  |
 | [Neutralize advertising ID](#neutralize-advertising-id) | Returns an empty Google Advertising ID and forces ‘limit ad tracking’, disabling ad tracking without causing the app to crash. |  |
 | [Set pin as wallpaper](#set-pin-as-wallpaper) | It adds the ‘Set as wallpaper’ option to the pin menu, which downloads uses the image and sets it as the device’s wallpaper. |  |
+
+</details>
+
+<details open>
+<summary>📦 Easy Sudoku&nbsp;&nbsp;•&nbsp;&nbsp;5 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 5.70.0 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Disable ad SDK](#disable-ad-sdk) | Stops the AppLovin MAX mediation stack — and with it Pangle, Amazon APS, Chartboost, InMobi, Mintegral, Fyber, Bigo and the rest — from ever initialising. The game starts faster and makes no ad-network requests at all. Requires "Remove ads": on its own it would only make the app fail to find ads, not stop asking for them. |  |
+| [Disable tracking](#disable-tracking) | Hands out an empty Google Advertising ID with "limit ad tracking" turned on, and stops AppsFlyer from sending install attribution and events. The game keeps working normally: nothing in it waits for attribution data. |  |
+| [Instant rewards](#instant-rewards) | Grants the reward of every "watch an ad" button — hints, streak repairs, extra puzzles — immediately, without playing a video. This is what keeps those buttons working once "Remove ads" is enabled: without it the game believes no video is available and hands out nothing. |  |
+| [Reclaim ad banner space](#reclaim-ad-banner-space) | Collapses the empty strip the banner used to occupy at the bottom of the board, so the puzzle gets the space back instead of staring at a blank rectangle. Only useful together with "Remove ads". |  |
+| [Remove ads](#remove-ads) | Turns off every ad Easy Sudoku shows: the home banner, the interstitials between puzzles, the app-open ad and all the background preloading. It works by telling the game its own "ads removed" purchase is already active, which also unlocks the Fun, Ice and Killer Sudoku modes that are otherwise gated behind watching ads. Keep "Instant rewards" enabled too, or the "watch an ad for a hint" buttons stop giving anything. |  |
 
 </details>
 
