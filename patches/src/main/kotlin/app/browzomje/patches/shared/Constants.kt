@@ -20,6 +20,27 @@ object Constants {
         )
     )
 
+    /**
+     * Easy Sudoku (Meevii) — `easy.sudoku.puzzle.solver.free`.
+     *
+     * A differenza di Pinterest, qui **i nomi delle classi dell'app non sono offuscati**
+     * (`com.meevii.common.utils.AdUtil`, `com.meevii.iap.hepler.d`, …): a cambiare sono solo i
+     * nomi dei metodi (`w()`, `G()`, `V()`, …) e i package "corti" delle classi di supporto
+     * (`xa`, `vc`, `sk`, …). I fingerprint si ancorano quindi al **nome di classe** + firma +
+     * stringhe, e quasi mai al nome del metodo: vedi i RECAP delle singole patch.
+     */
+    val COMPATIBILITY_EASY_SUDOKU = Compatibility(
+        name = "Easy Sudoku",
+        packageName = "easy.sudoku.puzzle.solver.free",
+        apkFileType = ApkFileType.APK,
+        appIconColor = 0x1E88E5,
+        targets = listOf(
+            AppTarget(
+                version = "5.70.0"
+            )
+        )
+    )
+
     val COMPATIBILITY_ALIGHT_MOTION = Compatibility(
         name = "Alight Motion",
         packageName = "com.alightcreative.motion",

@@ -3,8 +3,53 @@ package app.browzomje.patches.shared
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+
+/**
+ * Quanti registri del frame sono occupati dai parametri di ingresso (`this` incluso per i
+ * metodi d'istanza). I restanti — quelli **bassi**, `v0`, `v1`, … — sono i locali.
+ *
+ * `long` e `double` occupano due registri ciascuno: ignorarlo è l'errore classico che porta a
+ * scrivere sopra un parametro credendo di usare un locale libero.
+ */
+fun MutableMethod.inputRegisterCount(): Int {
+    val wideParameters = parameterTypes.count { it.toString() == "J" || it.toString() == "D" }
+    val thisRegister = if (AccessFlags.STATIC.isSet(accessFlags)) 0 else 1
+    return parameterTypes.size + wideParameters + thisRegister
+}
+
+/**
+ * Sostituisce il comportamento del metodo iniettandogli in testa uno stub che esce subito.
+ *
+ * Il codice originale resta nel dex ma diventa irraggiungibile: è il modo più sicuro di
+ * neutralizzare un metodo, perché non tocca né la firma né i chiamanti — l'app continua a
+ * invocarlo normalmente e riceve il valore che decidiamo noi.
+ *
+ * **Contratto sui registri.** Uno stub che esce prima di qualunque istruzione originale può
+ * scrivere liberamente sui registri bassi `v0`…`v<registersUsed - 1>`: o sono locali non ancora
+ * inizializzati, o sono parametri che nessuno leggerà più. L'unico vincolo è **leggere prima di
+ * scrivere**: se lo stub usa un parametro (per passarlo a un'extension) deve copiarlo via prima
+ * di sovrascrivere quel registro. Non si può quindi pretendere che esistano locali liberi — R8
+ * compila spesso un getter in `return-object p0`, senza nessun locale — e l'unica verifica
+ * sensata è che il frame sia abbastanza ampio.
+ *
+ * @param smali lo stub. Deve terminare con un `return*` ed è compilato con il register count
+ *     esistente del metodo, che non cambia.
+ * @param registersUsed quanti registri bassi lo stub usa, `v0` compreso.
+ */
+fun MutableMethod.forceReturn(smali: String, registersUsed: Int = 1) {
+    val implementation = implementation
+        ?: throw IllegalStateException("$definingClass->$name has no implementation: cannot stub")
+
+    check(implementation.registerCount >= registersUsed) {
+        "$definingClass->$name has a ${implementation.registerCount} register frame, " +
+            "but the stub needs $registersUsed"
+    }
+
+    addInstructions(0, smali.trimIndent())
+}
 
 /**
  * Inserisce del codice prima di **ogni** uscita del metodo, non solo della prima.
