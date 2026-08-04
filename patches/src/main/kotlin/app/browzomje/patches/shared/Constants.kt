@@ -53,15 +53,4 @@ object Constants {
         )
     )
 
-    val COMPATIBILITY_BETTER_LAUNCHER = Compatibility(
-        name = "BetterLauncher",
-        packageName = "TODO_PACKAGE_NAME", 
-        apkFileType = ApkFileType.APK,
-        appIconColor = 0x00BCD4, 
-        targets = listOf(
-            AppTarget(
-                version = "TODO_VERSION" 
-            )
-        )
-    )
 }
