@@ -1,3 +1,9 @@
+## [1.5.1](https://github.com/browzomje/browzomje-patches/compare/v1.5.0...v1.5.1) (2026-08-04)
+
+### 🐛 Bug Fixes
+
+* update patch metadata and source urls ([a587d55](https://github.com/browzomje/browzomje-patches/commit/a587d5572e1e5feb07c4a80d945f5528696bc076))
+
 ## [1.5.0](https://github.com/browzomje/browzomje-patches/compare/v1.4.1...v1.5.0) (2026-08-01)
 
 ### ✨ New Features
