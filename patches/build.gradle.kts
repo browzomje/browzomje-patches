@@ -1,13 +1,13 @@
-group = "app.template"
+group = "browzomje"
 
 patches {
     about {
         name = "browzomje Patches"
-        description = "Improving pinterest experience"
-        source = "git@github.com:browzomje/pinterest-patches.git"
+        description = "Morphe patches by browzomje"
+        source = "git@github.com:browzomje/browzomje-patches.git"
         author = "browzomje"
         contact = "na"
-        website = "na"
+        website = "https://github.com/browzomje/browzomje-patches"
         license = "GPLv3"
     }
 }
