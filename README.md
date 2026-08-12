@@ -12,9 +12,9 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.5.2](https://github.com/browzomje/browzomje-patches/releases/tag/v1.5.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;19 patches total
+> **[v1.6.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.6.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;20 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;14 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;15 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -32,6 +32,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide Create nav button](#hide-create-nav-button) | Hooks the '+' (create Pin) navigation bar button: hidden if enabled in Morphe settings. |  |
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hooks the notifications button: hidden if enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hooks the search button: hidden if enabled in Morphe settings. |  |
+| [Hide greeting header buttons](#hide-greeting-header-buttons) | Hooks the '+' (create) and inbox/notifications buttons in the home feed header: hidden if the matching Morphe settings are enabled. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section both on the search screen and in the carousel below the search bar. It does not prevent Pinterest from logging searches (server-side), but stops them from being shown anywhere in the app. |  |
 | [Morphe settings entry](#morphe-settings-entry) | Adds the "Morphe" item to the Account Settings list to open the toggle screen. |  |
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |

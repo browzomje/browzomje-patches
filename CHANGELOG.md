@@ -1,3 +1,13 @@
+## [1.6.0](https://github.com/browzomje/browzomje-patches/compare/v1.5.2...v1.6.0) (2026-08-12)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** stop hidePersistently from throwing on every call ([0df3ab2](https://github.com/browzomje/browzomje-patches/commit/0df3ab20ecc8c495f7e3990c30f1ecde5a2fa405))
+
+### ✨ New Features
+
+* **pinterest:** hide the create and inbox buttons in the feed header ([52bdc63](https://github.com/browzomje/browzomje-patches/commit/52bdc635c22360d777ea5427d393aee4ba80847a))
+
 ## [1.5.2](https://github.com/browzomje/browzomje-patches/compare/v1.5.1...v1.5.2) (2026-08-04)
 
 ### 🐛 Bug Fixes
