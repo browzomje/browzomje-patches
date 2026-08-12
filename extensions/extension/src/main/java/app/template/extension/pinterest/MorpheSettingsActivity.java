@@ -105,16 +105,18 @@ public final class MorpheSettingsActivity extends Activity {
 
         // Home e Profilo non compaiono qui: vedi MorpheSettingsStore.isNavTabHidden. Nasconderli
         // renderebbe irraggiungibile questa stessa schermata.
+        // Ogni riga porta l'icona del tasto che nasconde: dal nome non è ovvio quale sia, e da
+        // 14.28 "Crea" e "Notifiche" non stanno nemmeno più nella barra ma in alto a destra.
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_NAVBAR), "ic_vr_home_gestalt");
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_SEARCH_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_SEARCH_BUTTON,
-                MorpheSettingsStore.isSearchButtonHidden());
+                MorpheSettingsStore.isSearchButtonHidden(), "ic_vr_magnifying_glass_gestalt");
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_CREATE_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_CREATE_BUTTON,
-                MorpheSettingsStore.isCreateButtonHidden());
+                MorpheSettingsStore.isCreateButtonHidden(), "ic_vr_plus_gestalt");
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_NOTIFICATIONS_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_NOTIFICATIONS_BUTTON,
-                MorpheSettingsStore.isNotificationsButtonHidden());
+                MorpheSettingsStore.isNotificationsButtonHidden(), "ic_vr_speech_ellipsis_gestalt");
         addNote(root, MorpheStrings.get(MorpheStrings.NAVBAR_NOTE));
 
         addBackupSection(root);
@@ -322,10 +324,30 @@ public final class MorpheSettingsActivity extends Activity {
      */
     private void addToggleRow(LinearLayout parent, String label, String description,
                               final String prefKey, boolean initialValue) {
+        addToggleRow(parent, label, description, prefKey, initialValue, null);
+    }
+
+    /**
+     * @param iconName drawable di Pinterest da mostrare a sinistra dell'etichetta, o null. Si
+     *     usa per i toggle che nascondono un tasto: il nome ("Crea", "Notifiche") non basta a
+     *     riconoscerlo nell'app, l'icona sì — è la stessa che l'utente vede sullo schermo.
+     */
+    private void addToggleRow(LinearLayout parent, String label, String description,
+                              final String prefKey, boolean initialValue, String iconName) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(14), 0, dp(14));
+
+        Drawable icon = pinterestIcon(iconName);
+        if (icon != null) {
+            ImageView iconView = new ImageView(this);
+            iconView.setImageDrawable(icon);
+            iconView.setColorFilter(TEXT_PRIMARY);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(20), dp(20));
+            iconParams.rightMargin = dp(12);
+            row.addView(iconView, iconParams);
+        }
 
         LinearLayout labels = new LinearLayout(this);
         labels.setOrientation(LinearLayout.VERTICAL);

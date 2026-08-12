@@ -188,13 +188,15 @@ final class MorpheStrings {
             "検索ボタンを非表示", "隐藏搜索按钮", "검색 버튼 숨기기", "Ukryj przycisk Szukaj",
             "Zoekknop verbergen", "Arama düğmesini gizle", "إخفاء زر البحث");
 
+        // Senza il "(+)" nel testo: la riga porta già l'icona del tasto a sinistra, e ripeterlo
+        // sembrava un doppione.
         put(HIDE_CREATE_TITLE,
-            "Hide Create (+) button",
-            "Nascondi tasto Crea (+)", "Ocultar botón Crear (+)", "Masquer le bouton Créer (+)",
-            "Erstellen-Button (+) ausblenden", "Ocultar botão Criar (+)",
-            "Скрыть кнопку «Создать» (+)", "作成 (+) ボタンを非表示", "隐藏创建 (+) 按钮",
-            "만들기 (+) 버튼 숨기기", "Ukryj przycisk Utwórz (+)", "Knop Maken (+) verbergen",
-            "Oluştur (+) düğmesini gizle", "إخفاء زر الإنشاء (+)");
+            "Hide Create button",
+            "Nascondi tasto Crea", "Ocultar botón Crear", "Masquer le bouton Créer",
+            "Erstellen-Button ausblenden", "Ocultar botão Criar",
+            "Скрыть кнопку «Создать»", "作成ボタンを非表示", "隐藏创建按钮",
+            "만들기 버튼 숨기기", "Ukryj przycisk Utwórz", "Knop Maken verbergen",
+            "Oluştur düğmesini gizle", "إخفاء زر الإنشاء");
 
         put(HIDE_NOTIFICATIONS_TITLE,
             "Hide Notifications button",

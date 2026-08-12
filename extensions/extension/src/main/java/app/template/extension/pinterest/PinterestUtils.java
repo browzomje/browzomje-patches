@@ -623,6 +623,124 @@ public final class PinterestUtils {
         return null;
     }
 
+    // ------------------------------------------------- intestazione del feed (tasti in alto)
+
+    /** Contenitore dei tasti in alto a destra, dichiarato nell'XML dell'intestazione. */
+    private static final String HEADER_CONTAINER_ID = "home_feed_greeting_header_icon_container";
+
+    /** Il "+" (Crea). L'id glielo assegna il fragment mentre lo costruisce. */
+    private static final String HEADER_CREATE_ID = "home_feed_greeting_header_create_icon";
+
+    /**
+     * Posta/Notifiche: è un {@code FrameLayout} che contiene il tasto e il pallino dei non
+     * letti, quindi nascondendolo sparisce anche il badge.
+     */
+    private static final String HEADER_NEWSHUB_ID = "home_feed_greeting_header_newshub_icon";
+
+    /**
+     * Nasconde i tasti "+" (Crea) e Posta/Notifiche dell'intestazione del feed (issue #24).
+     *
+     * <p>Da 14.28.0 quei due tasti non sono più nella barra in basso — che per gli account con
+     * la nuova interfaccia contiene solo Home, Cerca e Profilo — ma in alto a destra, aggiunti
+     * a mano dal fragment del feed dentro {@code onViewCreated}. {@link #hideNavBarTab} non li
+     * trovava più e i due toggle della schermata Morphe non avevano quindi alcun effetto
+     * visibile. I toggle restano gli stessi: questo è solo il secondo posto in cui cercarli.
+     *
+     * <p>Chiamata <b>all'ingresso</b> di {@code onViewCreated} — l'unico punto in cui il
+     * registro del parametro contiene di sicuro la view, vedi il commento nella patch — quindi
+     * i tasti non sono ancora stati aggiunti al contenitore: il lavoro vero si rimanda con
+     * {@link View#post}, che viene eseguito dopo il ritorno del metodo. Gli id si risolvono per
+     * <em>nome</em> con {@code getIdentifier}: i valori numerici cambiano a ogni build di
+     * Pinterest, i nomi no.
+     *
+     * <p>Non lascia uscire nessuna eccezione: gira dentro un metodo del ciclo di vita di un
+     * fragment, dove qualunque throw sarebbe un crash dell'app.
+     *
+     * @param root la view radice del fragment del feed.
+     */
+    public static void hideGreetingHeaderButtons(final View root) {
+        try {
+            boolean hideCreate = MorpheSettingsStore.isCreateButtonHidden();
+            boolean hideNewsHub = MorpheSettingsStore.isNotificationsButtonHidden();
+            MorpheLog.hookFired(MorpheLog.HEADER,
+                    "create=" + hideCreate + ", inbox/notifications=" + hideNewsHub);
+
+            if (!hideCreate && !hideNewsHub) {
+                MorpheLog.d(MorpheLog.HEADER, "no button to hide: both options are off");
+                return;
+            }
+            if (root == null) {
+                MorpheLog.e(MorpheLog.HEADER, "null root view: nothing to search");
+                return;
+            }
+
+            root.post(new Runnable() {
+                @Override
+                public void run() {
+                    hideGreetingHeaderButtonsNow(root);
+                }
+            });
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.HEADER, "could not schedule hiding the header buttons", t);
+        }
+    }
+
+    /** Il lavoro vero, a tasti ormai aggiunti. Vedi {@link #hideGreetingHeaderButtons}. */
+    private static void hideGreetingHeaderButtonsNow(View root) {
+        try {
+            View container = findByName(root, HEADER_CONTAINER_ID);
+            if (container == null) {
+                // Succede se l'account non ha ancora la nuova intestazione: i tasti sono
+                // ancora nella barra in basso e li nasconde hideNavBarTab. Non è un errore.
+                MorpheLog.w(MorpheLog.HEADER, "this account has no header with the buttons at "
+                        + "the top: it is the navigation bar that hides them");
+                return;
+            }
+
+            // Le preferenze si rileggono qui e non si portano dietro dall'hook: fra i due
+            // momenti passa un giro di message loop, e così un toggle spento nel frattempo non
+            // nasconde comunque il tasto.
+            if (MorpheSettingsStore.isCreateButtonHidden()) {
+                hideHeaderButton(root, HEADER_CREATE_ID, "tasto Crea (+)");
+            }
+            if (MorpheSettingsStore.isNotificationsButtonHidden()) {
+                hideHeaderButton(root, HEADER_NEWSHUB_ID, "tasto Posta/Notifiche");
+            }
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.HEADER, "could not hide the header buttons", t);
+        }
+    }
+
+    /** Guardato a sé: un tasto che non si riesce a nascondere non deve saltare l'altro. */
+    private static void hideHeaderButton(View root, String idName, String what) {
+        try {
+            View button = findByName(root, idName);
+            if (button == null) {
+                MorpheLog.e(MorpheLog.HEADER, "no " + what + " (@id/" + idName + ") in the "
+                        + "header: the hook fired at the right place but the header has changed");
+                return;
+            }
+            MorpheViews.hidePersistently(button, MorpheLog.HEADER, what);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.HEADER, "could not hide " + what, t);
+        }
+    }
+
+    /**
+     * @return la view con quell'id, cercata a partire dalla radice dell'albero — il chiamante
+     *     può passare una view qualsiasi del fragment. Null se l'id non esiste in questa
+     *     versione dell'app o se la view non c'è.
+     */
+    private static View findByName(View view, String idName) {
+        Context context = view.getContext();
+        int id = context.getResources().getIdentifier(idName, "id", context.getPackageName());
+        if (id == 0) {
+            MorpheLog.d(MorpheLog.HEADER, "@id/" + idName + " does not exist in this version");
+            return null;
+        }
+        return view.getRootView().findViewById(id);
+    }
+
     // ---------------------------------------------------------------- cronologia ricerche
 
     /**

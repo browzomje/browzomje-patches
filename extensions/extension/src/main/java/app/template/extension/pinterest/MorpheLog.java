@@ -26,6 +26,8 @@ public final class MorpheLog {
     /** Canali (una costante per feature, per non sbagliare a scrivere le stringhe). */
     public static final String ADS = "ads";
     public static final String NAVBAR = "navbar";
+    /** Tasti in alto a destra nel feed (Crea, Posta/Notifiche), distinti da {@link #NAVBAR}. */
+    public static final String HEADER = "header";
     public static final String SEARCH_HISTORY = "search-history";
     public static final String SETTINGS_ENTRY = "settings-entry";
     public static final String EMAIL_DIALOG = "email-dialog";
