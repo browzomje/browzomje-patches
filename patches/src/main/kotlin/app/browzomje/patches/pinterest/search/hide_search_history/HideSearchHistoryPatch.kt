@@ -7,6 +7,10 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import com.android.tools.smali.dexlib2.iface.reference.TypeReference
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 private const val PATCH_NAME = "Hide search history"
@@ -94,14 +98,66 @@ val hideSearchHistoryPatch = bytecodePatch(
 
         // 2) Le due view restano agganciate come rete di sicurezza: se su una schermata la
         //    cronologia arrivasse per un'altra strada, almeno lì viene comunque nascosta.
-        SlpRecentSearchesViewFingerprint.methodOrNull?.let { method ->
+        // La lista della schermata di ricerca si ricava dalla fabbrica delle view della SLP.
+        //
+        // NON basta prendere la prima classe istanziata che sia un LinearLayout con costruttore
+        // (Context, X): quella fabbrica ne costruisce una decina, e la prima che combacia è un
+        // altro contenitore della stessa schermata (14.28: gm1.q1). Ci si aggancerebbe alla view
+        // sbagliata **senza nessun errore**, che è il modo peggiore di rompersi.
+        //
+        // Il ramo giusto si riconosce dal letterale: Kotlin lo emette subito dopo il costruttore,
+        // nel ramo d'errore della proprietà non inizializzata. Si parte quindi dal letterale e si
+        // risale alla `new-instance` più vicina che lo precede.
+        fun isContextConstructor(candidate: com.android.tools.smali.dexlib2.iface.Method) =
+            candidate.name == "<init>" &&
+                candidate.parameters.size == 2 &&
+                candidate.parameters[0].type == "Landroid/content/Context;"
+
+        val factoryInstructions = SlpViewFactoryFingerprint.methodOrNull
+            ?.implementation
+            ?.instructions
+            ?.toList()
+
+        val anchorIndex = factoryInstructions?.indexOfFirst { instruction ->
+            (instruction.opcode == Opcode.CONST_STRING ||
+                instruction.opcode == Opcode.CONST_STRING_JUMBO) &&
+                ((instruction as? ReferenceInstruction)?.reference as? StringReference)
+                    ?.string == "searchTypeaheadItemDeserializer"
+        } ?: -1
+
+        val slpListType = if (anchorIndex <= 0) {
+            null
+        } else {
+            factoryInstructions!!.take(anchorIndex)
+                .asReversed()
+                .asSequence()
+                .filter { it.opcode == Opcode.NEW_INSTANCE }
+                .mapNotNull { ((it as? ReferenceInstruction)?.reference as? TypeReference)?.type }
+                .firstOrNull { type ->
+                    classDefByOrNull(type)?.let { classDef ->
+                        classDef.superclass == "Landroid/widget/LinearLayout;" &&
+                            classDef.methods.any(::isContextConstructor)
+                    } == true
+                }
+        }
+
+        val slpListConstructor = slpListType
+            ?.let { mutableClassDefByOrNull(it) }
+            ?.methods
+            ?.firstOrNull(::isContextConstructor)
+
+        if (slpListConstructor == null) {
+            PatchLog.warn(
+                PATCH_NAME,
+                "\"Recent searches\" list on search screen not found: the other two hooks still " +
+                    "cover the typeahead. Anchor: \"searchTypeaheadItemDeserializer\".",
+            )
+        } else {
+            val method = slpListConstructor
             val exits = method.appendHideRecentSearches()
             PatchLog.hooked(PATCH_NAME, method, "search screen list, $exits exits")
             hooked++
-        } ?: PatchLog.warn(
-            PATCH_NAME,
-            "\"Recent searches\" list on search screen not found.",
-        )
+        }
 
         SearchTypeaheadRecentSearchesCarouselInitFingerprint.methodOrNull?.let { method ->
             val exits = method.appendHideRecentSearches()

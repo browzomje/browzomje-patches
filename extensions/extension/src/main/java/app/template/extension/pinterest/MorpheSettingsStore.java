@@ -21,6 +21,8 @@ public final class MorpheSettingsStore {
     public static final String KEY_DISABLE_EMAIL_CONFIRM_DIALOG = "disable_email_confirm_dialog";
     public static final String KEY_VERBOSE_LOGGING = "verbose_logging";
     public static final String KEY_BOARD_DOWNLOAD = "board_download";
+    public static final String KEY_HIDE_SEARCH_BOARD_MODULES = "hide_search_board_modules";
+    public static final String KEY_DISABLE_SCREENSHOT_SHARE = "disable_screenshot_share";
 
     /**
      * Le impostazioni che si esportano e si importano, nell'ordine in cui compaiono a schermo.
@@ -32,7 +34,9 @@ public final class MorpheSettingsStore {
     public static final String[] KEYS = {
         KEY_DISABLE_ADS,
         KEY_HIDE_SHOPPING_PINS,
+        KEY_HIDE_SEARCH_BOARD_MODULES,
         KEY_HIDE_SEARCH_HISTORY,
+        KEY_DISABLE_SCREENSHOT_SHARE,
         KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
         KEY_BOARD_DOWNLOAD,
         KEY_HIDE_SEARCH_BUTTON,
@@ -108,6 +112,8 @@ public final class MorpheSettingsStore {
             case KEY_DISABLE_EMAIL_CONFIRM_DIALOG:
             case KEY_BOARD_DOWNLOAD:
             case KEY_VERBOSE_LOGGING:
+            case KEY_HIDE_SEARCH_BOARD_MODULES:
+            case KEY_DISABLE_SCREENSHOT_SHARE:
                 return true;
             default:
                 return false;
@@ -137,6 +143,25 @@ public final class MorpheSettingsStore {
 
     public static boolean isSearchHistoryHidden() {
         return effective(KEY_HIDE_SEARCH_HISTORY);
+    }
+
+    /**
+     * Carosello sponsorizzato e bacheche in evidenza nella schermata di ricerca (issue #30).
+     *
+     * <p>Interruttore separato da {@link #isAdsDisabled()} perché tocca solo la ricerca e perché
+     * la regola sulle bacheche in evidenza è euristica: chi la trovasse troppo aggressiva deve
+     * poterla spegnere senza rinunciare al blocco della pubblicità.
+     */
+    public static boolean isSearchBoardModulesHidden() {
+        return effective(KEY_HIDE_SEARCH_BOARD_MODULES);
+    }
+
+    /**
+     * Pannello "Share screenshot" che Pinterest apre dopo uno screenshot, e la rilevazione che lo
+     * precede (issue #32).
+     */
+    public static boolean isScreenshotShareDisabled() {
+        return effective(KEY_DISABLE_SCREENSHOT_SHARE);
     }
 
     public static boolean isSearchButtonHidden() {

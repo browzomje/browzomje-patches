@@ -2,17 +2,6 @@ package app.browzomje.patches.pinterest.pin_menu.set_wallpaper
 
 import app.morphe.patcher.Fingerprint
 
-/** Vedi `CopyDirectLinkFingerprints.OverflowMenuBuilderFingerprint`: stesso target. */
-object OverflowMenuBuilderFingerprint : Fingerprint(
-    custom = { method, classDef ->
-        method.name == "<init>" && when (classDef.type) {
-            "Luz0/z;" -> method.parameters.size == 28
-            "Luz0/b0;" -> method.parameters.size == 27
-            else -> false
-        }
-    }
-)
-
 /**
  * Il punto in cui `GenericWebImageView` riceve la Bitmap già decodificata: da lì catturiamo
  * l'immagine del pin aperto, per poterla impostare come sfondo senza riscaricarla.
