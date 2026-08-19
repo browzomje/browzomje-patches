@@ -1,3 +1,19 @@
+## [1.8.0](https://github.com/browzomje/browzomje-patches/compare/v1.7.0...v1.8.0) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** align the added menu rows, and find the Activity reliably ([013fb98](https://github.com/browzomje/browzomje-patches/commit/013fb9802d5341df2dc81c0fd8959e008d3c8501))
+* **pinterest:** restore the native styling of the added pin menu rows ([7d1e903](https://github.com/browzomje/browzomje-patches/commit/7d1e9038fe225a24b8618c6c7c2fdc57e75da2d5))
+* **pinterest:** restore the pin overflow menu entries on 14.32.0 ([f416d01](https://github.com/browzomje/browzomje-patches/commit/f416d01bbc45b68c560d3859edfa94ecc5f4c601))
+* **pinterest:** show Morphe's messages through the app's real toast ([b54e0a9](https://github.com/browzomje/browzomje-patches/commit/b54e0a9a5d8e90369a28d13ee8039b443f015805))
+
+### ✨ New Features
+
+* **pinterest:** download button in the long-press menu, and say why a toast falls back ([bca5a36](https://github.com/browzomje/browzomje-patches/commit/bca5a366b249500463518b9def8b4b842e8ab8e0))
+* **pinterest:** Pinterest-style toasts, and actually close the menu ([0f99b7a](https://github.com/browzomje/browzomje-patches/commit/0f99b7a5c2c7e5949e9f189f459e3c207de33627))
+* **pinterest:** privacy hardening, link sanitizer and board download fixes ([7da75bb](https://github.com/browzomje/browzomje-patches/commit/7da75bb26f8e81c228a73046578d7631f553b001))
+* **pinterest:** use Pinterest's own toast for Morphe messages ([a4d6ab2](https://github.com/browzomje/browzomje-patches/commit/a4d6ab2763ae90a674d36c140b3d021013efab49))
+
 ## [1.8.0-dev.7](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.6...v1.8.0-dev.7) (2026-08-19)
 
 ### ✨ New Features
