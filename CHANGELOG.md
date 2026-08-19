@@ -1,3 +1,9 @@
+## [1.8.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.7.0...v1.8.0-dev.1) (2026-08-19)
+
+### ✨ New Features
+
+* **pinterest:** privacy hardening, link sanitizer and board download fixes ([7da75bb](https://github.com/browzomje/browzomje-patches/commit/7da75bb26f8e81c228a73046578d7631f553b001))
+
 ## [1.7.0](https://github.com/browzomje/browzomje-patches/compare/v1.6.0...v1.7.0) (2026-08-19)
 
 ### ✨ New Features
