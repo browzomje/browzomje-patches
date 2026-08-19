@@ -349,8 +349,8 @@ final class PinterestReflection {
     static boolean showGestaltToast(Context context, String message, int durationMs) {
         String modelClassName = MorpheRuntimeNames.textToastClass;
         if (modelClassName == null || modelClassName.isEmpty()) {
-            MorpheLog.d(MorpheLog.REFLECTION,
-                    "text toast class not resolved by the patch: drawing our own");
+            MorpheLog.w(MorpheLog.REFLECTION, "TOAST: the patch did not deliver a toast class "
+                    + "(is \"Morphe runtime names\" enabled?) — drawing our own");
             return false;
         }
 
@@ -359,13 +359,15 @@ final class PinterestReflection {
             //    È lui che sa animare, impilare e far sparire i toast.
             Activity activity = PinterestUtils.activityOf(context);
             if (activity == null) {
+                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: no Activity — drawing our own");
                 return false;
             }
             View container = findByClassName(activity.getWindow().getDecorView(),
                     TOAST_CONTAINER_CLASS);
             if (container == null) {
-                MorpheLog.d(MorpheLog.REFLECTION,
-                        "toast container not in the view tree: drawing our own");
+                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: " + TOAST_CONTAINER_CLASS
+                        + " not in the view tree of " + activity.getClass().getName()
+                        + " — drawing our own");
                 return false;
             }
 
@@ -385,16 +387,20 @@ final class PinterestReflection {
             }
             Method show = findShowMethod(container.getClass(), modelBase);
             if (show == null) {
-                MorpheLog.d(MorpheLog.REFLECTION,
-                        "no method on the container takes a " + modelBase.getName());
+                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: no method on "
+                        + container.getClass().getName() + " takes a " + modelBase.getName()
+                        + " — drawing our own");
                 return false;
             }
 
             show.setAccessible(true);
             show.invoke(container, model);
+            MorpheLog.i(MorpheLog.REFLECTION, "TOAST: shown with Pinterest's own toast ("
+                    + modelClassName + " -> " + container.getClass().getSimpleName() + "."
+                    + show.getName() + ")");
             return true;
         } catch (Throwable t) {
-            MorpheLog.d(MorpheLog.REFLECTION, "native toast not usable (" + t + "): drawing our own");
+            MorpheLog.w(MorpheLog.REFLECTION, "TOAST: native toast failed — drawing our own", t);
             return false;
         }
     }

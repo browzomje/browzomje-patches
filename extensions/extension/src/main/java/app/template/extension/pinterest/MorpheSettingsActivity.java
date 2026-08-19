@@ -114,6 +114,10 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheSettingsStore.isEmailConfirmDialogDisabled());
 
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_DOWNLOAD), "ic_vr_download_gestalt");
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.LONG_PRESS_DOWNLOAD_TITLE),
+                MorpheStrings.get(MorpheStrings.LONG_PRESS_DOWNLOAD_DESCRIPTION),
+                MorpheSettingsStore.KEY_LONG_PRESS_DOWNLOAD,
+                MorpheSettingsStore.isLongPressDownloadEnabled());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.BOARD_DOWNLOAD_TITLE),
                 MorpheStrings.get(MorpheStrings.BOARD_DOWNLOAD_DESCRIPTION),
                 MorpheSettingsStore.KEY_BOARD_DOWNLOAD,

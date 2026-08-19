@@ -469,6 +469,41 @@ final class BoardDownloadHandler {
         }, "morphe-board-download").start();
     }
 
+    /**
+     * Scarica l'immagine di un singolo pin, per il tasto del menu circolare.
+     *
+     * <p>Riusa la stessa scelta della risoluzione e la stessa cartella del download di una bacheca,
+     * così un pin salvato da qui finisce dove l'utente si aspetta di trovarlo.
+     */
+    static void downloadSinglePin(Context context, Object pin) {
+        if (context == null || pin == null) {
+            return;
+        }
+        try {
+            String url = bestImageUrl(pin);
+            if (url == null || url.isEmpty()) {
+                MorpheLog.w(MorpheLog.BOARD, "pin without a usable image: nothing to download");
+                PinterestUtils.showNativeToast(context, PinterestUtils.getString("no_image"));
+                return;
+            }
+            Object id = AdDetector.fieldValueBySerializedName(pin, "id");
+            String name = (id instanceof String ? (String) id : "pin") + extensionOf(url);
+
+            DownloadManager manager =
+                    (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            if (manager == null) {
+                return;
+            }
+            enqueue(manager, url, "Pins", name);
+            MorpheLog.ok(MorpheLog.BOARD, "single pin download queued: " + name);
+            PinterestUtils.showNativeToast(context,
+                    PinterestUtils.getString("download_image_started"));
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.BOARD, "could not download the pin", t);
+            PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+        }
+    }
+
     private static void enqueue(DownloadManager manager, String url, String folder, String name) {
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle(name);

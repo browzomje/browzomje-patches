@@ -104,7 +104,33 @@ final class CurrentPin {
      * di solito è un campo della view del menu o del suo oggetto di configurazione — mentre in
      * profondità si finisce nella gerarchia delle view di Android prima di averlo trovato.
      */
+    /**
+     * Il modello del Pin dentro {@code root}, o null.
+     *
+     * <p>Stessa visita di {@link #search}, ma restituisce l'oggetto invece del solo id: serve a chi
+     * dal pin deve ricavare altro, per esempio l'URL dell'immagine da scaricare.
+     */
+    static Object findPinIn(Object root) {
+        if (root == null) {
+            return null;
+        }
+        try {
+            return walk(root, true);
+        } catch (Throwable t) {
+            MorpheLog.d(MorpheLog.COPY_LINK, "pin non trovato: " + t);
+            return null;
+        }
+    }
+
     private static String search(Object root) throws IllegalAccessException {
+        Object pin = walk(root, false);
+        return pin instanceof String ? (String) pin : null;
+    }
+
+    /**
+     * @param wantModel true per farsi restituire il modello del Pin, false per il solo id.
+     */
+    private static Object walk(Object root, boolean wantModel) throws IllegalAccessException {
         Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
         Deque<Object[]> queue = new ArrayDeque<>();
         queue.add(new Object[] {root, 0});
@@ -120,7 +146,7 @@ final class CurrentPin {
             if (AdDetector.isCandidateModel(node.getClass())) {
                 Object id = AdDetector.fieldValueBySerializedName(node, "id");
                 if (id instanceof String && PIN_ID.matcher((String) id).matches()) {
-                    return (String) id;
+                    return wantModel ? node : id;
                 }
             }
 

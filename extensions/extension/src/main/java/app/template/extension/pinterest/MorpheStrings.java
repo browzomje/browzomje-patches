@@ -41,6 +41,8 @@ final class MorpheStrings {
 
     static final String BOARD_DOWNLOAD_TITLE = "board_download_title";
     static final String BOARD_DOWNLOAD_DESCRIPTION = "board_download_description";
+    static final String LONG_PRESS_DOWNLOAD_TITLE = "long_press_download_title";
+    static final String LONG_PRESS_DOWNLOAD_DESCRIPTION = "long_press_download_description";
 
     static final String HIDE_SEARCH_TITLE = "hide_search_title";
     static final String HIDE_CREATE_TITLE = "hide_create_title";
@@ -281,6 +283,31 @@ final class MorpheStrings {
             "Dialoogvenster \"bevestig je e-mail\" uitschakelen",
             "\"E-postanı doğrula\" penceresini devre dışı bırak",
             "تعطيل نافذة «أكِّد بريدك الإلكتروني»");
+
+        put(LONG_PRESS_DOWNLOAD_TITLE,
+            "Download button on long press",
+            "Tasto scarica alla pressione prolungata", "Botón de descarga al mantener pulsado",
+            "Bouton de téléchargement en appui long", "Download-Taste beim langen Drücken",
+            "Botão de transferência ao premir longamente", "Кнопка загрузки при долгом нажатии",
+            "長押しでダウンロードボタン", "长按显示下载按钮", "길게 눌러 다운로드 버튼",
+            "Przycisk pobierania przy długim naciśnięciu", "Downloadknop bij lang indrukken",
+            "Uzun basmada indirme düğmesi", "زر التنزيل عند الضغط المطوّل");
+
+        put(LONG_PRESS_DOWNLOAD_DESCRIPTION,
+            "Adds a download button to the circular menu, so a pin can be saved without opening it.",
+            "Aggiunge un tasto al menu circolare, per salvare un pin senza aprirlo.",
+            "Añade un botón al menú circular, para guardar un pin sin abrirlo.",
+            "Ajoute un bouton au menu circulaire, pour enregistrer un pin sans l'ouvrir.",
+            "Fügt dem Kreismenü eine Taste hinzu, um einen Pin zu speichern, ohne ihn zu öffnen.",
+            "Adiciona um botão ao menu circular, para guardar um pin sem o abrir.",
+            "Добавляет кнопку в круговое меню, чтобы сохранить пин, не открывая его.",
+            "円形メニューにボタンを追加し、ピンを開かずに保存できます。",
+            "在圆形菜单中添加按钮，无需打开即可保存 Pin。",
+            "원형 메뉴에 버튼을 추가해 핀을 열지 않고 저장합니다.",
+            "Dodaje przycisk do menu kołowego, aby zapisać pin bez otwierania go.",
+            "Voegt een knop toe aan het cirkelmenu om een pin op te slaan zonder hem te openen.",
+            "Dairesel menüye bir düğme ekler, böylece pin açılmadan kaydedilir.",
+            "يضيف زرًا إلى القائمة الدائرية لحفظ الدبوس دون فتحه.");
 
         put(BOARD_DOWNLOAD_TITLE,
             "Download whole board",

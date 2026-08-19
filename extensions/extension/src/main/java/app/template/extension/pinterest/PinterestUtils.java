@@ -294,6 +294,21 @@ public final class PinterestUtils {
     }
 
     /**
+     * Hook sul menu circolare del pin (pressione prolungata): accoda il tasto "scarica" alla lista
+     * dei tasti prima che il menu li disponga sull'arco. Vedi {@link ContextMenuDownload}.
+     */
+    @SuppressWarnings("unchecked")
+    public static void addContextMenuDownloadItem(Object menuView, java.util.List<?> items) {
+        MorpheLog.hookFired(MorpheLog.BOARD,
+                "long-press menu " + (menuView == null ? "null" : menuView.getClass().getName()));
+        try {
+            ContextMenuDownload.addItem(menuView, (java.util.List<Object>) items);
+        } catch (Throwable t) {
+            MorpheLog.e(MorpheLog.BOARD, "could not add the long-press download button", t);
+        }
+    }
+
+    /**
      * Collassa a zero una view che serve solo a mostrare pubblicità, se il blocco è acceso.
      *
      * <p>Hook sui costruttori delle view pubblicitarie di Pinterest (vedi {@code HideAdViewsPatch}).
@@ -1695,6 +1710,38 @@ public final class PinterestUtils {
             if (isTr) return "Doğrudan bağlantıyı kopyala";
             if (isAr) return "نسخ الرابط المباشر";
             return "Copy direct link";
+        }
+        if ("download_image_label".equals(key)) {
+            if (isIt) return "Scarica";
+            if (isEs) return "Descargar";
+            if (isFr) return "Télécharger";
+            if (isDe) return "Herunterladen";
+            if (isPt) return "Baixar";
+            if (isRu) return "Скачать";
+            if (isJa) return "ダウンロード";
+            if (isZh) return "下载";
+            if (isKo) return "다운로드";
+            if (isPl) return "Pobierz";
+            if (isNl) return "Downloaden";
+            if (isTr) return "İndir";
+            if (isAr) return "تنزيل";
+            return "Download";
+        }
+        if ("download_image_started".equals(key)) {
+            if (isIt) return "Immagine in download…";
+            if (isEs) return "Descargando la imagen…";
+            if (isFr) return "Téléchargement de l'image…";
+            if (isDe) return "Bild wird heruntergeladen…";
+            if (isPt) return "A baixar a imagem…";
+            if (isRu) return "Изображение загружается…";
+            if (isJa) return "画像をダウンロード中…";
+            if (isZh) return "正在下载图片…";
+            if (isKo) return "이미지 다운로드 중…";
+            if (isPl) return "Pobieranie obrazu…";
+            if (isNl) return "Afbeelding downloaden…";
+            if (isTr) return "Görsel indiriliyor…";
+            if (isAr) return "جارٍ تنزيل الصورة…";
+            return "Downloading image…";
         }
         if ("download_video_label".equals(key)) {
             if (isIt) return "Scarica video";

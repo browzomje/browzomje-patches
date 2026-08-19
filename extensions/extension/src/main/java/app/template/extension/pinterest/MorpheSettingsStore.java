@@ -24,6 +24,7 @@ public final class MorpheSettingsStore {
     public static final String KEY_HIDE_SEARCH_BOARD_MODULES = "hide_search_board_modules";
     public static final String KEY_DISABLE_SCREENSHOT_SHARE = "disable_screenshot_share";
     public static final String KEY_SANITIZE_LINKS = "sanitize_links";
+    public static final String KEY_LONG_PRESS_DOWNLOAD = "long_press_download";
     public static final String KEY_SHARE_LINK_ONLY = "share_link_only";
 
     /**
@@ -43,6 +44,7 @@ public final class MorpheSettingsStore {
         KEY_SHARE_LINK_ONLY,
         KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
         KEY_BOARD_DOWNLOAD,
+        KEY_LONG_PRESS_DOWNLOAD,
         KEY_HIDE_SEARCH_BUTTON,
         KEY_HIDE_CREATE_BUTTON,
         KEY_HIDE_NOTIFICATIONS_BUTTON,
@@ -115,6 +117,7 @@ public final class MorpheSettingsStore {
             case KEY_HIDE_SHOPPING_PINS:
             case KEY_DISABLE_EMAIL_CONFIRM_DIALOG:
             case KEY_BOARD_DOWNLOAD:
+            case KEY_LONG_PRESS_DOWNLOAD:
             case KEY_VERBOSE_LOGGING:
             case KEY_HIDE_SEARCH_BOARD_MODULES:
             case KEY_DISABLE_SCREENSHOT_SHARE:
@@ -223,6 +226,11 @@ public final class MorpheSettingsStore {
      * Voce di download nel menu "…" della bacheca. Quando è attiva, i pin delle bacheche
      * visitate vengono tenuti in memoria per poterli scaricare in blocco.
      */
+    /** Tasto "scarica" nel menu circolare che compare tenendo premuto un pin. */
+    public static boolean isLongPressDownloadEnabled() {
+        return effective(KEY_LONG_PRESS_DOWNLOAD);
+    }
+
     public static boolean isBoardDownloadEnabled() {
         return effective(KEY_BOARD_DOWNLOAD);
     }
