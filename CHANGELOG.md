@@ -1,3 +1,9 @@
+## [1.8.1-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.8.0...v1.8.1-dev.1) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** make the long-press download button actually appear ([6ae2955](https://github.com/browzomje/browzomje-patches/commit/6ae29556e21956b5593f5a31e35b8797c4ca412f))
+
 ## [1.8.0](https://github.com/browzomje/browzomje-patches/compare/v1.7.0...v1.8.0) (2026-08-19)
 
 ### 🐛 Bug Fixes
