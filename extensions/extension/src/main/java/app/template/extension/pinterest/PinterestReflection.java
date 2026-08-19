@@ -342,10 +342,30 @@ final class PinterestReflection {
      * @return true se il toast nativo è stato inviato; false se il chiamante deve ripiegare su
      *     {@link android.widget.Toast}.
      */
-    /** Il contenitore dei toast: nome pulito, sta nella libreria di componenti Gestalt. */
-    private static final String TOAST_CONTAINER_CLASS =
-            "com.pinterest.gestalt.toast.PinterestToastContainer";
+    /**
+     * Il metodo con cui l'Activity di Pinterest mostra un toast. Nome pulito: è API pubblica
+     * dell'Activity, non una funzione interna, quindi R8 non lo accorcia.
+     */
+    private static final String SHOW_TOAST = "showToast";
 
+    /**
+     * Mostra un messaggio con il toast vero di Pinterest — sfondo chiaro, testo scuro, in alto —
+     * invece della striscia disegnata da noi.
+     *
+     * <p><b>Perché passa dall'Activity.</b> Il primo tentativo cercava il contenitore dei toast
+     * nell'albero delle view e ci consegnava il modello. Non funzionava, e il log lo diceva:
+     * <em>PinterestToastContainer not in the view tree</em>. Il contenitore non è sempre montato —
+     * viene creato quando serve — quindi cercarlo è una corsa che si perde quasi sempre.
+     *
+     * <p>Pinterest stessa non lo cerca: manda un evento, e l'Activity che lo riceve chiama
+     * {@code showToast(modello)}. Quella è la porta d'ingresso vera, ed è raggiungibile
+     * direttamente: {@code MainActivity} ha un nome pulito perché è dichiarata nel manifest, e
+     * {@code showToast} è un metodo pubblico dell'Activity, quindi nemmeno lui viene accorciato.
+     * Saltare l'evento e chiamare il metodo evita sia la corsa sia il bisogno di indovinare quale
+     * classe-evento sia quella giusta.
+     *
+     * @return false se il toast nativo non è utilizzabile: il chiamante disegna il suo.
+     */
     static boolean showGestaltToast(Context context, String message, int durationMs) {
         String modelClassName = MorpheRuntimeNames.textToastClass;
         if (modelClassName == null || modelClassName.isEmpty()) {
@@ -355,48 +375,27 @@ final class PinterestReflection {
         }
 
         try {
-            // 1) Il contenitore: si cerca nell'albero delle view dell'Activity per nome di classe.
-            //    È lui che sa animare, impilare e far sparire i toast.
             Activity activity = PinterestUtils.activityOf(context);
             if (activity == null) {
                 MorpheLog.w(MorpheLog.REFLECTION, "TOAST: no Activity — drawing our own");
                 return false;
             }
-            View container = findByClassName(activity.getWindow().getDecorView(),
-                    TOAST_CONTAINER_CLASS);
-            if (container == null) {
-                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: " + TOAST_CONTAINER_CLASS
-                        + " not in the view tree of " + activity.getClass().getName()
-                        + " — drawing our own");
-                return false;
-            }
 
-            // 2) Il modello, costruito con la classe che la patch ha risolto leggendo il dex.
             Object model = Class.forName(modelClassName)
                     .getConstructor(String.class, int.class)
                     .newInstance(message, durationMs);
 
-            // 3) Il metodo con cui si consegna il modello al contenitore. Il suo nome è offuscato,
-            //    ma la firma no: è l'unico metodo pubblico che restituisce void e prende un solo
-            //    parametro del tipo base dei modelli — che ricaviamo dal modello stesso, senza
-            //    nominarlo.
-            Class<?> modelBase = model.getClass();
-            while (modelBase.getSuperclass() != null
-                    && modelBase.getSuperclass() != Object.class) {
-                modelBase = modelBase.getSuperclass();
-            }
-            Method show = findShowMethod(container.getClass(), modelBase);
+            Method show = findShowToastMethod(activity.getClass(), model);
             if (show == null) {
-                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: no method on "
-                        + container.getClass().getName() + " takes a " + modelBase.getName()
-                        + " — drawing our own");
+                MorpheLog.w(MorpheLog.REFLECTION, "TOAST: " + activity.getClass().getName()
+                        + " has no " + SHOW_TOAST + "(<toast model>) — drawing our own");
                 return false;
             }
 
             show.setAccessible(true);
-            show.invoke(container, model);
+            show.invoke(activity, model);
             MorpheLog.i(MorpheLog.REFLECTION, "TOAST: shown with Pinterest's own toast ("
-                    + modelClassName + " -> " + container.getClass().getSimpleName() + "."
+                    + modelClassName + " -> " + activity.getClass().getSimpleName() + "."
                     + show.getName() + ")");
             return true;
         } catch (Throwable t) {
@@ -405,35 +404,19 @@ final class PinterestReflection {
         }
     }
 
-    /** Il metodo `void <qualcosa>(<modello di toast>)` del contenitore. */
-    private static Method findShowMethod(Class<?> containerClass, Class<?> modelBase) {
-        for (Method method : containerClass.getMethods()) {
-            if (method.getReturnType() != void.class) {
+    /**
+     * {@code showToast(<modello>)} sull'Activity, cercato per nome e per compatibilità del
+     * parametro — non per tipo esatto, così regge se l'Activity dichiara la superclasse dei modelli
+     * invece del tipo concreto.
+     */
+    private static Method findShowToastMethod(Class<?> activityClass, Object model) {
+        for (Method method : activityClass.getMethods()) {
+            if (!SHOW_TOAST.equals(method.getName())) {
                 continue;
             }
             Class<?>[] parameters = method.getParameterTypes();
-            if (parameters.length == 1 && parameters[0] == modelBase) {
+            if (parameters.length == 1 && parameters[0].isInstance(model)) {
                 return method;
-            }
-        }
-        return null;
-    }
-
-    /** Cerca in profondità la prima view di questa classe. */
-    private static View findByClassName(View root, String className) {
-        if (root == null) {
-            return null;
-        }
-        if (className.equals(root.getClass().getName())) {
-            return root;
-        }
-        if (root instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) root;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                View found = findByClassName(group.getChildAt(i), className);
-                if (found != null) {
-                    return found;
-                }
             }
         }
         return null;
