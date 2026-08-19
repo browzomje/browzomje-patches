@@ -1,3 +1,9 @@
+## [1.8.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.1...v1.8.0-dev.2) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** restore the pin overflow menu entries on 14.32.0 ([f416d01](https://github.com/browzomje/browzomje-patches/commit/f416d01bbc45b68c560d3859edfa94ecc5f4c601))
+
 ## [1.8.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.7.0...v1.8.0-dev.1) (2026-08-19)
 
 ### ✨ New Features
