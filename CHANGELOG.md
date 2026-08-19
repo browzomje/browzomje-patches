@@ -1,3 +1,9 @@
+## [1.8.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.3...v1.8.0-dev.4) (2026-08-19)
+
+### ✨ New Features
+
+* **pinterest:** Pinterest-style toasts, and actually close the menu ([0f99b7a](https://github.com/browzomje/browzomje-patches/commit/0f99b7a5c2c7e5949e9f189f459e3c207de33627))
+
 ## [1.8.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.2...v1.8.0-dev.3) (2026-08-19)
 
 ### 🐛 Bug Fixes
