@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.8.0-dev.5",
+  "version": "1.8.0-dev.7",
   "patches": [
     {
       "name": "Copy direct link",
@@ -314,6 +314,43 @@
     {
       "name": "Download board",
       "description": "Adds an option to the board's \"…\" menu to bulk download the images and videos of the loaded pins.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pinterest",
+          "name": "Pinterest",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#E60023",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "14.23.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "14.28.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "14.32.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Download pin from long press",
+      "description": "Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [

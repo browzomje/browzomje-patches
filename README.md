@@ -12,9 +12,9 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.8.0-dev.6](https://github.com/browzomje/browzomje-patches/releases/tag/v1.8.0-dev.6)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
+> **[v1.8.0-dev.7](https://github.com/browzomje/browzomje-patches/releases/tag/v1.8.0-dev.7)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;30 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;24 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;25 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -32,6 +32,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Closes the "confirm your email" modal, and similar ones, when enabled in Morphe settings. |  |
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |
+| [Download pin from long press](#download-pin-from-long-press) | Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it. |  |
 | [Download video](#download-video) | Adds a "Download video" option to the pin menu, saving the clip to the Downloads folder. |  |
 | [Hide Create nav button](#hide-create-nav-button) | Hides the "+" (create Pin) navigation button, when enabled in Morphe settings. |  |
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hides the notifications navigation button, when enabled in Morphe settings. |  |

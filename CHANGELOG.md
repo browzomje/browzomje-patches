@@ -1,3 +1,9 @@
+## [1.8.0-dev.7](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.6...v1.8.0-dev.7) (2026-08-19)
+
+### ✨ New Features
+
+* **pinterest:** download button in the long-press menu, and say why a toast falls back ([bca5a36](https://github.com/browzomje/browzomje-patches/commit/bca5a366b249500463518b9def8b4b842e8ab8e0))
+
 ## [1.8.0-dev.6](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.5...v1.8.0-dev.6) (2026-08-19)
 
 ### ✨ New Features
