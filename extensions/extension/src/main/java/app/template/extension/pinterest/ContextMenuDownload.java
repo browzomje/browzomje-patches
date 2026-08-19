@@ -143,17 +143,26 @@ final class ContextMenuDownload {
 
         try {
             for (Field field : item.getClass().getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())
-                        || !Drawable.class.isAssignableFrom(field.getType())) {
+                if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
                 field.setAccessible(true);
-                Object theirs = field.get(sibling);
-                // Il campo che nel fratello contiene proprio l'icona disegnata è quello
-                // dell'icona: lì ci va la nostra, in tutti gli altri (gli sfondi dei vari stati)
-                // si copia il valore del fratello.
-                boolean isTheIconField = theirs != null && theirs == siblingDrawable;
-                field.set(item, isTheIconField ? icon : theirs);
+                Class<?> type = field.getType();
+
+                if (Drawable.class.isAssignableFrom(type)) {
+                    Object theirs = field.get(sibling);
+                    // Il campo che nel fratello contiene proprio l'icona disegnata è quello
+                    // dell'icona: lì ci va la nostra, in tutti gli altri (gli sfondi dei vari
+                    // stati) si copia il valore del fratello.
+                    boolean isTheIconField = theirs != null && theirs == siblingDrawable;
+                    field.set(item, isTheIconField ? icon : theirs);
+                } else if (type == boolean.class) {
+                    // Interruttori di presentazione: quale colore usare da evidenziato, se
+                    // l'icona va rimpicciolita, e simili.
+                    field.setBoolean(item, field.getBoolean(sibling));
+                } else if (type == int.class) {
+                    copyIfColour(context, field, sibling, item);
+                }
             }
         } catch (Throwable t) {
             MorpheLog.d(MorpheLog.BOARD, "could not copy the button look: " + t);
@@ -165,7 +174,43 @@ final class ContextMenuDownload {
             ourIcon.setPaddingRelative(
                     siblingIcon.getPaddingStart(), siblingIcon.getPaddingTop(),
                     siblingIcon.getPaddingEnd(), siblingIcon.getPaddingBottom());
+
+            // Anche la tinta viene dal fratello, ed è la ragione per cui l'icona usciva del
+            // colore sbagliato: appena inflatato, il tasto si applica da sé un filtro colore
+            // pensato per lo *sfondo*, e a correggerlo è un metodo che sui tasti di Pinterest
+            // viene chiamato durante la costruzione e sul nostro no. Il risultato era un'icona
+            // scura su tema scuro e chiara su tema chiaro — esattamente l'opposto delle altre.
+            ourIcon.setColorFilter(siblingIcon.getColorFilter());
         }
+    }
+
+    /**
+     * Copia un campo intero solo se contiene un colore.
+     *
+     * <p><b>Perché non si copiano tutti.</b> Fra gli interi del tasto ci sono sia i colori dei vari
+     * stati sia l'<em>identificativo dell'azione</em>, quello con cui il menu riconosce, per dire,
+     * la ricerca visuale. Copiare anche quello significherebbe far passare il nostro tasto per un
+     * altro, con conseguenze imprevedibili al rilascio del dito.
+     *
+     * <p>La distinzione non ha bisogno di nomi: un id di colore si risolve con
+     * {@code getColor()}, un id di tutt'altro tipo no e solleva. Si prova, e si copia solo ciò che
+     * un colore lo è davvero.
+     *
+     * <p>Serve perché al passaggio del dito il tasto **ricalcola** la propria tinta da questi
+     * campi: senza, l'icona spariva appena la si sfiorava e non tornava più.
+     */
+    private static void copyIfColour(Context context, Field field, View sibling, View item)
+            throws IllegalAccessException {
+        int theirs = field.getInt(sibling);
+        if (theirs == 0) {
+            return;
+        }
+        try {
+            context.getColor(theirs);
+        } catch (Throwable notAColour) {
+            return;
+        }
+        field.setInt(item, theirs);
     }
 
     /** @return il primo tasto già nella lista, da cui copiare l'aspetto. */
