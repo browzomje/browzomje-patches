@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.8.0-dev.5",
+  "version": "1.8.0-dev.6",
   "patches": [
     {
       "name": "Copy direct link",
@@ -660,6 +660,43 @@
           "targets": [
             {
               "version": "5.70.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Morphe runtime names",
+      "description": "Resolves the obfuscated class Pinterest uses to build a text toast and hands it to the extension at startup, so Morphe's messages look exactly like the app's own.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pinterest",
+          "name": "Pinterest",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#E60023",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "14.23.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "14.28.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "14.32.0",
               "isExperimental": false,
               "minSdk": null,
               "description": null

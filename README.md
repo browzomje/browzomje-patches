@@ -12,9 +12,9 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.8.0-dev.5](https://github.com/browzomje/browzomje-patches/releases/tag/v1.8.0-dev.5)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;28 patches total
+> **[v1.8.0-dev.6](https://github.com/browzomje/browzomje-patches/releases/tag/v1.8.0-dev.6)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;23 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;24 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -40,6 +40,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hooks the '+' (create) and inbox/notifications buttons in the home feed header: hidden if the matching Morphe settings are enabled. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after you take a screenshot, and stops it from watching for screenshots in the first place on the screens where that is possible. Can be turned back off from the Morphe settings screen. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section both on the search screen and in the carousel below the search bar. It does not prevent Pinterest from logging searches (server-side), but stops them from being shown anywhere in the app. |  |
+| [Morphe runtime names](#morphe-runtime-names) | Resolves the obfuscated class Pinterest uses to build a text toast and hands it to the extension at startup, so Morphe's messages look exactly like the app's own. |  |
 | [Morphe settings entry](#morphe-settings-entry) | Adds the "Morphe" item to the Account Settings list to open the toggle screen. |  |
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |
 | [Morphe settings screen (manifest)](#morphe-settings-screen-manifest) | Registers the Morphe settings Activity in the manifest, with an intent-filter for the morphe:// scheme. |  |

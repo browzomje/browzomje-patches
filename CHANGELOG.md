@@ -1,3 +1,9 @@
+## [1.8.0-dev.6](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.5...v1.8.0-dev.6) (2026-08-19)
+
+### ✨ New Features
+
+* **pinterest:** use Pinterest's own toast for Morphe messages ([a4d6ab2](https://github.com/browzomje/browzomje-patches/commit/a4d6ab2763ae90a674d36c140b3d021013efab49))
+
 ## [1.8.0-dev.5](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.4...v1.8.0-dev.5) (2026-08-19)
 
 ### 🐛 Bug Fixes
