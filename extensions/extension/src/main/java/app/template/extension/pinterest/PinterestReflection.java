@@ -102,25 +102,85 @@ final class PinterestReflection {
         return null;
     }
 
-    /** {@code RelativeLayout a(CharSequence, String, <enum icone>, boolean)}. */
+    /**
+     * Il metodo con cui il "view creator" del menu costruisce una riga.
+     *
+     * <p>Su 14.28.0 era {@code RelativeLayout a(CharSequence, String, <enum icone>, boolean)}. Su
+     * 14.32.0 ha preso un parametro in più — {@code a(CharSequence, String, <enum>, boolean,
+     * boolean)} — e siccome il vecchio riconoscimento pretendeva <em>esattamente</em> quattro
+     * parametri non lo trovava più: le nostre due voci finivano nella riga di ripiego, con font,
+     * icona e allineamento diversi da tutte le altre.
+     *
+     * <p>È lo stesso errore descritto nel PATCHING_MEMORY a proposito di
+     * {@code ModelListWithBookmark}: l'ancora serve a trovare il membro, ma ogni vincolo in più
+     * è una cosa in più che si può rompere. Qui quindi si pretende solo ciò che rende il metodo
+     * riconoscibile e utilizzabile:
+     *
+     * <ul>
+     *   <li>restituisce una {@link View} — è la riga;
+     *   <li>il primo parametro è la {@link CharSequence} del testo;
+     *   <li>c'è un parametro enum, che è l'icona.
+     * </ul>
+     *
+     * Tutto il resto (quanti parametri, in che ordine, di che tipo) lo riempie
+     * {@link #buildFactoryArguments}. Un parametro aggiunto in una versione futura non romperà più
+     * nulla.
+     */
     static Method findRowFactoryMethod(Class<?> viewCreatorClass) {
         for (Method method : viewCreatorClass.getMethods()) {
-            if (method.getReturnType() != RelativeLayout.class) {
+            if (!View.class.isAssignableFrom(method.getReturnType())) {
                 continue;
             }
             Class<?>[] parameters = method.getParameterTypes();
-            if (parameters.length != 4) {
+            if (parameters.length < 4 || parameters[0] != CharSequence.class) {
                 continue;
             }
-            if (parameters[0] != CharSequence.class
-                    || parameters[1] != String.class
-                    || !parameters[2].isEnum()
-                    || parameters[3] != boolean.class) {
+            if (indexOfEnumParameter(parameters) < 0) {
                 continue;
             }
             return method;
         }
         return null;
+    }
+
+    /** @return la posizione del primo parametro enum (l'icona), o -1 se non ce n'è. */
+    private static int indexOfEnumParameter(Class<?>[] parameters) {
+        for (int i = 1; i < parameters.length; i++) {
+            if (parameters[i].isEnum()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Riempie gli argomenti della fabbrica: il testo, l'icona, e per tutto il resto il valore
+     * neutro del tipo.
+     *
+     * <p>I parametri che non conosciamo sono opzioni di presentazione (riga compatta, badge, …):
+     * passando il valore neutro si ottiene la riga standard, cioè esattamente quella che vogliamo.
+     */
+    private static Object[] buildFactoryArguments(Class<?>[] parameters, CharSequence label,
+                                                  Object icon, int iconIndex) {
+        Object[] arguments = new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            if (i == 0) {
+                arguments[i] = label;
+            } else if (i == iconIndex) {
+                arguments[i] = icon;
+            } else if (parameters[i] == boolean.class) {
+                arguments[i] = Boolean.FALSE;
+            } else if (parameters[i] == int.class) {
+                arguments[i] = Integer.valueOf(0);
+            } else if (parameters[i] == long.class) {
+                arguments[i] = Long.valueOf(0L);
+            } else if (parameters[i].isPrimitive()) {
+                arguments[i] = Integer.valueOf(0);
+            } else {
+                arguments[i] = null;
+            }
+        }
+        return arguments;
     }
 
     /**
@@ -147,7 +207,9 @@ final class PinterestReflection {
             return null;
         }
 
-        Class<?> iconEnum = factory.getParameterTypes()[2];
+        Class<?>[] parameters = factory.getParameterTypes();
+        int iconIndex = indexOfEnumParameter(parameters);
+        Class<?> iconEnum = parameters[iconIndex];
         Object icon = null;
         try {
             icon = Enum.valueOf((Class<Enum>) iconEnum, iconName);
@@ -158,10 +220,12 @@ final class PinterestReflection {
 
         try {
             factory.setAccessible(true);
-            RelativeLayout row = (RelativeLayout) factory.invoke(creator, label, null, icon, false);
-            if (row == null) {
+            Object built = factory.invoke(creator,
+                    buildFactoryArguments(parameters, label, icon, iconIndex));
+            if (!(built instanceof View)) {
                 return null;
             }
+            View row = (View) built;
             row.setOnClickListener(onClick);
             return row;
         } catch (Throwable t) {
