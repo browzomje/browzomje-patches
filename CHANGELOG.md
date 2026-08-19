@@ -1,3 +1,9 @@
+## [1.8.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.2...v1.8.0-dev.3) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** restore the native styling of the added pin menu rows ([7d1e903](https://github.com/browzomje/browzomje-patches/commit/7d1e9038fe225a24b8618c6c7c2fdc57e75da2d5))
+
 ## [1.8.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.1...v1.8.0-dev.2) (2026-08-19)
 
 ### 🐛 Bug Fixes

@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-08-19T18:07:42",
-  "description": "## [1.8.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.1...v1.8.0-dev.2) (2026-08-19)\n\n### 🐛 Bug Fixes\n\n* **pinterest:** restore the pin overflow menu entries on 14.32.0 ([f416d01](https://github.com/browzomje/browzomje-patches/commit/f416d01bbc45b68c560d3859edfa94ecc5f4c601))",
-  "download_url": "https://github.com/browzomje/browzomje-patches/releases/download/v1.8.0-dev.2/patches-1.8.0-dev.2.mpp",
+  "created_at": "2026-08-19T18:15:50",
+  "description": "## [1.8.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.2...v1.8.0-dev.3) (2026-08-19)\n\n### 🐛 Bug Fixes\n\n* **pinterest:** restore the native styling of the added pin menu rows ([7d1e903](https://github.com/browzomje/browzomje-patches/commit/7d1e9038fe225a24b8618c6c7c2fdc57e75da2d5))",
+  "download_url": "https://github.com/browzomje/browzomje-patches/releases/download/v1.8.0-dev.3/patches-1.8.0-dev.3.mpp",
   "signature_download_url": "",
-  "version": "1.8.0-dev.2"
+  "version": "1.8.0-dev.3"
 }
