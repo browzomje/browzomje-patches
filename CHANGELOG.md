@@ -1,3 +1,9 @@
+## [1.8.0-dev.5](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.4...v1.8.0-dev.5) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** align the added menu rows, and find the Activity reliably ([013fb98](https://github.com/browzomje/browzomje-patches/commit/013fb9802d5341df2dc81c0fd8959e008d3c8501))
+
 ## [1.8.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.3...v1.8.0-dev.4) (2026-08-19)
 
 ### ✨ New Features
