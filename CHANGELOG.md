@@ -1,3 +1,9 @@
+## [1.8.0-dev.8](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.7...v1.8.0-dev.8) (2026-08-19)
+
+### 🐛 Bug Fixes
+
+* **pinterest:** show Morphe's messages through the app's real toast ([b54e0a9](https://github.com/browzomje/browzomje-patches/commit/b54e0a9a5d8e90369a28d13ee8039b443f015805))
+
 ## [1.8.0-dev.7](https://github.com/browzomje/browzomje-patches/compare/v1.8.0-dev.6...v1.8.0-dev.7) (2026-08-19)
 
 ### ✨ New Features
