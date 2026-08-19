@@ -34,6 +34,10 @@ final class MorpheStrings {
     static final String SEARCH_MODULES_DESCRIPTION = "search_modules_description";
     static final String SCREENSHOT_TITLE = "screenshot_title";
     static final String SCREENSHOT_DESCRIPTION = "screenshot_description";
+    static final String SANITIZE_LINKS_TITLE = "sanitize_links_title";
+    static final String SANITIZE_LINKS_DESCRIPTION = "sanitize_links_description";
+    static final String SHARE_LINK_ONLY_TITLE = "share_link_only_title";
+    static final String SHARE_LINK_ONLY_DESCRIPTION = "share_link_only_description";
 
     static final String BOARD_DOWNLOAD_TITLE = "board_download_title";
     static final String BOARD_DOWNLOAD_DESCRIPTION = "board_download_description";
@@ -171,6 +175,71 @@ final class MorpheStrings {
             "Voorkomt ook dat Pinterest schermafbeeldingen bewaakt, waar mogelijk.",
             "Mümkün olduğunda Pinterest'in ekran görüntülerini izlemesini de engeller.",
             "يمنع أيضًا Pinterest من مراقبة لقطات الشاشة، حيثما أمكن.");
+
+        put(SANITIZE_LINKS_TITLE,
+            "Clean shared links",
+            "Ripulisci i link condivisi", "Limpiar los enlaces compartidos",
+            "Nettoyer les liens partagés", "Geteilte Links bereinigen",
+            "Limpar as ligações partilhadas", "Очищать отправляемые ссылки",
+            "共有リンクをクリーンにする", "清理分享链接", "공유 링크 정리",
+            "Czyść udostępniane linki", "Gedeelde links opschonen",
+            "Paylaşılan bağlantıları temizle", "تنظيف الروابط المشاركة");
+
+        put(SANITIZE_LINKS_DESCRIPTION,
+            "Removes tracking parameters and turns pin.it short links into the plain pin link. "
+                + "Resolving a short link costs one network request.",
+            "Toglie i parametri di tracciamento e trasforma gli short link pin.it nel link "
+                + "normale del pin. Risolvere uno short link costa una richiesta di rete.",
+            "Quita los parámetros de seguimiento y convierte los enlaces cortos pin.it en el "
+                + "enlace normal del pin. Resolverlos cuesta una petición de red.",
+            "Supprime les paramètres de suivi et transforme les liens courts pin.it en lien "
+                + "normal du pin. Résoudre un lien court coûte une requête réseau.",
+            "Entfernt Tracking-Parameter und wandelt pin.it-Kurzlinks in den normalen Pin-Link "
+                + "um. Das Auflösen kostet eine Netzwerkanfrage.",
+            "Remove os parâmetros de rastreio e converte as ligações curtas pin.it na ligação "
+                + "normal do pin. Resolver uma ligação curta custa um pedido de rede.",
+            "Убирает параметры отслеживания и превращает короткие ссылки pin.it в обычную "
+                + "ссылку на пин. Разрешение короткой ссылки требует сетевого запроса.",
+            "トラッキングパラメータを削除し、pin.it の短縮リンクを通常のピンのリンクに変換します。"
+                + "短縮リンクの解決には通信が 1 回必要です。",
+            "移除跟踪参数，并把 pin.it 短链接还原为普通的 Pin 链接。解析短链接需要一次网络请求。",
+            "추적 매개변수를 제거하고 pin.it 단축 링크를 일반 핀 링크로 바꿉니다. "
+                + "단축 링크 해석에는 네트워크 요청이 한 번 필요합니다.",
+            "Usuwa parametry śledzenia i zamienia krótkie linki pin.it na zwykły link do pinu. "
+                + "Rozwinięcie krótkiego linku kosztuje jedno zapytanie sieciowe.",
+            "Verwijdert trackingparameters en zet pin.it-verkorte links om in de gewone pinlink. "
+                + "Het oplossen kost één netwerkverzoek.",
+            "Takip parametrelerini kaldırır ve pin.it kısa bağlantılarını normal pin "
+                + "bağlantısına çevirir. Çözümlemek bir ağ isteğine mal olur.",
+            "يزيل معاملات التتبع ويحوّل روابط pin.it المختصرة إلى رابط الدبوس العادي. "
+                + "يتطلب حل الرابط المختصر طلب شبكة واحدًا.");
+
+        put(SHARE_LINK_ONLY_TITLE,
+            "Share the link only",
+            "Condividi solo il link", "Compartir solo el enlace",
+            "Partager seulement le lien", "Nur den Link teilen",
+            "Partilhar apenas a ligação", "Отправлять только ссылку",
+            "リンクだけを共有", "只分享链接", "링크만 공유",
+            "Udostępniaj tylko link", "Alleen de link delen",
+            "Yalnızca bağlantıyı paylaş", "مشاركة الرابط فقط");
+
+        put(SHARE_LINK_ONLY_DESCRIPTION,
+            "Drops the promotional sentence Pinterest puts in front of the link (\"Take a look at "
+                + "this Pin! ➡️\").",
+            "Toglie la frase promozionale che Pinterest antepone al link (\"Dai un'occhiata a "
+                + "questa idea ➡️\").",
+            "Quita la frase promocional que Pinterest antepone al enlace.",
+            "Supprime la phrase promotionnelle que Pinterest ajoute devant le lien.",
+            "Entfernt den Werbesatz, den Pinterest vor den Link setzt.",
+            "Remove a frase promocional que o Pinterest coloca antes da ligação.",
+            "Убирает рекламную фразу, которую Pinterest ставит перед ссылкой.",
+            "Pinterest がリンクの前に付ける宣伝文を削除します。",
+            "移除 Pinterest 加在链接前面的推广语句。",
+            "Pinterest가 링크 앞에 붙이는 홍보 문구를 제거합니다.",
+            "Usuwa zdanie promocyjne, które Pinterest dodaje przed linkiem.",
+            "Verwijdert de promotiezin die Pinterest voor de link zet.",
+            "Pinterest'in bağlantının önüne koyduğu tanıtım cümlesini kaldırır.",
+            "يزيل العبارة الترويجية التي يضعها Pinterest قبل الرابط.");
 
         put(SEARCH_HISTORY_TITLE,
             "Hide search history",

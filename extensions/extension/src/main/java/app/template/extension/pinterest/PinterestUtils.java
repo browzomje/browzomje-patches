@@ -242,6 +242,34 @@ public final class PinterestUtils {
     }
 
     /**
+     * Collassa a zero una view che serve solo a mostrare pubblicità, se il blocco è acceso.
+     *
+     * <p>Hook sui costruttori delle view pubblicitarie di Pinterest (vedi {@code HideAdViewsPatch}).
+     * È una rete di sicurezza dietro a {@link #filterSponsoredPinsFromFeed(Object)}, non un
+     * doppione: il filtro toglie i contenuti sponsorizzati dalle risposte di rete, ma l'app può
+     * comunque decidere di costruire una di queste view — per esempio al primissimo caricamento del
+     * feed dopo un'installazione pulita, prima che il filtro abbia visto passare qualcosa. Qui la
+     * view viene costruita lo stesso (iniezioni Dagger, inflate del layout, listener: tutto gira,
+     * così chi ne tiene un riferimento non trova null) ma non disegna e non occupa spazio, perché
+     * {@code GONE} salta sia la misura sia il disegno.
+     *
+     * <p>Il controllo dell'interruttore sta qui e non nel bytecode di proposito: se stesse nel
+     * patch, spegnere "Disabilita pubblicità" dalla schermata Morphe non rimetterebbe indietro
+     * queste view, e l'interruttore mentirebbe.
+     */
+    public static void hideAdView(View view) {
+        if (view == null || !MorpheSettingsStore.isAdsDisabled()) {
+            return;
+        }
+        try {
+            view.setVisibility(View.GONE);
+            MorpheLog.hookFired(MorpheLog.ADS, "ad view collassata: " + view.getClass().getName());
+        } catch (Throwable t) {
+            MorpheLog.w(MorpheLog.ADS, "non sono riuscito a collassare la ad view", t);
+        }
+    }
+
+    /**
      * Hook sui costruttori delle risposte del feed (Feed, PagedResponse, ModelListWithBookmark):
      * rimuove i contenuti sponsorizzati dalle liste che l'oggetto appena costruito contiene.
      */
@@ -1525,6 +1553,21 @@ public final class PinterestUtils {
             if (isTr) return "%1 resim ve %2 video indirildi.";
             if (isAr) return "تم تنزيل %1 صورة و%2 فيديو.";
             return "Downloaded %1 images and %2 videos.";
+        }
+        if ("board_download_already".equals(key)) {
+            if (isIt) return "%d già presenti, saltati.";
+            if (isEs) return "%d ya presentes, omitidos.";
+            if (isFr) return "%d déjà présents, ignorés.";
+            if (isDe) return "%d bereits vorhanden, übersprungen.";
+            if (isPt) return "%d já presentes, ignorados.";
+            if (isRu) return "%d уже есть, пропущено.";
+            if (isJa) return "%d 件は既にあるためスキップしました。";
+            if (isZh) return "%d 个已存在，已跳过。";
+            if (isKo) return "%d개는 이미 있어 건너뛰었습니다.";
+            if (isNl) return "%d al aanwezig, overgeslagen.";
+            if (isTr) return "%d zaten var, atlandı.";
+            if (isAr) return "%d موجودة بالفعل، تم تخطيها.";
+            return "%d already there, skipped.";
         }
         if ("board_download_skipped".equals(key)) {
             if (isIt) return "%d video saltati: richiedono un'app esterna (yt-dlp).";

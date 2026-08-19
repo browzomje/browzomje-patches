@@ -23,6 +23,8 @@ public final class MorpheSettingsStore {
     public static final String KEY_BOARD_DOWNLOAD = "board_download";
     public static final String KEY_HIDE_SEARCH_BOARD_MODULES = "hide_search_board_modules";
     public static final String KEY_DISABLE_SCREENSHOT_SHARE = "disable_screenshot_share";
+    public static final String KEY_SANITIZE_LINKS = "sanitize_links";
+    public static final String KEY_SHARE_LINK_ONLY = "share_link_only";
 
     /**
      * Le impostazioni che si esportano e si importano, nell'ordine in cui compaiono a schermo.
@@ -37,6 +39,8 @@ public final class MorpheSettingsStore {
         KEY_HIDE_SEARCH_BOARD_MODULES,
         KEY_HIDE_SEARCH_HISTORY,
         KEY_DISABLE_SCREENSHOT_SHARE,
+        KEY_SANITIZE_LINKS,
+        KEY_SHARE_LINK_ONLY,
         KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
         KEY_BOARD_DOWNLOAD,
         KEY_HIDE_SEARCH_BUTTON,
@@ -114,6 +118,8 @@ public final class MorpheSettingsStore {
             case KEY_VERBOSE_LOGGING:
             case KEY_HIDE_SEARCH_BOARD_MODULES:
             case KEY_DISABLE_SCREENSHOT_SHARE:
+            case KEY_SANITIZE_LINKS:
+            case KEY_SHARE_LINK_ONLY:
                 return true;
             default:
                 return false;
@@ -162,6 +168,31 @@ public final class MorpheSettingsStore {
      */
     public static boolean isScreenshotShareDisabled() {
         return effective(KEY_DISABLE_SCREENSHOT_SHARE);
+    }
+
+    /**
+     * Ripulitura dei link che escono dall'app: parametri di tracciamento tolti dalla query e short
+     * link {@code pin.it} risolti nel link canonico del pin.
+     *
+     * <p>È un interruttore e non una scelta fatta una volta per tutte in fase di patch perché
+     * risolvere uno short link costa una richiesta di rete mentre l'utente aspetta: chi ha una
+     * connessione lenta e preferisce la condivisione istantanea deve poterlo spegnere. Vedi
+     * {@link UrlSanitizer}.
+     */
+    public static boolean isLinkSanitizerEnabled() {
+        return effective(KEY_SANITIZE_LINKS);
+    }
+
+    /**
+     * Condivide il solo link, senza la frase promozionale che Pinterest ci antepone ("Take a
+     * look at this Pin! ➡️").
+     *
+     * <p>Interruttore separato da {@link #isLinkSanitizerEnabled()} perché è una decisione diversa:
+     * quello toglie il tracciamento, questo toglie del testo che qualcuno potrebbe volere. Vedi
+     * {@link UrlSanitizer#stripToUrls(String)}.
+     */
+    public static boolean isShareLinkOnlyEnabled() {
+        return effective(KEY_SHARE_LINK_ONLY);
     }
 
     public static boolean isSearchButtonHidden() {

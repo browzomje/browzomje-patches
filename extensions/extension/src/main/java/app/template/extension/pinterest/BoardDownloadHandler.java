@@ -4,6 +4,8 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
+
+import java.io.File;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -398,8 +400,12 @@ final class BoardDownloadHandler {
 
         MorpheLog.i(MorpheLog.BOARD, "starting download of " + pins.size()
                 + " pins from board \"" + folder + "\" (" + boardId + ")");
-        PinterestUtils.showNativeToast(context,
-                PinterestUtils.getString("board_download_started").replace("%d", String.valueOf(pins.size())));
+        // Il nome della bacheca nel messaggio non è un vezzo: la bacheca "corrente" è dedotta da
+        // quale bacheca domina le ultime risposte di rete, quindi passando in fretta da una
+        // bacheca all'altra può non essere quella che si ha davanti. Scrivendola, se la deduzione
+        // sbaglia lo si vede subito invece di scoprirlo dai file scaricati.
+        PinterestUtils.showNativeToast(context, folder + " — "
+                + PinterestUtils.getString("board_download_started").replace("%d", String.valueOf(pins.size())));
 
         // Il download vero e proprio è delegato a DownloadManager (che lavora in background),
         // ma le chiamate di accodamento vengono fatte fuori dal main thread: con bacheche
@@ -410,6 +416,7 @@ final class BoardDownloadHandler {
                 int images = 0;
                 int videos = 0;
                 int streamingSkipped = 0;
+                int alreadyThere = 0;
                 int failed = 0;
 
                 DownloadManager manager =
@@ -422,6 +429,10 @@ final class BoardDownloadHandler {
                 for (CapturedPin pin : pins) {
                     try {
                         if (pin.videoUrl != null) {
+                            if (alreadyDownloaded(folder, pin.id + ".mp4")) {
+                                alreadyThere++;
+                                continue;
+                            }
                             enqueue(manager, pin.videoUrl, folder, pin.id + ".mp4");
                             videos++;
                         } else if (pin.videoOnlyStreaming) {
@@ -431,7 +442,12 @@ final class BoardDownloadHandler {
                             MorpheLog.d(MorpheLog.BOARD,
                                     "pin " + pin.id + ": streaming only, skipped");
                         } else if (pin.imageUrl != null) {
-                            enqueue(manager, pin.imageUrl, folder, pin.id + extensionOf(pin.imageUrl));
+                            String fileName = pin.id + extensionOf(pin.imageUrl);
+                            if (alreadyDownloaded(folder, fileName)) {
+                                alreadyThere++;
+                                continue;
+                            }
+                            enqueue(manager, pin.imageUrl, folder, fileName);
                             images++;
                         }
                     } catch (Throwable t) {
@@ -440,7 +456,8 @@ final class BoardDownloadHandler {
                     }
                 }
 
-                final String summary = buildSummary(images, videos, streamingSkipped, failed);
+                final String summary =
+                        buildSummary(images, videos, streamingSkipped, alreadyThere, failed);
                 MorpheLog.ok(MorpheLog.BOARD, summary);
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -484,11 +501,40 @@ final class BoardDownloadHandler {
         return name.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
-    private static String buildSummary(int images, int videos, int streamingSkipped, int failed) {
+    /**
+     * @return true se questo pin è già stato scaricato in una sessione precedente.
+     *
+     * <p>Senza questo controllo, ri-scaricare una bacheca non salta niente: {@code DownloadManager}
+     * non sovrascrive e non salta, <b>rinomina</b>. Alla seconda passata si ritrovano
+     * {@code <id>-1.jpg}, alla terza {@code <id>-2.jpg}, e la cartella si riempie di copie dello
+     * stesso pin — è il motivo per cui una bacheca da 28 pin poteva produrre 46 file.
+     *
+     * <p>Il nome del file è l'id del pin, che è stabile: la presenza del file è quindi una risposta
+     * esatta alla domanda "questo pin ce l'ho già", non un'euristica.
+     */
+    private static boolean alreadyDownloaded(String folder, String name) {
+        try {
+            File destination = new File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "Pinterest/" + safe(folder) + "/" + safe(name));
+            return destination.exists();
+        } catch (Throwable t) {
+            // Non potendo controllare, si scarica: un doppione è meno grave di un pin mancante.
+            MorpheLog.d(MorpheLog.BOARD, "could not check whether " + name + " already exists: " + t);
+            return false;
+        }
+    }
+
+    private static String buildSummary(
+            int images, int videos, int streamingSkipped, int alreadyThere, int failed) {
         StringBuilder sb = new StringBuilder();
         sb.append(PinterestUtils.getString("board_download_done")
                 .replace("%1", String.valueOf(images))
                 .replace("%2", String.valueOf(videos)));
+        if (alreadyThere > 0) {
+            sb.append(' ').append(PinterestUtils.getString("board_download_already")
+                    .replace("%d", String.valueOf(alreadyThere)));
+        }
         if (streamingSkipped > 0) {
             sb.append(' ').append(PinterestUtils.getString("board_download_skipped")
                     .replace("%d", String.valueOf(streamingSkipped)));
