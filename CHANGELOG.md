@@ -1,3 +1,9 @@
+## [1.7.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.6.0...v1.7.0-dev.1) (2026-08-19)
+
+### ✨ New Features
+
+* **pinterest:** add hide screenshot share patch and support 14.32.0 ([b212051](https://github.com/browzomje/browzomje-patches/commit/b2120514fb6ff4e6f3b5a6f69ad78f32c3fd8c53))
+
 ## [1.6.0](https://github.com/browzomje/browzomje-patches/compare/v1.5.2...v1.6.0) (2026-08-12)
 
 ### 🐛 Bug Fixes

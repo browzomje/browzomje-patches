@@ -12,20 +12,20 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.6.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.6.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;20 patches total
+> **[v1.7.0-dev.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.7.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;21 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;15 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;16 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.23.0 | 14.28.0 |
-| :---: | :---: |
+| 14.23.0 | 14.28.0 | 14.32.0 |
+| :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Copy direct link](#copy-direct-link) | Adds a 'Copy direct link' option to the pin menu to copy a link under the direct CDN media format instead of the standard Pinterest web link. |  |
-| [Disable ads](#disable-ads) | Removes sponsored (promoted) pins from the home feed and from search/related/board feeds. Also carries the optional "Hide product pins" filter, which is off by default and is turned on from the Morphe settings screen. |  |
+| [Disable ads](#disable-ads) | Removes sponsored (promoted) pins from the home feed and from search/related/board feeds. Also carries two more filters turned on from the Morphe settings screen: "Hide product pins", off by default, and "Hide board modules in search" (sponsored carousel and featured boards), on by default. They ride on the same three hooks because the search landing page is delivered by the very same feed responses. |  |
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Immediately closes the "confirm your email" modal (and similar ones: connect Google, etc.) if enabled in Morphe settings. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download images and videos from already loaded pins. Streaming-only videos are reported and skipped. |  |
 | [Download video](#download-video) | Adds a 'Download video' option to the pin menu for video pins, saving the clip to the Downloads folder. |  |
@@ -33,6 +33,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hooks the notifications button: hidden if enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hooks the search button: hidden if enabled in Morphe settings. |  |
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hooks the '+' (create) and inbox/notifications buttons in the home feed header: hidden if the matching Morphe settings are enabled. |  |
+| [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after you take a screenshot, and stops it from watching for screenshots in the first place on the screens where that is possible. Can be turned back off from the Morphe settings screen. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section both on the search screen and in the carousel below the search bar. It does not prevent Pinterest from logging searches (server-side), but stops them from being shown anywhere in the app. |  |
 | [Morphe settings entry](#morphe-settings-entry) | Adds the "Morphe" item to the Account Settings list to open the toggle screen. |  |
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |
