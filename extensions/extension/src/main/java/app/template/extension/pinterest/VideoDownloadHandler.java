@@ -155,6 +155,7 @@ class VideoDownloadHandler {
             // l'etichetta "Scarica con app esterna (yt-dlp)": una voce inutile e fuorviante su
             // un post che video non è. Ora, se non c'è nulla da scaricare, viene rimossa.
             row.setVisibility(View.GONE);
+            PinterestUtils.matchRowTextAppearance(container, row);
             container.addView(row);
 
             final ImageView icon = PinterestUtils.findImageView(row);

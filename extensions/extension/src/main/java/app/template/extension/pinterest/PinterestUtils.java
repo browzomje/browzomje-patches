@@ -68,6 +68,10 @@ public final class PinterestUtils {
         if (bitmap != null) {
             currentPinBitmap = bitmap;
         }
+        if (view instanceof View) {
+            // Occasione per sapere qual è l'Activity in primo piano: vedi rememberActivityFrom.
+            rememberActivityFrom(((View) view).getContext());
+        }
         if (view != null) {
             try {
                 Class<?> clazz = view.getClass();
@@ -126,6 +130,7 @@ public final class PinterestUtils {
      */
     private static void whenMenuIsReady(final Object menuContainer, final Runnable action) {
         if (menuContainer instanceof View) {
+            rememberActivityFrom(((View) menuContainer).getContext());
             ((View) menuContainer).post(action);
         } else {
             action.run();
@@ -234,6 +239,7 @@ public final class PinterestUtils {
                 MorpheLog.setStatus(MorpheLog.COPY_LINK, "ok — fallback row (different style)");
             }
             if (row != null) {
+                matchRowTextAppearance(container, row);
                 container.addView(row);
             }
         } catch (Throwable t) {
@@ -1349,17 +1355,51 @@ public final class PinterestUtils {
      * {@link #foregroundActivity()}.
      */
     static Activity activityOf(Context context) {
+        Activity fromChain = activityFromContextChain(context);
+        return fromChain != null ? fromChain : foregroundActivity();
+    }
+
+    /** @return l'Activity risalendo i wrapper di {@code context}, o null se non ce n'è una. */
+    private static Activity activityFromContextChain(Context context) {
         Context current = context;
         for (int i = 0; i < 10 && current != null; i++) {
             if (current instanceof Activity) {
                 return (Activity) current;
             }
             if (!(current instanceof android.content.ContextWrapper)) {
-                break;
+                return null;
             }
             current = ((android.content.ContextWrapper) current).getBaseContext();
         }
-        return foregroundActivity();
+        return null;
+    }
+
+    /**
+     * Prende nota dell'Activity a cui appartiene questa View, se non l'abbiamo già.
+     *
+     * <p>Serve ai punti che un'Activity non ce l'hanno: la voce "scarica bacheca" arriva da una
+     * callback del modello del menu, che riceve solo l'indice della riga toccata e da cui si può
+     * risalire al massimo al Context dell'Application — dal quale non si arriva a nessuna Activity,
+     * quindi né il menu si chiudeva né il messaggio compariva nello stile giusto.
+     *
+     * <p>Il ciclo di vita da solo non basta a coprire il buco: {@code registerActivityLifecycleCallbacks}
+     * notifica solo gli eventi <em>futuri</em>, e in Pinterest l'unica Activity va in primo piano
+     * all'avvio, prima che qualunque codice di Morphe giri. Da lì in poi si naviga fra fragment, e
+     * un altro {@code onActivityResumed} non arriva più: il riferimento sarebbe rimasto vuoto per
+     * tutta la sessione.
+     *
+     * <p>Le View invece ci passano di continuo per le mani — ogni immagine del feed, ogni menu — e
+     * ognuna conosce la propria Activity.
+     */
+    static void rememberActivityFrom(Context context) {
+        Activity activity = activityFromContextChain(context);
+        if (activity == null) {
+            return;
+        }
+        Activity known = foreground == null ? null : foreground.get();
+        if (known != activity) {
+            foreground = new java.lang.ref.WeakReference<>(activity);
+        }
     }
 
     /** L'ultima Activity andata in primo piano, o null se non ne è ancora passata nessuna. */
@@ -1529,6 +1569,46 @@ public final class PinterestUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Allinea il testo di una riga che abbiamo aggiunto a quello delle righe già presenti nel menu.
+     *
+     * <p>La fabbrica nativa delle righe prende, oltre a testo e icona, due flag che decidono come
+     * il testo viene composto: il menu li valorizza leggendo il proprio stato, noi non possiamo
+     * saperli e passiamo il valore neutro. Il risultato è una riga giusta in tutto tranne che nel
+     * corpo del testo, che veniva più grande delle altre.
+     *
+     * <p>Invece di indovinare i flag — che sono due oggi e potrebbero essere tre domani — si copia
+     * il risultato: dimensione, carattere e colore si prendono dalla prima riga già nel menu, che
+     * per definizione è composta come Pinterest vuole. Si adatta da sé a qualunque variante il menu
+     * stia usando, e non nomina niente.
+     *
+     * @param container il menu, con dentro le righe di Pinterest
+     * @param row la riga appena costruita, non ancora aggiunta
+     */
+    static void matchRowTextAppearance(ViewGroup container, View row) {
+        try {
+            TextView ours = findTextView(row);
+            if (ours == null) {
+                return;
+            }
+            for (int i = 0; i < container.getChildCount(); i++) {
+                TextView theirs = findTextView(container.getChildAt(i));
+                if (theirs == null || theirs == ours || theirs.getTextSize() <= 0f) {
+                    continue;
+                }
+                ours.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, theirs.getTextSize());
+                ours.setTypeface(theirs.getTypeface());
+                ours.setTextColor(theirs.getTextColors());
+                MorpheLog.d(MorpheLog.REFLECTION, "row text aligned with the menu ("
+                        + theirs.getTextSize() + "px)");
+                return;
+            }
+            MorpheLog.d(MorpheLog.REFLECTION, "no existing row to copy the text style from");
+        } catch (Throwable t) {
+            MorpheLog.d(MorpheLog.REFLECTION, "could not align the row text: " + t);
+        }
     }
 
     static TextView findTextView(View v) {
