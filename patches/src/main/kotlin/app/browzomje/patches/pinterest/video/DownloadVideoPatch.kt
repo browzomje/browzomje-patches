@@ -6,6 +6,7 @@ import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import app.browzomje.patches.pinterest.OverflowMenuBuilderFingerprint
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 private const val PATCH_NAME = "Download video"
@@ -51,7 +52,7 @@ val downloadVideoPatch = bytecodePatch(
         PatchLog.hooked(PATCH_NAME, captureMethod2, "video formats capture")
 
         // 3) La voce di menu vera e propria.
-        val menuMethod = VideoOverflowMenuBuilderFingerprint.method
+        val menuMethod = OverflowMenuBuilderFingerprint.method
         val menuRegisterCount = menuMethod.implementation!!.registerCount
         val p0RegisterIndex = menuRegisterCount - (menuMethod.parameters.size + 1)
 

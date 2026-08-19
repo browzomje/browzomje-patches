@@ -234,9 +234,11 @@ public final class PinterestUtils {
     /** Come {@link #totalAdsRemoved}, per i pin di prodotto: sono due opzioni distinte. */
     private static volatile int totalShoppingPinsRemoved;
 
-    /** @return true se almeno una delle due opzioni di filtro del feed è accesa. */
+    /** @return true se almeno una delle opzioni di filtro del feed è accesa. */
     private static boolean isFilteringEnabled() {
-        return MorpheSettingsStore.isAdsDisabled() || MorpheSettingsStore.isShoppingPinsHidden();
+        return MorpheSettingsStore.isAdsDisabled()
+                || MorpheSettingsStore.isShoppingPinsHidden()
+                || MorpheSettingsStore.isSearchBoardModulesHidden();
     }
 
     /**
@@ -383,12 +385,14 @@ public final class PinterestUtils {
         }
         boolean removeAds = MorpheSettingsStore.isAdsDisabled();
         boolean removeShopping = MorpheSettingsStore.isShoppingPinsHidden();
+        boolean removeSearchModules = MorpheSettingsStore.isSearchBoardModulesHidden();
         try {
             synchronized (items) {
                 int total = items.size();
                 int matching = 0;
                 for (Object item : items) {
-                    if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)) {
+                    if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)
+                            || isSearchModule(item, removeSearchModules)) {
                         matching++;
                     }
                 }
@@ -411,11 +415,13 @@ public final class PinterestUtils {
 
                 int ads = 0;
                 int shopping = 0;
+                int modules = 0;
                 java.util.Iterator<?> iterator = items.iterator();
                 while (iterator.hasNext()) {
                     Object item = iterator.next();
                     boolean ad = isAd(item, removeAds);
-                    if (!ad && !isShoppingPin(item, removeShopping)) {
+                    boolean module = !ad && isSearchModule(item, removeSearchModules);
+                    if (!ad && !module && !isShoppingPin(item, removeShopping)) {
                         continue;
                     }
                     try {
@@ -427,6 +433,8 @@ public final class PinterestUtils {
                     }
                     if (ad) {
                         ads++;
+                    } else if (module) {
+                        modules++;
                     } else {
                         shopping++;
                     }
@@ -440,6 +448,12 @@ public final class PinterestUtils {
                             + " product pins)");
                     MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved + " ads and "
                             + totalShoppingPinsRemoved + " product pins removed so far");
+                }
+                if (modules > 0) {
+                    // Canale a sé: sono moduli della ricerca, non annunci, e tenerli distinti
+                    // rende leggibile in logcat quale delle due opzioni ha tolto cosa.
+                    MorpheLog.i(MorpheLog.SEARCH_MODULES, "removed " + modules
+                            + " search board modules out of " + total);
                 }
             }
         } catch (Throwable t) {
@@ -455,6 +469,75 @@ public final class PinterestUtils {
     /** @param enabled se false non si guarda nemmeno il modello: l'opzione è spenta. */
     private static boolean isShoppingPin(Object item, boolean enabled) {
         return enabled && AdDetector.isShoppingPin(item);
+    }
+
+    /** @param enabled se false non si guarda nemmeno il modello: l'opzione è spenta. */
+    private static boolean isSearchModule(Object item, boolean enabled) {
+        return enabled && SearchModuleDetector.isUnwantedSearchModule(item);
+    }
+
+    // ------------------------------------------------------------- screenshot (issue #32)
+
+    /**
+     * Percorso legacy: chiamata all'ingresso del metodo che, dopo uno screenshot, registra
+     * l'evento e apre il pannello di condivisione.
+     *
+     * @param fragment il fragment del closeup, usato solo per il log.
+     * @return true se il metodo deve uscire subito senza fare nulla.
+     */
+    public static boolean blockLegacyScreenshotFlow(Object fragment) {
+        MorpheLog.hookFired(MorpheLog.SCREENSHOT, "legacy funnel on "
+                + (fragment == null ? "null" : fragment.getClass().getName()));
+
+        if (!MorpheSettingsStore.isScreenshotShareDisabled()) {
+            MorpheLog.d(MorpheLog.SCREENSHOT, "option off: letting the panel through");
+            return false;
+        }
+        MorpheLog.ok(MorpheLog.SCREENSHOT, "screenshot panel blocked (legacy path)");
+        return true;
+    }
+
+    /**
+     * Percorso SBA: chiamata all'ingresso del processore degli effetti screenshot.
+     *
+     * <p>Blocca l'intero processore, quindi anche gli effetti che <em>avviano</em> la
+     * sorveglianza degli screenshot: con l'opzione attiva la rilevazione non parte affatto.
+     *
+     * @param effect l'effetto in arrivo. Il suo {@code toString()} è leggibile
+     *     ({@code StartScreenshotObservation}, {@code ShowScreenshotUpsell}, …), quindi finisce
+     *     nel log: è il modo più diretto per vedere cosa stava per succedere.
+     * @return true se il processore deve uscire subito.
+     */
+    /**
+     * Rilevatore screenshot generico, usato fuori dal closeup (feed, bacheche).
+     *
+     * <p>Chiamata all'ingresso del metodo che <em>avvia</em> l'osservazione: se si esce subito,
+     * né il {@code FileObserver} né la callback di Android 14 vengono registrati, quindi non c'è
+     * proprio niente che possa poi aprire il pannello.
+     *
+     * @return true se l'osservazione non deve partire.
+     */
+    public static boolean blockScreenshotObserver() {
+        MorpheLog.hookFired(MorpheLog.SCREENSHOT, "generic observer starting");
+
+        if (!MorpheSettingsStore.isScreenshotShareDisabled()) {
+            MorpheLog.d(MorpheLog.SCREENSHOT, "option off: letting the observer start");
+            return false;
+        }
+        MorpheLog.ok(MorpheLog.SCREENSHOT, "screenshot observation not started");
+        return true;
+    }
+
+    public static boolean blockScreenshotEffect(Object effect) {
+        String what = effect == null ? "null" : String.valueOf(effect);
+        MorpheLog.hookFired(MorpheLog.SCREENSHOT, "SBA effect " + what);
+
+        if (!MorpheSettingsStore.isScreenshotShareDisabled()) {
+            MorpheLog.d(MorpheLog.SCREENSHOT, "option off: running effect " + what);
+            return false;
+        }
+        MorpheLog.ok(MorpheLog.SCREENSHOT, "blocked effect " + what);
+        return true;
     }
 
     // ---------------------------------------------------------------- barra di navigazione

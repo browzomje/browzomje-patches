@@ -30,6 +30,10 @@ final class MorpheStrings {
     static final String SEARCH_HISTORY_TITLE = "search_history_title";
     static final String SEARCH_HISTORY_DESCRIPTION = "search_history_description";
     static final String EMAIL_DIALOG_TITLE = "email_dialog_title";
+    static final String SEARCH_MODULES_TITLE = "search_modules_title";
+    static final String SEARCH_MODULES_DESCRIPTION = "search_modules_description";
+    static final String SCREENSHOT_TITLE = "screenshot_title";
+    static final String SCREENSHOT_DESCRIPTION = "screenshot_description";
 
     static final String BOARD_DOWNLOAD_TITLE = "board_download_title";
     static final String BOARD_DOWNLOAD_DESCRIPTION = "board_download_description";
@@ -116,6 +120,57 @@ final class MorpheStrings {
             "スポンサー商品を非表示", "隐藏赞助商品", "스폰서 제품 숨기기",
             "Ukryj produkty sponsorowane", "Gesponsorde producten verbergen",
             "Sponsorlu ürünleri gizle", "إخفاء المنتجات المموّلة");
+
+        put(SEARCH_MODULES_TITLE,
+            "Hide board modules in search",
+            "Nascondi moduli a bacheche nella ricerca", "Ocultar módulos de tableros en la búsqueda",
+            "Masquer les modules de tableaux dans la recherche", "Pinnwand-Module in der Suche ausblenden",
+            "Ocultar módulos de pastas na pesquisa", "Скрыть блоки досок в поиске",
+            "検索のボードモジュールを非表示", "隐藏搜索中的图板模块", "검색의 보드 모듈 숨기기",
+            "Ukryj moduły tablic w wyszukiwaniu", "Bordmodules in zoeken verbergen",
+            "Aramada pano modüllerini gizle", "إخفاء وحدات اللوحات في البحث");
+
+        put(SEARCH_MODULES_DESCRIPTION,
+            "Sponsored carousel and featured boards. \"Ideas for you\" stays.",
+            "Carosello sponsorizzato e bacheche in evidenza. \"Idee per te\" resta.",
+            "Carrusel patrocinado y tableros destacados. \"Ideas para ti\" se mantiene.",
+            "Carrousel sponsorisé et tableaux à la une. « Idées pour vous » reste.",
+            "Gesponsertes Karussell und vorgestellte Pinnwände. \"Ideen für dich\" bleibt.",
+            "Carrossel patrocinado e pastas em destaque. \"Ideias para si\" fica.",
+            "Спонсируемая карусель и рекомендованные доски. \"Идеи для вас\" остаются.",
+            "スポンサーカルーセルと注目のボード。「あなたへのアイデア」は残ります。",
+            "赞助轮播和精选图板。“为你推荐”会保留。",
+            "스폰서 캐러셀과 추천 보드. \"회원님을 위한 아이디어\"는 유지됩니다.",
+            "Sponsorowana karuzela i polecane tablice. \"Pomysły dla Ciebie\" zostają.",
+            "Gesponsorde carrousel en uitgelichte borden. \"Ideeën voor jou\" blijft.",
+            "Sponsorlu karusel ve öne çıkan panolar. \"Senin için fikirler\" kalır.",
+            "الدوّار المموّل واللوحات المميزة. تبقى \"أفكار لك\".");
+
+        put(SCREENSHOT_TITLE,
+            "Hide screenshot share menu",
+            "Nascondi menu condivisione screenshot", "Ocultar menú de compartir captura",
+            "Masquer le menu de partage de capture", "Screenshot-Teilen-Menü ausblenden",
+            "Ocultar menu de partilha de captura", "Скрыть меню отправки скриншота",
+            "スクリーンショット共有メニューを非表示", "隐藏截图分享菜单",
+            "스크린샷 공유 메뉴 숨기기", "Ukryj menu udostępniania zrzutu",
+            "Deelmenu voor schermafbeeldingen verbergen", "Ekran görüntüsü paylaşım menüsünü gizle",
+            "إخفاء قائمة مشاركة لقطة الشاشة");
+
+        put(SCREENSHOT_DESCRIPTION,
+            "Also stops Pinterest from watching for screenshots, where possible.",
+            "Impedisce anche a Pinterest di sorvegliare gli screenshot, dove possibile.",
+            "También impide que Pinterest vigile las capturas, cuando es posible.",
+            "Empêche aussi Pinterest de surveiller les captures, quand c'est possible.",
+            "Hindert Pinterest zudem daran, Screenshots zu überwachen, wo möglich.",
+            "Também impede o Pinterest de vigiar as capturas, quando possível.",
+            "Также мешает Pinterest следить за скриншотами, где это возможно.",
+            "可能な場合、Pinterest によるスクリーンショットの監視も止めます。",
+            "在可能的情况下，也会阻止 Pinterest 监视截图。",
+            "가능한 경우 Pinterest의 스크린샷 감시도 중단합니다.",
+            "Uniemożliwia też Pinterestowi śledzenie zrzutów ekranu, gdy to możliwe.",
+            "Voorkomt ook dat Pinterest schermafbeeldingen bewaakt, waar mogelijk.",
+            "Mümkün olduğunda Pinterest'in ekran görüntülerini izlemesini de engeller.",
+            "يمنع أيضًا Pinterest من مراقبة لقطات الشاشة، حيثما أمكن.");
 
         put(SEARCH_HISTORY_TITLE,
             "Hide search history",

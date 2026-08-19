@@ -6,6 +6,7 @@ import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import app.browzomje.patches.pinterest.OverflowMenuBuilderFingerprint
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 

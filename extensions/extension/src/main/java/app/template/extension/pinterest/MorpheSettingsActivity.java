@@ -89,10 +89,18 @@ public final class MorpheSettingsActivity extends Activity {
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SHOPPING_PINS_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_SHOPPING_PINS,
                 MorpheSettingsStore.isShoppingPinsHidden());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.SEARCH_MODULES_TITLE),
+                MorpheStrings.get(MorpheStrings.SEARCH_MODULES_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_SEARCH_BOARD_MODULES,
+                MorpheSettingsStore.isSearchBoardModulesHidden());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SEARCH_HISTORY_TITLE),
                 MorpheStrings.get(MorpheStrings.SEARCH_HISTORY_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_SEARCH_HISTORY,
                 MorpheSettingsStore.isSearchHistoryHidden());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.SCREENSHOT_TITLE),
+                MorpheStrings.get(MorpheStrings.SCREENSHOT_DESCRIPTION),
+                MorpheSettingsStore.KEY_DISABLE_SCREENSHOT_SHARE,
+                MorpheSettingsStore.isScreenshotShareDisabled());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.EMAIL_DIALOG_TITLE), null,
                 MorpheSettingsStore.KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
                 MorpheSettingsStore.isEmailConfirmDialogDisabled());

@@ -52,6 +52,43 @@ fun MutableMethod.forceReturn(smali: String, registersUsed: Int = 1) {
 }
 
 /**
+ * Fa uscire subito il metodo (`return-void`) se l'extension dice di sì, altrimenti lo lascia
+ * proseguire immutato.
+ *
+ * È la forma più conservativa di neutralizzazione condizionale: il codice originale resta intatto
+ * e viene saltato solo quando l'opzione è attiva, quindi l'interruttore nella schermata Morphe
+ * funziona davvero a runtime invece di essere deciso in fase di patch.
+ *
+ * **Contratto sui registri.** L'iniezione avviene in testa al metodo, dove nessun locale è ancora
+ * inizializzato: `v0` è quindi libero — ma solo se il frame ha almeno un registro oltre a quelli
+ * occupati dai parametri. R8 compila alcuni metodi con un frame grande esattamente quanto i
+ * parametri; lì `v0` *è* un parametro e sovrascriverlo prima di averlo letto lo distruggerebbe.
+ * In quel caso non si inietta nulla e si restituisce `false`, così il chiamante può loggarlo
+ * invece di produrre un APK che si rompe a runtime.
+ *
+ * @param condition riferimento smali a un metodo statico che restituisce `Z`, comprensivo di
+ *     `invoke-static`. Deve lasciare il risultato pronto per `move-result`.
+ * @return true se l'uscita anticipata è stata iniettata.
+ */
+fun MutableMethod.returnVoidWhen(condition: String): Boolean {
+    val implementation = implementation ?: return false
+    if (implementation.registerCount - inputRegisterCount() < 1) return false
+
+    addInstructions(
+        0,
+        """
+        $condition
+        move-result v0
+        if-eqz v0, :morphe_proceed
+        return-void
+        :morphe_proceed
+        nop
+        """.trimIndent(),
+    )
+    return true
+}
+
+/**
  * Inserisce del codice prima di **ogni** uscita del metodo, non solo della prima.
  *
  * Il modo abituale — `instructions.indexOfFirst { it.opcode == RETURN_VOID }` — presuppone che

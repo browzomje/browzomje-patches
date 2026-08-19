@@ -35,12 +35,23 @@ object RecentSearchesItemsFingerprint : Fingerprint(
     strings = listOf("multimodal_search_recently_viewed_pins"),
 )
 
-/** La lista "Ricerche recenti" della schermata di ricerca. 14.23/14.24/14.28: je1.m. */
-object SlpRecentSearchesViewFingerprint : Fingerprint(
-    returnType = "V",
-    custom = { method, classDef ->
-        classDef.type == "Lje1/m;" && method.name == "<init>" && method.parameters.size == 2
-    }
+/**
+ * La **fabbrica** delle view della search landing page, cioè il grosso `when` che costruisce una
+ * view diversa per ogni tipo di sezione.
+ *
+ * Non è il bersaglio: è il punto di partenza per arrivarci. La lista "Ricerche recenti"
+ * (14.23/14.24/14.28: `je1.m` — 14.32: `ef1.l`) non ha dentro di sé **nessun letterale**, e la
+ * sua forma — un `LinearLayout` con costruttore `(Context, X)` — è condivisa da una trentina di
+ * classi: non è ancorabile né per stringa né per forma. Inchiodarne il nome è ciò che la faceva
+ * sparire a ogni versione.
+ *
+ * La fabbrica invece un letterale ce l'ha: `"searchTypeaheadItemDeserializer"`, il nome del campo
+ * che Kotlin conserva per il messaggio di errore delle proprietà non inizializzate. Compare una
+ * volta sola in tutto il dex, su entrambe le versioni verificate, ed è proprio nel ramo che
+ * costruisce la lista. Da lì la patch legge il `new-instance` e ricava la classe.
+ */
+object SlpViewFactoryFingerprint : Fingerprint(
+    strings = listOf("searchTypeaheadItemDeserializer"),
 )
 
 /**
