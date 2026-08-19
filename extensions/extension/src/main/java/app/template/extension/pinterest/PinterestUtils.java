@@ -1296,6 +1296,12 @@ public final class PinterestUtils {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
+                // Prima il toast vero di Pinterest, così i messaggi di Morphe sono
+                // indistinguibili da quelli dell'app. La striscia disegnata da noi resta come
+                // ripiego per quando il modello nativo non è disponibile.
+                if (PinterestReflection.showGestaltToast(context, message, 5000)) {
+                    return;
+                }
                 if (MorpheToast.show(context, message)) {
                     return;
                 }

@@ -28,6 +28,15 @@ public final class MorpheRuntimeNames {
      */
     public static volatile String settingsRowClass = "";
 
+    /**
+     * Classe del modello di toast di testo di Pinterest, quella con costruttore
+     * {@code (String testo, int durataMs)}. Valorizzata da "Morphe runtime names".
+     *
+     * <p>Serve a mostrare i messaggi di Morphe con lo stesso toast dell'app invece che con uno
+     * disegnato da noi: vedi {@link PinterestReflection#showGestaltToast}.
+     */
+    public static volatile String textToastClass = "";
+
     /** Destinazione della voce "Morphe": lo schema gestito da {@link MorpheSettingsActivity}. */
     public static final String SETTINGS_URI = "morphe://settings";
 
@@ -39,9 +48,16 @@ public final class MorpheRuntimeNames {
         MorpheLog.i(MorpheLog.SETTINGS_ENTRY, "settings row class resolved by the patch: " + className);
     }
 
+    /** Chiamata iniettata dalla patch "Morphe runtime names", in testa a Application.onCreate. */
+    public static void setTextToastClass(String className) {
+        textToastClass = className;
+        MorpheLog.i(MorpheLog.REFLECTION, "text toast class resolved by the patch: " + className);
+    }
+
     /** Log di controllo: mostra cosa la patch è riuscita a risolvere. */
     public static String describe() {
         return "settingsRowClass=" + (settingsRowClass.isEmpty() ? "<UNRESOLVED>" : settingsRowClass)
+                + ", textToastClass=" + (textToastClass.isEmpty() ? "<UNRESOLVED>" : textToastClass)
                 + ", settingsUri=" + SETTINGS_URI;
     }
 }

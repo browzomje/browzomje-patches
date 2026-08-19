@@ -1,5 +1,7 @@
 package app.browzomje.extension.pinterest;
 
+import android.app.Activity;
+import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -30,21 +32,6 @@ final class PinterestReflection {
      */
     private static final String[] DISMISS_EVENT_CANDIDATES = {
             "ii0.o", "ai0.u"
-    };
-
-    /** Toast "a stringa": costruttore {@code (String testo, int durataMs)}. */
-    private static final String[] TOAST_CANDIDATES = {
-            "xs2.e", "ir2.f"
-    };
-
-    /** Evento "mostra questo toast": costruttore che prende la classe base dei toast. */
-    private static final String[] TOAST_EVENT_CANDIDATES = {
-            "xs2.g", "ir2.h"
-    };
-
-    /** Classe base astratta dei toast, parametro del costruttore qui sopra. */
-    private static final String[] TOAST_BASE_CANDIDATES = {
-            "vw1.p", "kw1.p", "ww1.o"
     };
 
     /** Holder statico dell'EventManager, usato solo se non si riesce a ricavarlo dagli oggetti. */
@@ -355,25 +342,95 @@ final class PinterestReflection {
      * @return true se il toast nativo è stato inviato; false se il chiamante deve ripiegare su
      *     {@link android.widget.Toast}.
      */
-    static boolean showGestaltToast(String message, int durationMs) {
-        Class<?> toastClass = findFirstClass(TOAST_CANDIDATES);
-        Class<?> eventClass = findFirstClass(TOAST_EVENT_CANDIDATES);
-        Class<?> baseClass = findFirstClass(TOAST_BASE_CANDIDATES);
-        if (toastClass == null || eventClass == null || baseClass == null) {
-            MorpheLog.w(MorpheLog.REFLECTION, "Gestalt toast classes not resolved (toast="
-                    + toastClass + ", event=" + eventClass + ", base=" + baseClass
-                    + "): falling back to the system Toast.");
+    /** Il contenitore dei toast: nome pulito, sta nella libreria di componenti Gestalt. */
+    private static final String TOAST_CONTAINER_CLASS =
+            "com.pinterest.gestalt.toast.PinterestToastContainer";
+
+    static boolean showGestaltToast(Context context, String message, int durationMs) {
+        String modelClassName = MorpheRuntimeNames.textToastClass;
+        if (modelClassName == null || modelClassName.isEmpty()) {
+            MorpheLog.d(MorpheLog.REFLECTION,
+                    "text toast class not resolved by the patch: drawing our own");
             return false;
         }
+
         try {
-            Constructor<?> toastCtor = toastClass.getConstructor(String.class, int.class);
-            Object toast = toastCtor.newInstance(message, durationMs);
-            Constructor<?> eventCtor = eventClass.getConstructor(baseClass);
-            return postEvent(eventCtor.newInstance(toast));
+            // 1) Il contenitore: si cerca nell'albero delle view dell'Activity per nome di classe.
+            //    È lui che sa animare, impilare e far sparire i toast.
+            Activity activity = PinterestUtils.activityOf(context);
+            if (activity == null) {
+                return false;
+            }
+            View container = findByClassName(activity.getWindow().getDecorView(),
+                    TOAST_CONTAINER_CLASS);
+            if (container == null) {
+                MorpheLog.d(MorpheLog.REFLECTION,
+                        "toast container not in the view tree: drawing our own");
+                return false;
+            }
+
+            // 2) Il modello, costruito con la classe che la patch ha risolto leggendo il dex.
+            Object model = Class.forName(modelClassName)
+                    .getConstructor(String.class, int.class)
+                    .newInstance(message, durationMs);
+
+            // 3) Il metodo con cui si consegna il modello al contenitore. Il suo nome è offuscato,
+            //    ma la firma no: è l'unico metodo pubblico che restituisce void e prende un solo
+            //    parametro del tipo base dei modelli — che ricaviamo dal modello stesso, senza
+            //    nominarlo.
+            Class<?> modelBase = model.getClass();
+            while (modelBase.getSuperclass() != null
+                    && modelBase.getSuperclass() != Object.class) {
+                modelBase = modelBase.getSuperclass();
+            }
+            Method show = findShowMethod(container.getClass(), modelBase);
+            if (show == null) {
+                MorpheLog.d(MorpheLog.REFLECTION,
+                        "no method on the container takes a " + modelBase.getName());
+                return false;
+            }
+
+            show.setAccessible(true);
+            show.invoke(container, model);
+            return true;
         } catch (Throwable t) {
-            MorpheLog.w(MorpheLog.REFLECTION, "could not create the Gestalt toast", t);
+            MorpheLog.d(MorpheLog.REFLECTION, "native toast not usable (" + t + "): drawing our own");
             return false;
         }
+    }
+
+    /** Il metodo `void <qualcosa>(<modello di toast>)` del contenitore. */
+    private static Method findShowMethod(Class<?> containerClass, Class<?> modelBase) {
+        for (Method method : containerClass.getMethods()) {
+            if (method.getReturnType() != void.class) {
+                continue;
+            }
+            Class<?>[] parameters = method.getParameterTypes();
+            if (parameters.length == 1 && parameters[0] == modelBase) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    /** Cerca in profondità la prima view di questa classe. */
+    private static View findByClassName(View root, String className) {
+        if (root == null) {
+            return null;
+        }
+        if (className.equals(root.getClass().getName())) {
+            return root;
+        }
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findByClassName(group.getChildAt(i), className);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------ modello Pin
