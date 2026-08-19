@@ -200,7 +200,7 @@ class VideoDownloadHandler {
                                 row.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        PinterestUtils.dismissMenu();
+                                        PinterestUtils.dismissMenu(v.getContext());
                                         downloadVideo(v.getContext(), resResult.videoUrl);
                                     }
                                 });
@@ -219,7 +219,7 @@ class VideoDownloadHandler {
                                 row.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        PinterestUtils.dismissMenu();
+                                        PinterestUtils.dismissMenu(v.getContext());
                                         shareLinkToDownloader(v.getContext(), resResult.streamingUrl);
                                     }
                                 });

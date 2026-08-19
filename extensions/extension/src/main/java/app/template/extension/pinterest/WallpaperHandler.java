@@ -53,7 +53,7 @@ class WallpaperHandler {
             View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    PinterestUtils.dismissMenu();
+                    PinterestUtils.dismissMenu(v.getContext());
                     showWallpaperDialog(v.getContext());
                 }
             };

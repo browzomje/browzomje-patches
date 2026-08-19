@@ -1,6 +1,8 @@
 package app.browzomje.extension.pinterest;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -217,7 +219,7 @@ public final class PinterestUtils {
             View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    dismissMenu();
+                    dismissMenu(v.getContext());
                     copyLinkToClipboard(v.getContext());
                 }
             };
@@ -1276,30 +1278,148 @@ public final class PinterestUtils {
         return Math.round(value * density);
     }
 
+    /**
+     * Mostra un messaggio nello stile di Pinterest: striscia scura arrotondata in alto.
+     *
+     * <p>Lo disegna {@link MorpheToast}, che non nomina nessuna classe dell'app — il tentativo
+     * precedente di riusare il toast nativo per nome offuscato costruiva silenziosamente l'oggetto
+     * sbagliato su 14.32.0. Il toast di sistema resta solo come ultima rete, per quando non c'è
+     * un'Activity a cui attaccare la striscia.
+     */
     static void showNativeToast(final Context context, final String message) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                if (PinterestReflection.showGestaltToast(message, 7000)) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "native toast shown: " + message);
+                if (MorpheToast.show(context, message)) {
                     return;
                 }
-                MorpheLog.w(MorpheLog.REFLECTION,
-                        "native toast not available, using the system one: " + message);
+                MorpheLog.d(MorpheLog.REFLECTION,
+                        "no Activity for the Morphe toast, using the system one: " + message);
                 Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    static void dismissMenu() {
+    /**
+     * Chiude il menu aperto, esattamente come farebbe l'utente premendo "indietro".
+     *
+     * <p>Prima si provava a mandare all'EventManager un evento "chiudi il menu contestuale",
+     * cercandone la classe fra due nomi offuscati: su 14.32.0 nessuno dei due esiste più e il menu
+     * restava aperto sotto al messaggio di conferma.
+     *
+     * <p>Il menu del pin è un modale, e i modali di Pinterest si chiudono col tasto indietro. Il
+     * modo più solido di chiuderlo è quindi chiedere all'Activity di gestire un "indietro" invece
+     * di ricostruire l'evento interno: `onBackPressed` è API pubblica di Android, non cambia mai, e
+     * fa passare la chiusura per la strada normale dell'app — animazione e stato di navigazione
+     * compresi.
+     *
+     * <p>Si chiama solo mentre un menu è effettivamente aperto (dal gestore di una sua voce), quindi
+     * non c'è il rischio che l'"indietro" venga interpretato come una navigazione.
+     *
+     * @param context il Context della riga premuta: da lì si risale all'Activity.
+     */
+    @SuppressWarnings("deprecation")
+    static void dismissMenu(final Context context) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                if (PinterestReflection.dismissContextualMenu()) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "context menu dismissed");
+                Activity activity = activityOf(context);
+                if (activity == null) {
+                    MorpheLog.d(MorpheLog.REFLECTION, "no Activity: the menu stays open");
+                    return;
+                }
+                try {
+                    activity.onBackPressed();
+                    MorpheLog.d(MorpheLog.REFLECTION, "menu closed with back");
+                } catch (Throwable t) {
+                    MorpheLog.w(MorpheLog.REFLECTION, "could not close the menu", t);
                 }
             }
         });
+    }
+
+    /**
+     * L'Activity a cui appartiene {@code context}, o quella in primo piano se non si arriva a
+     * un'Activity per quella strada.
+     *
+     * <p>Il Context di una View è quasi sempre un wrapper attorno all'Activity, quindi la catena si
+     * risale. Ma non tutti i punti da cui serve chiudere un menu o mostrare un messaggio hanno una
+     * View sottomano — la voce di download della bacheca, per esempio, ha solo il Context
+     * dell'Application, da cui non si risale a niente. Per quei casi c'è
+     * {@link #foregroundActivity()}.
+     */
+    static Activity activityOf(Context context) {
+        Context current = context;
+        for (int i = 0; i < 10 && current != null; i++) {
+            if (current instanceof Activity) {
+                return (Activity) current;
+            }
+            if (!(current instanceof android.content.ContextWrapper)) {
+                break;
+            }
+            current = ((android.content.ContextWrapper) current).getBaseContext();
+        }
+        return foregroundActivity();
+    }
+
+    /** L'ultima Activity andata in primo piano, o null se non ne è ancora passata nessuna. */
+    private static java.lang.ref.WeakReference<Activity> foreground;
+
+    private static volatile boolean lifecycleWatchInstalled;
+
+    static Activity foregroundActivity() {
+        installLifecycleWatch();
+        java.lang.ref.WeakReference<Activity> reference = foreground;
+        return reference == null ? null : reference.get();
+    }
+
+    /**
+     * Si mette in ascolto del ciclo di vita delle Activity per sapere qual è quella in primo piano.
+     *
+     * <p>Riferimento **debole**: tenerne uno forte impedirebbe all'Activity di essere liberata
+     * quando l'utente la chiude, che è una perdita di memoria vera e delle peggiori.
+     *
+     * <p>L'ascolto si installa alla prima richiesta e non all'avvio del processo: se nessuna
+     * funzione di Morphe ha bisogno di sapere qual è l'Activity corrente, non paghiamo niente.
+     */
+    private static void installLifecycleWatch() {
+        if (lifecycleWatchInstalled) {
+            return;
+        }
+        Application application = MorpheSettingsStore.appContext();
+        if (application == null) {
+            return;
+        }
+        lifecycleWatchInstalled = true;
+        try {
+            application.registerActivityLifecycleCallbacks(
+                    new Application.ActivityLifecycleCallbacks() {
+                        @Override
+                        public void onActivityResumed(Activity activity) {
+                            foreground = new java.lang.ref.WeakReference<>(activity);
+                        }
+
+                        @Override
+                        public void onActivityCreated(Activity activity, android.os.Bundle b) {}
+
+                        @Override
+                        public void onActivityStarted(Activity activity) {}
+
+                        @Override
+                        public void onActivityPaused(Activity activity) {}
+
+                        @Override
+                        public void onActivityStopped(Activity activity) {}
+
+                        @Override
+                        public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) {}
+
+                        @Override
+                        public void onActivityDestroyed(Activity activity) {}
+                    });
+        } catch (Throwable t) {
+            MorpheLog.w(MorpheLog.REFLECTION, "could not watch the activity lifecycle", t);
+        }
     }
 
     /**

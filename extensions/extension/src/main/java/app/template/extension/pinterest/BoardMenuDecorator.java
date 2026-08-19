@@ -145,7 +145,7 @@ final class BoardMenuDecorator {
                 MorpheLog.i(MorpheLog.BOARD_MENU, "download entry tapped");
                 Context context = MorpheSettingsStore.appContext();
                 if (context != null) {
-                    PinterestUtils.dismissMenu();
+                    PinterestUtils.dismissMenu(context);
                     BoardDownloadHandler.downloadCurrentBoard(context);
                 }
                 return kotlinUnit();
