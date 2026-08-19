@@ -60,7 +60,7 @@ private fun MutableMethod.appendHideRecentSearches(): Int {
 @Suppress("unused")
 val hideSearchHistoryPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Hides the \"Recent searches\" section both on the search screen and in the carousel below the search bar. It does not prevent Pinterest from logging searches (server-side), but stops them from being shown anywhere in the app.",
+    description = "Hides the \"Recent searches\" section on the search screen and below the search bar. Pinterest still logs searches server-side.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

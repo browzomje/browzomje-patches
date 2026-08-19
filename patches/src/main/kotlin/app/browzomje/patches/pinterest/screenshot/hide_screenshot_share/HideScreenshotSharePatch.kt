@@ -20,9 +20,7 @@ private fun MutableMethod.parameterRegister(index: Int): Int =
 @Suppress("unused")
 val hideScreenshotSharePatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Removes the panel Pinterest opens after you take a screenshot, and stops it " +
-        "from watching for screenshots in the first place on the screens where that is possible. " +
-        "Can be turned back off from the Morphe settings screen.",
+    description = "Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

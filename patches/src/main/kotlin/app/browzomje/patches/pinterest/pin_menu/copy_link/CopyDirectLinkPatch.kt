@@ -12,7 +12,7 @@ private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/Pinteres
 @Suppress("unused")
 val copyDirectLinkPatch = bytecodePatch(
     name = "Copy direct link",
-    description = "Adds a 'Copy direct link' option to the pin menu to copy a link under the direct CDN media format instead of the standard Pinterest web link.",
+    description = "Adds a \"Copy direct link\" option to the pin menu, copying the direct CDN media link instead of the Pinterest web link.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

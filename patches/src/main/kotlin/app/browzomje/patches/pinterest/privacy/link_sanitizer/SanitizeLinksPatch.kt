@@ -164,9 +164,7 @@ private const val SHARE_PATCH_NAME = "Sanitize shared links"
 @Suppress("unused")
 val sanitizeSharedLinksPatch = bytecodePatch(
     name = SHARE_PATCH_NAME,
-    description = "Strips UTM and click-ID tracking parameters from the link Pinterest puts on the " +
-        "Android share sheet, and resolves pin.it short links — whose slug identifies who shared it " +
-        "— to the plain pin link. Can be turned off from the Morphe settings screen.",
+    description = "Strips tracking parameters from the link on the Android share sheet and resolves pin.it short links to the plain pin link. Switchable from Morphe settings.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
@@ -233,9 +231,7 @@ private const val COPY_PATCH_NAME = "Sanitize copied links"
 @Suppress("unused")
 val sanitizeCopiedLinksPatch = bytecodePatch(
     name = COPY_PATCH_NAME,
-    description = "Resolves the pin.it short link that \"Copy link\" puts on the clipboard — its slug " +
-        "identifies who shared it — to the plain pin link, and strips tracking parameters. " +
-        "Can be turned off from the Morphe settings screen.",
+    description = "Turns the pin.it link that \"Copy link\" copies, whose slug identifies who shared it, into the plain pin link. Switchable from Morphe settings.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

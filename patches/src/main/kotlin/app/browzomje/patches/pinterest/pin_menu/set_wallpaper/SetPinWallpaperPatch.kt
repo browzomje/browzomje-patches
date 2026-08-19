@@ -35,7 +35,7 @@ private val addWallpaperPermissionPatch = resourcePatch(
 @Suppress("unused")
 val setPinWallpaperPatch = bytecodePatch(
     name = "Set pin as wallpaper",
-    description = "It adds the ‘Set as wallpaper’ option to the pin menu, which downloads uses the image and sets it as the device’s wallpaper.",
+    description = "Adds a \"Set as wallpaper\" option to the pin menu, which downloads the image and sets it as the device wallpaper.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

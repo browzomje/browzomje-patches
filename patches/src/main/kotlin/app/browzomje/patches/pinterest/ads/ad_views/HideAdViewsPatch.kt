@@ -75,9 +75,7 @@ private fun adViewConstructorFingerprint(className: String) = Fingerprint(
 @Suppress("unused")
 val hideAdViewsPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Collapses Pinterest's ad-only views (text ad cards, promoted closeup action bars, " +
-        "sponsored board headers) so no ad chrome is drawn even if the app builds one. " +
-        "Follows the \"Disable ads\" switch in the Morphe settings screen.",
+    description = "Collapses Pinterest's ad-only views, so no ad chrome is drawn even if the app builds one. Follows the \"Disable ads\" switch.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

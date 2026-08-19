@@ -87,9 +87,7 @@ private val ANALYTICS_CONSENT_FLAGS = setOf(
 @Suppress("unused")
 val trackingManifestPatch = resourcePatch(
     name = PATCH_NAME,
-    description = "Turns off the advertising and telemetry SDKs Pinterest embeds — Google Ads (AdMob), " +
-        "Bugsnag crash reporting, Firebase Analytics/Crashlytics/Performance and the Android Privacy " +
-        "Sandbox ad APIs — and strips the Advertising ID permission. Push notifications are unaffected.",
+    description = "Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

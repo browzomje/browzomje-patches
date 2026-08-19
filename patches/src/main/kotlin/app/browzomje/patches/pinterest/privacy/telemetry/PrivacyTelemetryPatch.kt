@@ -7,7 +7,7 @@ import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 @Suppress("unused")
 val privacyTelemetryPatch = bytecodePatch(
     name = "Neutralize advertising ID",
-    description = "Returns an empty Google Advertising ID and forces ‘limit ad tracking’, disabling ad tracking without causing the app to crash.",
+    description = "Returns an empty Google Advertising ID and forces \"limit ad tracking\", without crashing the app.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

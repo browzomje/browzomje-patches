@@ -76,8 +76,7 @@ internal object TextToastModelFingerprint : Fingerprint(
 @Suppress("unused")
 val runtimeNamesPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Resolves the obfuscated class Pinterest uses to build a text toast and hands it " +
-        "to the extension at startup, so Morphe's messages look exactly like the app's own.",
+    description = "Resolves the class Pinterest builds its toasts with, so Morphe's messages look like the app's own.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

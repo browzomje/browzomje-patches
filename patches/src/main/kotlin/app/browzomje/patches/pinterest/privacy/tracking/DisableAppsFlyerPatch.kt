@@ -62,8 +62,7 @@ internal object AppsFlyerInitFingerprint : Fingerprint(
 @Suppress("unused")
 val disableAppsFlyerPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Neutralises the AppsFlyer attribution SDK: init() becomes a no-op and isStopped() " +
-        "always returns true, so no install, event or uninstall data is transmitted.",
+    description = "Neutralises the AppsFlyer attribution SDK, so no install, event or uninstall data leaves the device.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

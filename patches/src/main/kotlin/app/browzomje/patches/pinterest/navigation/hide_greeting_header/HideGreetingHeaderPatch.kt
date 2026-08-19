@@ -22,8 +22,7 @@ private const val PATCH_NAME = "Hide greeting header buttons"
 @Suppress("unused")
 val hideGreetingHeaderButtonsPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Hooks the '+' (create) and inbox/notifications buttons in the home feed " +
-        "header: hidden if the matching Morphe settings are enabled.",
+    description = "Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

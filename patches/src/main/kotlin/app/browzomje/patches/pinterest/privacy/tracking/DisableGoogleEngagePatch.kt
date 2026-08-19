@@ -33,8 +33,7 @@ private const val ENGAGE_ENV_METADATA = "com.google.android.engage.service.ENV"
 @Suppress("unused")
 val disableGoogleEngagePatch = resourcePatch(
     name = MANIFEST_PATCH_NAME,
-    description = "Removes the Google Engage broadcast receiver, so Pinterest cannot publish your " +
-        "content to Google (Discover, Assistant, Play Store).",
+    description = "Stops Pinterest publishing your content to Google (Discover, Assistant, Play Store).",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
@@ -112,8 +111,7 @@ internal object GoogleEngageWorkerCreateWorkFingerprint : Fingerprint(
 @Suppress("unused")
 val disableGoogleEngageWorkerPatch = bytecodePatch(
     name = WORKER_PATCH_NAME,
-    description = "Makes the periodic Google Engage job fail, so no content recommendation is ever " +
-        "published to Google even when the job is scheduled from outside the manifest.",
+    description = "Blocks the periodic Google Engage job, the other way content reaches Google.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

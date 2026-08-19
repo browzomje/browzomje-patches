@@ -14,7 +14,7 @@ private const val PATCH_NAME = "Download video"
 @Suppress("unused")
 val downloadVideoPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Adds a 'Download video' option to the pin menu for video pins, saving the clip to the Downloads folder.",
+    description = "Adds a \"Download video\" option to the pin menu, saving the clip to the Downloads folder.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
