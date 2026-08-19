@@ -182,6 +182,17 @@ public final class UrlSanitizer {
             return cached;
         }
 
+        // Scorciatoia senza rete: se l'utente ha appena aperto il menu "…" di un pin, il suo id è
+        // già in memoria e il link canonico si scrive direttamente. È il caso normale — si copia il
+        // link subito dopo aver aperto il menu — e fa la differenza fra istantaneo e un secondo e
+        // mezzo di attesa. Fuori da quella finestra {@link CurrentPin} restituisce null e si passa
+        // alla risoluzione via rete, che è lenta ma non tira a indovinare.
+        String local = CurrentPin.canonicalUrl();
+        if (local != null) {
+            MorpheLog.d(MorpheLog.SHARE_LINK, "short link risolto in locale, senza rete");
+            return local;
+        }
+
         String resolved = shortUrl;
         try {
             Future<String> future = RESOLVER.submit(new Callable<String>() {

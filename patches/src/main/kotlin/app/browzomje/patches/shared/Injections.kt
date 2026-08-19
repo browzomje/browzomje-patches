@@ -6,6 +6,8 @@ import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 /**
  * Quanti registri del frame sono occupati dai parametri di ingresso (`this` incluso per i
@@ -124,6 +126,103 @@ fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
 
     for (index in returnIndices) {
         addInstructions(index, InlineSmaliCompiler.compile(smali, "", registerCount, true))
+    }
+    return returnIndices.size
+}
+
+/**
+ * Inserisce codice **subito dopo la chiamata al costruttore della superclasse**, cioè nel primo
+ * punto di un costruttore in cui `p0` è utilizzabile.
+ *
+ * **Il problema che risolve.** In un costruttore `p0` è `this`, ma solo *all'inizio*: i registri dei
+ * parametri sono registri come gli altri, e appena il parametro è morto R8 li riusa come spazio di
+ * lavoro. Nel costruttore del menu "…" del pin (94 registri, migliaia di istruzioni) `p0` alla fine
+ * del metodo non contiene più la view ma un campo di analytics — motivo per cui le tre voci di menu
+ * risultavano "agganciate" e non comparivano, con l'extension che riceveva l'oggetto sbagliato.
+ * Nessun calcolo di indici può rimediare: non è l'indice a essere sbagliato, è il *momento*.
+ *
+ * **Perché dopo il super e non all'indice 0.** Prima della chiamata al costruttore della superclasse
+ * l'oggetto non è inizializzato: chiamarci sopra un metodo di `View` è un errore. Subito dopo,
+ * invece, la parte `View` esiste ed è usabile — ed è anche il punto in cui `p0` è certamente ancora
+ * `this`, perché tutto il resto del costruttore lo userà per scrivere i propri campi.
+ *
+ * Chi si aggancia qui deve però tenere conto che l'oggetto è **appena nato**: i campi non sono
+ * ancora valorizzati e le view figlie non sono ancora state aggiunte. Il lavoro va rimandato, per
+ * esempio con `View.post(...)`.
+ *
+ * @return l'indice a cui è stato inserito il codice.
+ * @throws IllegalStateException se il metodo non chiama nessun costruttore di un'altra classe.
+ */
+fun MutableMethod.addInstructionsAfterSuperConstructor(smali: String): Int {
+    val implementation = implementation
+        ?: throw IllegalStateException("$definingClass->$name has no implementation")
+
+    val superCallIndex = implementation.instructions
+        .withIndex()
+        .indexOfFirst { (_, instruction) ->
+            if (instruction.opcode != Opcode.INVOKE_DIRECT &&
+                instruction.opcode != Opcode.INVOKE_DIRECT_RANGE
+            ) {
+                false
+            } else {
+                val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                reference != null &&
+                    reference.name == "<init>" &&
+                    reference.definingClass != definingClass
+            }
+        }
+
+    if (superCallIndex < 0) {
+        throw IllegalStateException(
+            "$definingClass->$name does not call a super constructor: cannot hook after it"
+        )
+    }
+
+    addInstructions(superCallIndex + 1, smali.trimIndent())
+    return superCallIndex + 1
+}
+
+/**
+ * Come [addInstructionsBeforeEveryReturn], ma lo smali è compilato **nel contesto del metodo
+ * agganciato** invece che contro un frame anonimo. La differenza pratica è una sola, ed è grossa:
+ * qui si possono usare i registri dei parametri per nome — `p0`, `p1`, … — e in particolare `p0`,
+ * che nei metodi d'istanza è `this`.
+ *
+ * **Perché conta.** La versione con il frame anonimo obbliga a scrivere numeri di registro assoluti,
+ * e quindi a calcolare a mano dove sia `this`: `registerCount - (parametri + 1)`. Quel conto ha due
+ * modi di sbagliare — i parametri `long` e `double` occupano due registri ciascuno, e il frame non è
+ * detto che sia largo esattamente quanto gli input — e quando sbaglia **non fallisce**: passa un
+ * registro qualsiasi, cioè un oggetto a caso preso dai locali del metodo. La patch risulta applicata
+ * e l'APK si costruisce; il difetto salta fuori solo a runtime, come un `ClassCastException` o un
+ * silenzioso "non succede niente".
+ *
+ * È esattamente quello che era successo alle tre voci del menu "…" del pin su 14.32.0: `addView`
+ * veniva chiamata su un oggetto di analytics invece che sulla view del menu. Da qui la regola:
+ * **quando serve `this`, si scrive `p0` e si lascia decidere all'assemblatore**, non lo si calcola.
+ *
+ * @param smali codice da inserire. Deve essere idempotente: su un metodo con più uscite viene
+ *     compilato più volte (ma ne viene eseguita una sola per invocazione).
+ * @return quante uscite sono state agganciate.
+ */
+fun MutableMethod.addInstructionsBeforeEveryReturnUsingParameters(smali: String): Int {
+    val implementation = implementation
+        ?: throw IllegalStateException("$definingClass->$name has no implementation")
+
+    val returnIndices = implementation.instructions
+        .mapIndexedNotNull { index, instruction ->
+            if (instruction.opcode.isReturn()) index else null
+        }
+        .reversed()
+
+    if (returnIndices.isEmpty()) {
+        throw IllegalStateException(
+            "$definingClass->$name has no return instruction: cannot hook"
+        )
+    }
+
+    // A ritroso: inserire istruzioni sposta in avanti gli indici di tutto ciò che segue.
+    for (index in returnIndices) {
+        addInstructions(index, smali.trimIndent())
     }
     return returnIndices.size
 }

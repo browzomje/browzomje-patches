@@ -3,10 +3,9 @@ package app.browzomje.patches.pinterest.pin_menu.set_wallpaper
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
-import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
-import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import app.browzomje.patches.shared.addInstructionsAfterSuperConstructor
 import app.browzomje.patches.pinterest.OverflowMenuBuilderFingerprint
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
@@ -45,28 +44,19 @@ val setPinWallpaperPatch = bytecodePatch(
 
     execute {
         val method = OverflowMenuBuilderFingerprint.method
-        val registerCount = method.implementation!!.registerCount
-        val p0RegisterIndex = registerCount - (method.parameters.size + 1)
 
-        val exits = method.addInstructionsBeforeEveryReturn(
-            "invoke-static/range { v$p0RegisterIndex .. v$p0RegisterIndex }, " +
-                "$EXTENSION_CLASS->addWallpaperOption(Ljava/lang/Object;)V",
+        val at = method.addInstructionsAfterSuperConstructor(
+            "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS->addWallpaperOption(Ljava/lang/Object;)V",
         )
-        PatchLog.hooked("Set pin as wallpaper", method, "pin menu option, $exits exits")
+        PatchLog.hooked("Set pin as wallpaper", method, "pin menu option, after super at $at")
 
         PinCloseupBitmapFingerprint.methodOrNull?.let { pinMethod ->
-            val pinRegisterCount = pinMethod.implementation!!.registerCount
-            val pinParameterRegisterCount = pinMethod.parameters.size + 1
-            val p0RegisterIndex = pinRegisterCount - pinParameterRegisterCount
-            val p1RegisterIndex = p0RegisterIndex + 1
-
-            val pinInstructions = InlineSmaliCompiler.compile(
-                "invoke-static/range { v$p0RegisterIndex .. v$p1RegisterIndex }, $EXTENSION_CLASS->setCurrentPinView(Ljava/lang/Object;Landroid/graphics/Bitmap;)V",
-                "",
-                pinRegisterCount,
-                true
+            // Iniezione in testa al metodo: qui `p0`/`p1` sono `this` e il primo parametro, e
+            // scriverli per nome evita lo stesso conto a mano che aveva rotto il menu del pin.
+            pinMethod.addInstructions(
+                0,
+                "invoke-static/range { p0 .. p1 }, $EXTENSION_CLASS->setCurrentPinView(Ljava/lang/Object;Landroid/graphics/Bitmap;)V",
             )
-            pinMethod.addInstructions(0, pinInstructions)
             PatchLog.hooked("Set pin as wallpaper", pinMethod, "pin bitmap capture")
         } ?: PatchLog.warn(
             "Set pin as wallpaper",

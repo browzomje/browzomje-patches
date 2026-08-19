@@ -108,25 +108,57 @@ public final class PinterestUtils {
         }
     }
 
-    public static void addDownloadVideoOption(final Object menuContainer) {
-        MorpheLog.hookFired(MorpheLog.VIDEO,
-                "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
-        try {
-            VideoDownloadHandler.addDownloadVideoOption(menuContainer);
-        } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.VIDEO, "could not add the \"download video\" entry", t);
+    /**
+     * Rimanda {@code action} a quando la view del menu è finita di costruirsi.
+     *
+     * <p>Le tre voci che aggiungiamo al menu "…" del pin si agganciano subito dopo la chiamata al
+     * costruttore della superclasse: è l'unico punto del costruttore in cui la view è raggiungibile
+     * con certezza (vedi {@code addInstructionsAfterSuperConstructor} lato patch). Lì però la view è
+     * appena nata — i campi non sono valorizzati e le righe del menu non sono ancora state aggiunte —
+     * quindi lavorarci subito vorrebbe dire mettere le nostre voci in cima e cercare il pin dove
+     * ancora non c'è.
+     *
+     * <p>{@link View#post(Runnable)} risolve entrambe le cose: su una view non ancora attaccata
+     * accoda l'azione e la esegue al momento dell'attach, cioè quando il menu è completo e visibile.
+     * Se l'oggetto non fosse una view, si esegue subito: meglio provarci che non fare niente.
+     */
+    private static void whenMenuIsReady(final Object menuContainer, final Runnable action) {
+        if (menuContainer instanceof View) {
+            ((View) menuContainer).post(action);
+        } else {
+            action.run();
         }
     }
 
+    public static void addDownloadVideoOption(final Object menuContainer) {
+        MorpheLog.hookFired(MorpheLog.VIDEO,
+                "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
+        whenMenuIsReady(menuContainer, new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    VideoDownloadHandler.addDownloadVideoOption(menuContainer);
+                } catch (Throwable t) {
+                    MorpheLog.e(MorpheLog.VIDEO, "could not add the \"download video\" entry", t);
+                }
+            }
+        });
+    }
+
     // Delegate for wallpaper
-    public static void addWallpaperOption(Object menuContainer) {
+    public static void addWallpaperOption(final Object menuContainer) {
         MorpheLog.hookFired(MorpheLog.WALLPAPER,
                 "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
-        try {
-            WallpaperHandler.addWallpaperOption(menuContainer);
-        } catch (Throwable t) {
-            MorpheLog.e(MorpheLog.WALLPAPER, "could not add the \"set wallpaper\" entry", t);
-        }
+        whenMenuIsReady(menuContainer, new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    WallpaperHandler.addWallpaperOption(menuContainer);
+                } catch (Throwable t) {
+                    MorpheLog.e(MorpheLog.WALLPAPER, "could not add the \"set wallpaper\" entry", t);
+                }
+            }
+        });
     }
 
     /**
@@ -155,9 +187,21 @@ public final class PinterestUtils {
     }
 
     // Copy Link Logic
-    public static void addCopyLinkOption(Object menuContainer) {
+    public static void addCopyLinkOption(final Object menuContainer) {
         MorpheLog.hookFired(MorpheLog.COPY_LINK,
                 menuContainer == null ? "null" : menuContainer.getClass().getName());
+        whenMenuIsReady(menuContainer, new Runnable() {
+            @Override
+            public void run() {
+                addCopyLinkOptionNow(menuContainer);
+            }
+        });
+    }
+
+    private static void addCopyLinkOptionNow(Object menuContainer) {
+        // Si fa comunque, anche se poi la voce non venisse aggiunta: serve al sanificatore dei
+        // link, che così può scrivere il link canonico senza chiedere niente alla rete.
+        CurrentPin.captureFrom(menuContainer);
 
         if (!(menuContainer instanceof ViewGroup)) {
             MorpheLog.e(MorpheLog.COPY_LINK, "expected a ViewGroup, got "

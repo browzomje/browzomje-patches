@@ -1,0 +1,166 @@
+package app.browzomje.extension.pinterest;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+/**
+ * L'id del pin su cui l'utente ha appena aperto il menu "…".
+ *
+ * <p><b>A cosa serve.</b> Quando si copia o si condivide un pin, Pinterest mette negli appunti uno
+ * short link {@code pin.it/<slug>}. Lo slug non contiene l'id del pin: per sapere a quale pin
+ * corrisponde bisogna seguire il redirect, cioè fare una richiesta di rete e far aspettare l'utente
+ * un secondo e mezzo (vedi {@link UrlSanitizer}). Ma l'app quell'id ce l'ha già in memoria: se lo
+ * catturiamo quando il menu viene costruito, il link canonico si scrive in locale, all'istante, e
+ * per giunta senza dire a Pinterest che stiamo copiando quel link.
+ *
+ * <p><b>Come si trova l'id.</b> Non per posizione né per nome di campo — sono offuscati e cambiano a
+ * ogni versione — ma riconoscendo il <em>modello</em>: si percorre il grafo degli oggetti a partire
+ * dalla view del menu e ci si ferma sul primo oggetto che {@link AdDetector#isCandidateModel} sa
+ * essere un modello di Pinterest, cioè che porta i marcatori Gson del Pin. Da lì l'id si legge per
+ * nome JSON (`id`), che è protocollo di rete e non cambia. È la stessa tecnica già usata per il
+ * filtro pubblicità e per il download delle bacheche.
+ *
+ * <p><b>Il limite, dichiarato.</b> Questa è una cattura "dell'ultimo pin visto", non un legame
+ * dimostrato fra <em>quello</em> short link e <em>quel</em> pin. Vale quindi solo entro
+ * {@link #FRESHNESS_MS} dall'apertura del menu — il tempo di aprire il menu e premere copia — e per
+ * qualunque altro caso si torna alla risoluzione via rete, che è lenta ma è sempre corretta. Meglio
+ * aspettare un secondo che consegnare all'utente il link di un pin sbagliato.
+ */
+final class CurrentPin {
+
+    private CurrentPin() {}
+
+    /**
+     * Quanto resta valida la cattura. Coprire il gesto "apro il menu → condividi → copia link"
+     * basta e avanza; tenerla valida più a lungo aumenterebbe solo la probabilità di attribuire uno
+     * short link al pin sbagliato.
+     */
+    private static final long FRESHNESS_MS = 20_000L;
+
+    /** Quanti oggetti al massimo si visitano prima di rinunciare, per non pesare sull'apertura del menu. */
+    private static final int MAX_VISITED = 400;
+
+    /** Quanto in profondità si scende nel grafo degli oggetti. */
+    private static final int MAX_DEPTH = 5;
+
+    /** Un id di pin è un numero lungo: serve a scartare stringhe che id non sono. */
+    private static final Pattern PIN_ID = Pattern.compile("[0-9]{15,20}");
+
+    private static volatile String pinId;
+    private static volatile long capturedAt;
+
+    /**
+     * Cerca l'id del pin dentro {@code menuView} e lo memorizza.
+     *
+     * <p>Chiamata alla costruzione del menu "…" del pin. Non solleva mai: se non trova niente,
+     * semplicemente non aggiorna nulla e il sanificatore continuerà a risolvere gli short link via
+     * rete.
+     */
+    static void captureFrom(Object menuView) {
+        if (menuView == null) {
+            return;
+        }
+        try {
+            String found = search(menuView);
+            if (found == null) {
+                MorpheLog.d(MorpheLog.COPY_LINK, "id del pin non trovato nel menu "
+                        + menuView.getClass().getName());
+                return;
+            }
+            pinId = found;
+            capturedAt = System.currentTimeMillis();
+            MorpheLog.d(MorpheLog.COPY_LINK, "pin corrente: " + found);
+        } catch (Throwable t) {
+            MorpheLog.w(MorpheLog.COPY_LINK, "cattura dell'id del pin non riuscita", t);
+        }
+    }
+
+    /**
+     * @return il link canonico del pin corrente, o null se non ce n'è uno abbastanza recente. Chi
+     *     riceve null deve ricadere sulla risoluzione via rete.
+     */
+    static String canonicalUrl() {
+        String id = pinId;
+        if (id == null) {
+            return null;
+        }
+        if (System.currentTimeMillis() - capturedAt > FRESHNESS_MS) {
+            return null;
+        }
+        return "https://pinterest.com/pin/" + id + "/";
+    }
+
+    /**
+     * Visita in ampiezza il grafo a partire da {@code root} e restituisce l'id del primo modello di
+     * Pinterest incontrato.
+     *
+     * <p>In ampiezza e non in profondità di proposito: il modello del pin sta vicino alla radice —
+     * di solito è un campo della view del menu o del suo oggetto di configurazione — mentre in
+     * profondità si finisce nella gerarchia delle view di Android prima di averlo trovato.
+     */
+    private static String search(Object root) throws IllegalAccessException {
+        Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
+        Deque<Object[]> queue = new ArrayDeque<>();
+        queue.add(new Object[] {root, 0});
+        seen.add(root);
+
+        int visited = 0;
+        while (!queue.isEmpty() && visited < MAX_VISITED) {
+            Object[] entry = queue.poll();
+            Object node = entry[0];
+            int depth = (Integer) entry[1];
+            visited++;
+
+            if (AdDetector.isCandidateModel(node.getClass())) {
+                Object id = AdDetector.fieldValueBySerializedName(node, "id");
+                if (id instanceof String && PIN_ID.matcher((String) id).matches()) {
+                    return (String) id;
+                }
+            }
+
+            if (depth >= MAX_DEPTH) {
+                continue;
+            }
+
+            Class<?> clazz = node.getClass();
+            while (clazz != null && !skip(clazz)) {
+                for (Field field : clazz.getDeclaredFields()) {
+                    if (Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
+                        continue;
+                    }
+                    Class<?> type = field.getType();
+                    // Le classi di libreria non contengono modelli di Pinterest, e scenderci dentro
+                    // vuol dire percorrere mezza gerarchia delle view per niente.
+                    if (skip(type) || type.isArray()) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(node);
+                    if (value == null || seen.contains(value)) {
+                        continue;
+                    }
+                    seen.add(value);
+                    queue.add(new Object[] {value, depth + 1});
+                }
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    /** Classi in cui non ha senso scendere: framework Android, libreria standard, Kotlin. */
+    private static boolean skip(Class<?> clazz) {
+        String name = clazz.getName();
+        return name.startsWith("android.")
+                || name.startsWith("androidx.")
+                || name.startsWith("java.")
+                || name.startsWith("javax.")
+                || name.startsWith("kotlin.");
+    }
+}
