@@ -1,6 +1,7 @@
 package app.browzomje.extension.pinterest;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -58,13 +59,6 @@ final class ContextMenuDownload {
 
         final Context context = ((View) menuView).getContext();
         try {
-            // Il pin a cui appartiene il menu: serve sia per scaricarlo sia per sapere se c'è.
-            final Object pin = CurrentPin.findPinIn(menuView);
-            if (pin == null) {
-                MorpheLog.d(MorpheLog.BOARD, "long-press menu: no pin found, button not added");
-                return;
-            }
-
             int layoutId = context.getResources()
                     .getIdentifier(ITEM_LAYOUT, "layout", context.getPackageName());
             if (layoutId == 0) {
@@ -77,12 +71,30 @@ final class ContextMenuDownload {
                 return;
             }
 
-            setIcon(context, item);
+            // L'ordine conta: il tasto applica cerchio e icona solo quando ha un'etichetta —
+            // senza, esce dal proprio metodo di aggiornamento senza disegnare niente.
             setLabel(item, PinterestUtils.getString("download_image_label"));
+            applyAppearance(context, item, items);
 
+            // Il pin si cerca al **click**, non adesso.
+            //
+            // Quando questo metodo gira il menu sta ancora raccogliendo i propri tasti e non è
+            // ancora legato al pin: cercandolo qui non si trovava niente e il tasto non veniva
+            // nemmeno aggiunto. Al click invece il menu è montato e collegato, e la stessa visita
+            // del grafo lo trova. In più il costo si paga solo quando l'utente scarica davvero,
+            // invece che a ogni pressione prolungata.
+            final Object menu = menuView;
             item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Object pin = CurrentPin.findPinIn(menu);
+                    if (pin == null) {
+                        MorpheLog.w(MorpheLog.BOARD, "long-press download: pin not found in "
+                                + menu.getClass().getName());
+                        PinterestUtils.showNativeToast(v.getContext(),
+                                PinterestUtils.getString("no_image"));
+                        return;
+                    }
                     BoardDownloadHandler.downloadSinglePin(v.getContext(), pin);
                 }
             });
@@ -96,16 +108,87 @@ final class ContextMenuDownload {
         }
     }
 
-    /** L'icona sta nell'unica ImageView del layout del tasto. */
-    private static void setIcon(Context context, View item) {
-        ImageView icon = PinterestUtils.findImageView(item);
-        if (icon == null) {
+    /**
+     * Dà al tasto l'aspetto degli altri: cerchio scuro, icona centrata, colori di stato.
+     *
+     * <p><b>Perché non basta scrivere l'icona sulla ImageView.</b> Il tasto non disegna quello che
+     * gli si mette nella ImageView: tiene l'icona in un proprio campo e la riapplica ogni volta che
+     * cambia stato — quando ci passi sopra il dito, per esempio. Scrivendo solo la ImageView,
+     * l'icona spariva al primo cambio di stato e il cerchio scuro non compariva mai.
+     *
+     * <p><b>Perché si copia da un fratello invece di chiamare i metodi del tasto.</b> I metodi che
+     * fanno questo lavoro hanno nomi accorciati e la stessa firma (un {@code int} solo): non c'è
+     * modo di distinguere quello dell'icona da quello dell'etichetta senza tirare a indovinare.
+     * Un tasto già nella lista, invece, è per definizione configurato come Pinterest vuole: si
+     * copiano i suoi campi grafici e si sostituisce la sola icona. Si adatta da sé a tema chiaro,
+     * tema scuro e a qualunque variante il menu stia usando.
+     *
+     * <p>I campi che puntano a delle view non si copiano mai: farlo significherebbe far disegnare
+     * il nostro tasto dentro quello del vicino.
+     */
+    private static void applyAppearance(Context context, View item, List<Object> siblings) {
+        ImageView ourIcon = PinterestUtils.findImageView(item);
+        Drawable icon = loadIcon(context);
+        if (ourIcon != null && icon != null) {
+            ourIcon.setImageDrawable(icon);
+        }
+
+        View sibling = firstSibling(siblings);
+        if (sibling == null) {
+            MorpheLog.d(MorpheLog.BOARD, "no sibling button to copy the look from");
             return;
         }
+        ImageView siblingIcon = PinterestUtils.findImageView(sibling);
+        Drawable siblingDrawable = siblingIcon == null ? null : siblingIcon.getDrawable();
+
+        try {
+            for (Field field : item.getClass().getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())
+                        || !Drawable.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+                field.setAccessible(true);
+                Object theirs = field.get(sibling);
+                // Il campo che nel fratello contiene proprio l'icona disegnata è quello
+                // dell'icona: lì ci va la nostra, in tutti gli altri (gli sfondi dei vari stati)
+                // si copia il valore del fratello.
+                boolean isTheIconField = theirs != null && theirs == siblingDrawable;
+                field.set(item, isTheIconField ? icon : theirs);
+            }
+        } catch (Throwable t) {
+            MorpheLog.d(MorpheLog.BOARD, "could not copy the button look: " + t);
+        }
+
+        if (ourIcon != null && siblingIcon != null) {
+            ourIcon.setBackground(siblingIcon.getBackground());
+            ourIcon.setScaleType(siblingIcon.getScaleType());
+            ourIcon.setPaddingRelative(
+                    siblingIcon.getPaddingStart(), siblingIcon.getPaddingTop(),
+                    siblingIcon.getPaddingEnd(), siblingIcon.getPaddingBottom());
+        }
+    }
+
+    /** @return il primo tasto già nella lista, da cui copiare l'aspetto. */
+    private static View firstSibling(List<Object> siblings) {
+        for (Object candidate : siblings) {
+            if (candidate instanceof View) {
+                return (View) candidate;
+            }
+        }
+        return null;
+    }
+
+    private static Drawable loadIcon(Context context) {
         int iconId = context.getResources()
                 .getIdentifier(ICON, "drawable", context.getPackageName());
-        if (iconId != 0) {
-            icon.setImageResource(iconId);
+        if (iconId == 0) {
+            MorpheLog.w(MorpheLog.BOARD, "icon " + ICON + " not found");
+            return null;
+        }
+        try {
+            return context.getDrawable(iconId);
+        } catch (Throwable t) {
+            return null;
         }
     }
 

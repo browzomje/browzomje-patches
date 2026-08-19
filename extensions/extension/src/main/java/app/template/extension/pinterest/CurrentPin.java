@@ -44,10 +44,10 @@ final class CurrentPin {
     private static final long FRESHNESS_MS = 20_000L;
 
     /** Quanti oggetti al massimo si visitano prima di rinunciare, per non pesare sull'apertura del menu. */
-    private static final int MAX_VISITED = 400;
+    private static final int MAX_VISITED = 1500;
 
     /** Quanto in profondità si scende nel grafo degli oggetti. */
-    private static final int MAX_DEPTH = 5;
+    private static final int MAX_DEPTH = 7;
 
     /** Un id di pin è un numero lungo: serve a scartare stringhe che id non sono. */
     private static final Pattern PIN_ID = Pattern.compile("[0-9]{15,20}");
@@ -157,18 +157,21 @@ final class CurrentPin {
             Class<?> clazz = node.getClass();
             while (clazz != null && !skip(clazz)) {
                 for (Field field : clazz.getDeclaredFields()) {
-                    if (Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
-                        continue;
-                    }
-                    Class<?> type = field.getType();
-                    // Le classi di libreria non contengono modelli di Pinterest, e scenderci dentro
-                    // vuol dire percorrere mezza gerarchia delle view per niente.
-                    if (skip(type) || type.isArray()) {
+                    if (Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()
+                            || field.getType().isArray()) {
                         continue;
                     }
                     field.setAccessible(true);
                     Object value = field.get(node);
                     if (value == null || seen.contains(value)) {
+                        continue;
+                    }
+                    // Si decide sulla classe **effettiva** del valore, non sul tipo dichiarato del
+                    // campo. È la differenza che faceva fallire il menu circolare: il campo che
+                    // porta al pin è dichiarato `View`, quindi guardando il tipo dichiarato lo si
+                    // scartava come "roba di Android" — mentre l'oggetto dentro è la view di
+                    // Pinterest che il pin ce l'ha davvero.
+                    if (skip(value.getClass())) {
                         continue;
                     }
                     seen.add(value);
