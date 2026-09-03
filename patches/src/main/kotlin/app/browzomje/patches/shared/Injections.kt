@@ -91,6 +91,43 @@ fun MutableMethod.returnVoidWhen(condition: String): Boolean {
 }
 
 /**
+ * Come [returnVoidWhen], ma per un metodo che restituisce `Z`: se l'extension dice di sì il
+ * metodo esce subito con `false`, altrimenti prosegue immutato.
+ *
+ * Serve per i metodi con cui l'app **decide da sé** se mostrare qualcosa — su Pinterest il caso
+ * tipico è `PinCloseupBaseModule.shouldShowForPin()`, che ogni modulo del closeup implementa. Far
+ * rispondere "no" a uno di quei metodi è il modo meno invasivo di togliere una sezione: non si
+ * tocca nessuna view, non si combatte con il layout del RecyclerView, e si passa per la stessa
+ * strada che l'app percorre quando quella sezione non ha contenuti da mostrare.
+ *
+ * Vale lo stesso **contratto sui registri** di [returnVoidWhen]: l'iniezione è in testa al metodo,
+ * `v0` è libero solo se il frame ha almeno un registro oltre ai parametri, e se non ce l'ha non si
+ * inietta nulla.
+ *
+ * @param condition riferimento smali a un metodo statico che restituisce `Z`, comprensivo di
+ *     `invoke-static`. Deve lasciare il risultato pronto per `move-result`.
+ * @return true se l'uscita anticipata è stata iniettata.
+ */
+fun MutableMethod.returnFalseWhen(condition: String): Boolean {
+    val implementation = implementation ?: return false
+    if (implementation.registerCount - inputRegisterCount() < 1) return false
+
+    addInstructions(
+        0,
+        """
+        $condition
+        move-result v0
+        if-eqz v0, :morphe_proceed
+        const/4 v0, 0x0
+        return v0
+        :morphe_proceed
+        nop
+        """.trimIndent(),
+    )
+    return true
+}
+
+/**
  * Inserisce del codice prima di **ogni** uscita del metodo, non solo della prima.
  *
  * Il modo abituale — `instructions.indexOfFirst { it.opcode == RETURN_VOID }` — presuppone che
@@ -111,6 +148,7 @@ fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
     val implementation = implementation
         ?: throw IllegalStateException("$definingClass->$name has no implementation")
     val registerCount = implementation.registerCount
+    val isStatic = AccessFlags.STATIC.isSet(accessFlags)
 
     val returnIndices = implementation.instructions
         .mapIndexedNotNull { index, instruction ->
@@ -124,8 +162,9 @@ fun MutableMethod.addInstructionsBeforeEveryReturn(smali: String): Int {
         )
     }
 
+    val paramString = parameterTypes.joinToString("") { it.toString() }
     for (index in returnIndices) {
-        addInstructions(index, InlineSmaliCompiler.compile(smali, "", registerCount, true))
+        addInstructions(index, InlineSmaliCompiler.compile(smali, paramString, registerCount, isStatic))
     }
     return returnIndices.size
 }

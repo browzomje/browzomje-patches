@@ -101,6 +101,10 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheStrings.get(MorpheStrings.SCREENSHOT_DESCRIPTION),
                 MorpheSettingsStore.KEY_DISABLE_SCREENSHOT_SHARE,
                 MorpheSettingsStore.isScreenshotShareDisabled());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_TITLE),
+                MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_COMMENTS,
+                MorpheSettingsStore.isCommentsHidden());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_TITLE),
                 MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_DESCRIPTION),
                 MorpheSettingsStore.KEY_SANITIZE_LINKS,
@@ -109,6 +113,14 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheStrings.get(MorpheStrings.SHARE_LINK_ONLY_DESCRIPTION),
                 MorpheSettingsStore.KEY_SHARE_LINK_ONLY,
                 MorpheSettingsStore.isShareLinkOnlyEnabled());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.SYSTEM_SHARE_SHEET_TITLE),
+                MorpheStrings.get(MorpheStrings.SYSTEM_SHARE_SHEET_DESCRIPTION),
+                MorpheSettingsStore.KEY_SYSTEM_SHARE_SHEET,
+                MorpheSettingsStore.isSystemShareSheetEnabled());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.EXTERNAL_BROWSER_TITLE),
+                MorpheStrings.get(MorpheStrings.EXTERNAL_BROWSER_DESCRIPTION),
+                MorpheSettingsStore.KEY_EXTERNAL_BROWSER,
+                MorpheSettingsStore.isExternalBrowserEnabled());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.EMAIL_DIALOG_TITLE), null,
                 MorpheSettingsStore.KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
                 MorpheSettingsStore.isEmailConfirmDialogDisabled());

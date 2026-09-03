@@ -38,6 +38,12 @@ final class MorpheStrings {
     static final String SANITIZE_LINKS_DESCRIPTION = "sanitize_links_description";
     static final String SHARE_LINK_ONLY_TITLE = "share_link_only_title";
     static final String SHARE_LINK_ONLY_DESCRIPTION = "share_link_only_description";
+    static final String SYSTEM_SHARE_SHEET_TITLE = "system_share_sheet_title";
+    static final String SYSTEM_SHARE_SHEET_DESCRIPTION = "system_share_sheet_description";
+    static final String EXTERNAL_BROWSER_TITLE = "external_browser_title";
+    static final String EXTERNAL_BROWSER_DESCRIPTION = "external_browser_description";
+    static final String HIDE_COMMENTS_TITLE = "hide_comments_title";
+    static final String HIDE_COMMENTS_DESCRIPTION = "hide_comments_description";
 
     static final String BOARD_DOWNLOAD_TITLE = "board_download_title";
     static final String BOARD_DOWNLOAD_DESCRIPTION = "board_download_description";
@@ -227,9 +233,9 @@ final class MorpheStrings {
 
         put(SHARE_LINK_ONLY_DESCRIPTION,
             "Drops the promotional sentence Pinterest puts in front of the link (\"Take a look at "
-                + "this Pin! ➡️\").",
+                + "this Pin! →\").",
             "Toglie la frase promozionale che Pinterest antepone al link (\"Dai un'occhiata a "
-                + "questa idea ➡️\").",
+                + "questa idea →\").",
             "Quita la frase promocional que Pinterest antepone al enlace.",
             "Supprime la phrase promotionnelle que Pinterest ajoute devant le lien.",
             "Entfernt den Werbesatz, den Pinterest vor den Link setzt.",
@@ -242,6 +248,134 @@ final class MorpheStrings {
             "Verwijdert de promotiezin die Pinterest voor de link zet.",
             "Pinterest'in bağlantının önüne koyduğu tanıtım cümlesini kaldırır.",
             "يزيل العبارة الترويجية التي يضعها Pinterest قبل الرابط.");
+
+        put(SYSTEM_SHARE_SHEET_TITLE,
+            "Use the system share sheet",
+            "Usa il pannello di condivisione di sistema",
+            "Usar el panel de compartir del sistema",
+            "Utiliser le panneau de partage du système",
+            "System-Teilen-Dialog verwenden",
+            "Usar o painel de partilha do sistema",
+            "Использовать системное меню «Поделиться»",
+            "システムの共有シートを使う",
+            "使用系统分享面板",
+            "시스템 공유 시트 사용",
+            "Używaj systemowego panelu udostępniania",
+            "Systeemdeelvenster gebruiken",
+            "Sistem paylaşım panelini kullan",
+            "استخدام لوحة المشاركة في النظام");
+
+        put(SYSTEM_SHARE_SHEET_DESCRIPTION,
+            "Shares pins through Android's own sheet, which reaches every installed app. Boards, "
+                + "profiles and conversations keep Pinterest's sheet.",
+            "Condivide i pin con il pannello di Android, che raggiunge tutte le app installate. "
+                + "Bacheche, profili e conversazioni restano con il pannello di Pinterest.",
+            "Comparte los pines con el panel de Android, que llega a todas las apps instaladas. "
+                + "Tableros, perfiles y conversaciones mantienen el panel de Pinterest.",
+            "Partage les épingles via le panneau d'Android, qui atteint toutes les applications "
+                + "installées. Tableaux, profils et conversations gardent celui de Pinterest.",
+            "Teilt Pins über den Android-Dialog, der alle installierten Apps erreicht. Pinnwände, "
+                + "Profile und Unterhaltungen behalten den Dialog von Pinterest.",
+            "Partilha os pins pelo painel do Android, que chega a todas as apps instaladas. "
+                + "Pastas, perfis e conversas mantêm o painel do Pinterest.",
+            "Отправляет пины через системное меню Android, доступное всем установленным "
+                + "приложениям. Доски, профили и переписки используют меню Pinterest.",
+            "Android の共有シートでピンを共有します。インストール済みのすべてのアプリに届きます。"
+                + "ボード・プロフィール・会話は Pinterest のシートのままです。",
+            "通过 Android 自带的分享面板分享 Pin，可发送到所有已安装的应用。图板、个人主页和对话仍使用 Pinterest 的面板。",
+            "안드로이드 기본 공유 시트로 핀을 공유해 설치된 모든 앱에 보낼 수 있습니다. 보드·프로필·대화는 "
+                + "핀터레스트 시트를 그대로 씁니다.",
+            "Udostępnia piny panelem Androida, który obejmuje wszystkie zainstalowane aplikacje. "
+                + "Tablice, profile i rozmowy zostają przy panelu Pinteresta.",
+            "Deelt pins via het venster van Android, dat elke geïnstalleerde app bereikt. Borden, "
+                + "profielen en gesprekken houden het venster van Pinterest.",
+            "Pinleri, kurulu tüm uygulamalara ulaşan Android panelinden paylaşır. Panolar, "
+                + "profiller ve sohbetler Pinterest'in panelinde kalır.",
+            "يشارك التثبيتات عبر لوحة أندرويد التي تصل إلى كل التطبيقات المثبّتة. أما اللوحات "
+                + "والملفات الشخصية والمحادثات فتبقى على لوحة Pinterest.");
+
+        put(EXTERNAL_BROWSER_TITLE,
+            "Open links in the default browser",
+            "Apri i link nel browser predefinito",
+            "Abrir los enlaces en el navegador predeterminado",
+            "Ouvrir les liens dans le navigateur par défaut",
+            "Links im Standardbrowser öffnen",
+            "Abrir as ligações no navegador predefinido",
+            "Открывать ссылки в браузере по умолчанию",
+            "リンクを既定のブラウザーで開く",
+            "在默认浏览器中打开链接",
+            "링크를 기본 브라우저로 열기",
+            "Otwieraj linki w domyślnej przeglądarce",
+            "Links in de standaardbrowser openen",
+            "Bağlantıları varsayılan tarayıcıda aç",
+            "فتح الروابط في المتصفح الافتراضي");
+
+        put(EXTERNAL_BROWSER_DESCRIPTION,
+            "\"Visit site\" opens your browser instead of Pinterest's built-in one, which runs "
+                + "inside the app and can watch the page. Pinterest's own pages stay in-app.",
+            "\"Visita il sito\" apre il tuo browser invece di quello interno di Pinterest, che "
+                + "gira dentro l'app e può osservare la pagina. Le pagine di Pinterest restano "
+                + "dentro l'app.",
+            "\"Visitar el sitio\" abre tu navegador en vez del interno de Pinterest, que se "
+                + "ejecuta dentro de la app. Las páginas de Pinterest siguen dentro.",
+            "« Visiter le site » ouvre votre navigateur au lieu de celui intégré à Pinterest, qui "
+                + "s'exécute dans l'app. Les pages de Pinterest restent dans l'app.",
+            "„Website besuchen“ öffnet deinen Browser statt des in Pinterest eingebauten, der "
+                + "innerhalb der App läuft. Pinterest-eigene Seiten bleiben in der App.",
+            "\"Visitar site\" abre o teu navegador em vez do interno do Pinterest, que corre "
+                + "dentro da app. As páginas do próprio Pinterest ficam na app.",
+            "«Перейти на сайт» открывает ваш браузер вместо встроенного в Pinterest, который "
+                + "работает внутри приложения. Страницы самого Pinterest остаются внутри.",
+            "「サイトにアクセス」で、アプリ内で動く Pinterest の内蔵ブラウザーではなく既定の"
+                + "ブラウザーが開きます。Pinterest 自身のページはアプリ内のままです。",
+            "点按“访问网站”时打开你的浏览器，而不是运行在应用内部的 Pinterest 内置浏览器。Pinterest 自己的页面仍在应用内打开。",
+            "'사이트 방문'을 누르면 앱 안에서 실행되는 핀터레스트 내장 브라우저 대신 기본 브라우저가 열립니다. "
+                + "핀터레스트 자체 페이지는 앱 안에 남습니다.",
+            "„Odwiedź stronę” otwiera Twoją przeglądarkę zamiast wbudowanej w Pinterest, która "
+                + "działa wewnątrz aplikacji. Strony samego Pinteresta zostają w aplikacji.",
+            "\"Site bezoeken\" opent je eigen browser in plaats van die van Pinterest, die binnen "
+                + "de app draait. Pinterest-eigen pagina's blijven in de app.",
+            "\"Siteyi ziyaret et\" uygulamanın içinde çalışan Pinterest tarayıcısı yerine kendi "
+                + "tarayıcını açar. Pinterest'in kendi sayfaları uygulamada kalır.",
+            "يفتح زر \"زيارة الموقع\" متصفحك بدل متصفح Pinterest الداخلي الذي يعمل داخل التطبيق. "
+                + "أما صفحات Pinterest نفسها فتبقى داخل التطبيق.");
+
+        put(HIDE_COMMENTS_TITLE,
+            "Hide comments",
+            "Nascondi i commenti", "Ocultar los comentarios",
+            "Masquer les commentaires", "Kommentare ausblenden",
+            "Ocultar os comentários", "Скрыть комментарии",
+            "コメントを非表示にする", "隐藏评论", "댓글 숨기기",
+            "Ukryj komentarze", "Reacties verbergen",
+            "Yorumları gizle", "إخفاء التعليقات");
+
+        put(HIDE_COMMENTS_DESCRIPTION,
+            "Removes the comments section, the preview with \"view all\" and the comment button, "
+                + "so the section cannot be reached.",
+            "Toglie la sezione commenti, l'anteprima con \"visualizza tutti\" e il tasto dei "
+                + "commenti, così la sezione non è raggiungibile.",
+            "Quita la sección de comentarios, la vista previa con \"ver todos\" y el botón de "
+                + "comentarios, de modo que la sección no se pueda abrir.",
+            "Supprime la section commentaires, l'aperçu avec « tout voir » et le bouton de "
+                + "commentaire, de sorte que la section devienne inaccessible.",
+            "Entfernt den Kommentarbereich, die Vorschau mit „Alle ansehen“ und die "
+                + "Kommentarschaltfläche, sodass der Bereich nicht erreichbar ist.",
+            "Remove a secção de comentários, a pré-visualização com \"ver tudo\" e o botão de "
+                + "comentários, de modo que a secção não seja acessível.",
+            "Убирает раздел комментариев, предпросмотр с «смотреть все» и кнопку комментариев, "
+                + "так что раздел становится недоступен.",
+            "コメント欄、「すべて見る」付きのプレビュー、コメントボタンを取り除き、"
+                + "コメント欄に到達できないようにします。",
+            "移除评论区、带“查看全部”的预览以及评论按钮，使评论区无法进入。",
+            "댓글 섹션과 '모두 보기'가 있는 미리보기, 댓글 버튼을 없애 댓글 섹션에 들어갈 수 없게 합니다.",
+            "Usuwa sekcję komentarzy, podgląd z „zobacz wszystkie” oraz przycisk komentarzy, więc "
+                + "sekcja staje się niedostępna.",
+            "Verwijdert de reactiesectie, het voorbeeld met \"alles bekijken\" en de "
+                + "reactieknop, zodat de sectie onbereikbaar wordt.",
+            "Yorumlar bölümünü, \"tümünü gör\" içeren önizlemeyi ve yorum düğmesini kaldırır; "
+                + "böylece bölüme ulaşılamaz.",
+            "يزيل قسم التعليقات والمعاينة التي تحتوي على \"عرض الكل\" وزر التعليقات، فلا يعود "
+                + "بالإمكان الوصول إلى القسم.");
 
         put(SEARCH_HISTORY_TITLE,
             "Hide search history",

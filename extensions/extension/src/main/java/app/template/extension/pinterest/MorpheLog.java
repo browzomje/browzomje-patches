@@ -41,6 +41,15 @@ public final class MorpheLog {
      * {@link #COPY_LINK}, che è la voce "Copia link diretto" del menu del pin.
      */
     public static final String SHARE_LINK = "share-link";
+    /** Apertura dei link nel browser di sistema invece che in quello interno (issue #35). */
+    public static final String EXTERNAL_BROWSER = "external-browser";
+    /** Sezione commenti e anteprima commenti del closeup (issue #36). */
+    public static final String COMMENTS = "comments";
+    /**
+     * Sostituzione del foglio di condivisione interno con quello di sistema (issue #38),
+     * distinta da {@link #SHARE_LINK}, che ripulisce il testo condiviso.
+     */
+    public static final String SHARE_SHEET = "share-sheet";
     public static final String WALLPAPER = "wallpaper";
     public static final String VIDEO = "video";
     public static final String BOARD = "board";

@@ -26,6 +26,9 @@ public final class MorpheSettingsStore {
     public static final String KEY_SANITIZE_LINKS = "sanitize_links";
     public static final String KEY_LONG_PRESS_DOWNLOAD = "long_press_download";
     public static final String KEY_SHARE_LINK_ONLY = "share_link_only";
+    public static final String KEY_EXTERNAL_BROWSER = "external_browser";
+    public static final String KEY_SYSTEM_SHARE_SHEET = "system_share_sheet";
+    public static final String KEY_HIDE_COMMENTS = "hide_comments";
 
     /**
      * Le impostazioni che si esportano e si importano, nell'ordine in cui compaiono a schermo.
@@ -40,8 +43,11 @@ public final class MorpheSettingsStore {
         KEY_HIDE_SEARCH_BOARD_MODULES,
         KEY_HIDE_SEARCH_HISTORY,
         KEY_DISABLE_SCREENSHOT_SHARE,
+        KEY_HIDE_COMMENTS,
         KEY_SANITIZE_LINKS,
         KEY_SHARE_LINK_ONLY,
+        KEY_SYSTEM_SHARE_SHEET,
+        KEY_EXTERNAL_BROWSER,
         KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
         KEY_BOARD_DOWNLOAD,
         KEY_LONG_PRESS_DOWNLOAD,
@@ -123,7 +129,10 @@ public final class MorpheSettingsStore {
             case KEY_DISABLE_SCREENSHOT_SHARE:
             case KEY_SANITIZE_LINKS:
             case KEY_SHARE_LINK_ONLY:
+            case KEY_EXTERNAL_BROWSER:
+            case KEY_SYSTEM_SHARE_SHEET:
                 return true;
+            // KEY_HIDE_COMMENTS non è qui: vedi isCommentsHidden().
             default:
                 return false;
         }
@@ -196,6 +205,47 @@ public final class MorpheSettingsStore {
      */
     public static boolean isShareLinkOnlyEnabled() {
         return effective(KEY_SHARE_LINK_ONLY);
+    }
+
+    /**
+     * Apre i link del tasto "Visita il sito" nel browser predefinito del telefono invece che nel
+     * browser interno di Pinterest (issue #35).
+     *
+     * <p>Acceso per default: un browser esterno vede solo il sito, mentre quello interno gira
+     * dentro Pinterest, che può osservare la navigazione — è la stessa ragione per cui è acceso
+     * {@link #isLinkSanitizerEnabled()}. Resta un interruttore perché il browser interno ha una
+     * cosa che quello esterno non ha, il tasto "Salva" del pin, e chi lo usa deve poterlo
+     * riavere. Vedi {@link ExternalBrowser}.
+     */
+    public static boolean isExternalBrowserEnabled() {
+        return effective(KEY_EXTERNAL_BROWSER);
+    }
+
+    /**
+     * Sostituisce il foglio di condivisione interno di Pinterest con quello di sistema
+     * (issue #38).
+     *
+     * <p>Acceso per default: il foglio di sistema arriva a tutte le app installate, mentre quello
+     * interno mostra una manciata di app scelte da Pinterest e mette in cima i contatti, cioè
+     * invita a condividere <em>dentro</em> Pinterest. È un interruttore perché chi usa i messaggi
+     * diretti dell'app perderebbe la strada più breve per mandare un pin a un contatto. Vedi
+     * {@link SystemShareSheet}.
+     */
+    public static boolean isSystemShareSheetEnabled() {
+        return effective(KEY_SYSTEM_SHARE_SHEET);
+    }
+
+    /**
+     * Nasconde la sezione commenti del pin e la sua anteprima, "Visualizza tutti" compreso
+     * (issue #36).
+     *
+     * <p>A differenza delle altre due arrivate con lo stesso giro di issue, questa è
+     * <b>spenta</b> per default: toglie una funzione dell'app invece di cambiare la strada con cui
+     * ci si arriva, e chi legge o scrive commenti non deve ritrovarseli spariti dopo aver
+     * aggiornato la patch. La issue stessa la chiede come interruttore, non come comportamento.
+     */
+    public static boolean isCommentsHidden() {
+        return effective(KEY_HIDE_COMMENTS);
     }
 
     public static boolean isSearchButtonHidden() {
