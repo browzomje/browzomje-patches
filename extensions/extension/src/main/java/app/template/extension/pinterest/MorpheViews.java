@@ -87,6 +87,42 @@ final class MorpheViews {
         }
     }
 
+    /**
+     * Cerca dentro {@code root} (compresa) la View il cui id di risorsa si chiama {@code idName}.
+     *
+     * <p>L'id si risolve <b>per nome</b> con {@code getIdentifier} e mai per valore numerico: i
+     * valori sono ricalcolati a ogni build dell'app, i nomi no — sono il modo in cui gli XML di
+     * layout si citano fra loro, quindi R8 non può toccarli. È la stessa regola che segue
+     * l'intestazione del feed.
+     *
+     * @param root radice della sottostruttura da esplorare; se null si restituisce null.
+     * @param idName nome della risorsa, es. {@code "unified_comments_module_container"}.
+     * @param channel canale di log, per dire quale ricerca è fallita e perché.
+     * @return la View trovata, o null se l'id non esiste in questa versione dell'app oppure se
+     *     nessuna View della sottostruttura lo porta.
+     */
+    static View findDescendantByIdName(View root, String idName, String channel) {
+        if (root == null) {
+            return null;
+        }
+        int id;
+        try {
+            id = root.getContext().getResources()
+                    .getIdentifier(idName, "id", root.getContext().getPackageName());
+        } catch (Throwable t) {
+            MorpheLog.w(channel, "could not resolve @id/" + idName, t);
+            return null;
+        }
+        if (id == 0) {
+            MorpheLog.d(channel, "@id/" + idName + " does not exist in this version of the app");
+            return null;
+        }
+        if (root.getId() == id) {
+            return root;
+        }
+        return root.findViewById(id);
+    }
+
     private static void apply(View view) {
         view.setVisibility(View.GONE);
         ViewGroup.LayoutParams params = view.getLayoutParams();

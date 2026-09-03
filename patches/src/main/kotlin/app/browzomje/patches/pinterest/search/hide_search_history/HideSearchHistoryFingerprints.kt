@@ -79,11 +79,22 @@ object SearchTypeaheadRecentSearchesCarouselInitFingerprint : Fingerprint(
  * La classe non è offuscata, il nome del metodo sì: è `a(Z)V`, l'unico membro dell'interfaccia
  * `fl0.c` che la classe implementa. Si aggancia quindi per firma — un solo metodo della classe
  * prende un boolean — e non per nome, così un rename di R8 non lo fa saltare.
+ *
+ * **Si guarda il nome semplice, non il package.** Fino a 14.32.0 la classe stava in
+ * `com.pinterest.design.brio.widget.progress`; su 14.34.0 è stata spostata in
+ * `com.pinterest.design.progress`, e il confronto sul descrittore intero ha smesso di trovarla —
+ * in silenzio, perché questo fingerprint è opzionale: la patch si applicava lo stesso e la
+ * schermata di ricerca restava a girare.
+ *
+ * Un *sposta-package* non è un'offuscazione: il nome semplice resta quello vero perché la classe è
+ * inflatata per nome dagli XML (`fragment_search_typeahead.xml`), ed è l'unica parte del
+ * descrittore che l'XML costringe a restare. Ci si ancora quindi a quella, più la firma del
+ * metodo.
  */
 object PinterestLoadingLayoutFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Z"),
     custom = { _, classDef ->
-        classDef.type == "Lcom/pinterest/design/brio/widget/progress/PinterestLoadingLayout;"
+        classDef.type.endsWith("/PinterestLoadingLayout;")
     }
 )

@@ -82,6 +82,17 @@ final class CurrentPin {
     }
 
     /**
+     * Registra direttamente l'id del pin se valido (es. intercettato da SendableObject).
+     */
+    static void recordPinId(String id) {
+        if (id != null && PIN_ID.matcher(id).matches()) {
+            pinId = id;
+            capturedAt = System.currentTimeMillis();
+            MorpheLog.d(MorpheLog.COPY_LINK, "pin corrente (da SendableObject): " + id);
+        }
+    }
+
+    /**
      * @return il link canonico del pin corrente, o null se non ce n'è uno abbastanza recente. Chi
      *     riceve null deve ricadere sulla risoluzione via rete.
      */
@@ -118,6 +129,28 @@ final class CurrentPin {
             return walk(root, true);
         } catch (Throwable t) {
             MorpheLog.d(MorpheLog.COPY_LINK, "pin non trovato: " + t);
+            return null;
+        }
+    }
+
+    /**
+     * Cerca l'id del pin dentro un oggetto qualsiasi, senza toccare il "pin corrente".
+     *
+     * <p>La differenza con {@link #canonicalUrl()} è che lì il pin è quello visto per ultimo — un
+     * ricordo, valido solo per pochi secondi — mentre qui è quello contenuto nell'oggetto che si
+     * passa, cioè un legame dimostrato. Chi ha in mano l'oggetto giusto (per esempio il foglio di
+     * condivisione, che il pin da condividere ce l'ha dentro) deve usare questo.
+     *
+     * @return l'id del pin, o null se nel grafo non ce n'è nessuno.
+     */
+    static String pinIdIn(Object root) {
+        if (root == null) {
+            return null;
+        }
+        try {
+            return search(root);
+        } catch (Throwable t) {
+            MorpheLog.d(MorpheLog.COPY_LINK, "no pin id in " + root.getClass().getName() + ": " + t);
             return null;
         }
     }

@@ -1345,24 +1345,65 @@ public final class PinterestUtils {
      *
      * @param context il Context della riga premuta: da lì si risale all'Activity.
      */
-    @SuppressWarnings("deprecation")
     static void dismissMenu(final Context context) {
+        pressBack(context, MorpheLog.REFLECTION, "menu");
+    }
+
+    /**
+     * Chiude la schermata in cima, esattamente come farebbe l'utente premendo "indietro".
+     *
+     * <p>Oltre al menu del pin la usano le due patch che sostituiscono una schermata di Pinterest
+     * con qualcosa di esterno — il browser interno (issue #35) e il foglio di condivisione
+     * (issue #38): entrambe agiscono <em>dopo</em> che la schermata è già stata aperta, quindi
+     * devono richiuderla.
+     *
+     * <p>Si passa sempre dall'"indietro" e mai dagli eventi interni dell'app: quelli hanno nomi
+     * offuscati che cambiano a ogni versione (su 14.32.0 nessuno dei due nomi noti esisteva più, e
+     * il menu restava aperto sotto al messaggio di conferma), mentre {@code onBackPressed} è API
+     * pubblica di Android e fa passare la chiusura per la strada normale dell'app — animazione e
+     * stato di navigazione compresi.
+     *
+     * @param context il Context da cui risalire all'Activity.
+     * @param channel canale di log di chi sta chiudendo.
+     * @param what descrizione leggibile di cosa si sta chiudendo, per i messaggi.
+     */
+    static void pressBack(final Context context, final String channel, final String what) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                Activity activity = activityOf(context);
-                if (activity == null) {
-                    MorpheLog.d(MorpheLog.REFLECTION, "no Activity: the menu stays open");
-                    return;
-                }
-                try {
-                    activity.onBackPressed();
-                    MorpheLog.d(MorpheLog.REFLECTION, "menu closed with back");
-                } catch (Throwable t) {
-                    MorpheLog.w(MorpheLog.REFLECTION, "could not close the menu", t);
-                }
+                pressBackNow(context, channel, what);
             }
         });
+    }
+
+    /**
+     * Come {@link #pressBack}, ma <b>subito</b>, senza passare dalla coda del thread principale.
+     *
+     * <p>Serve a chi deve richiudere una schermata <em>prima</em> di aprirne una di sistema al suo
+     * posto. Rimandare l'"indietro" alla coda, lì, significa consegnarlo quando l'Activity di
+     * Pinterest è già stata messa in pausa dal chooser che le sta davanti: il modale non lo riceve
+     * e resta aperto sotto, così tornando indietro dal foglio di sistema si ritrova quello interno
+     * ancora a schermo.
+     *
+     * <p>Va chiamata solo dal thread principale — chi non ci si trova usi {@link #pressBack}.
+     */
+    @SuppressWarnings("deprecation")
+    static void pressBackNow(Context context, String channel, String what) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            pressBack(context, channel, what);
+            return;
+        }
+        Activity activity = activityOf(context);
+        if (activity == null) {
+            MorpheLog.w(channel, "no Activity in reach: the " + what + " stays open");
+            return;
+        }
+        try {
+            activity.onBackPressed();
+            MorpheLog.d(channel, what + " closed with back");
+        } catch (Throwable t) {
+            MorpheLog.w(channel, "could not close the " + what, t);
+        }
     }
 
     /**
