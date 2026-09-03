@@ -12,15 +12,15 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.9.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.9.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;30 patches total
+> **[v1.10.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.10.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;33 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;25 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;28 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.23.0 | 14.28.0 | 14.32.0 |
-| :---: | :---: | :---: |
+| 14.23.0 | 14.28.0 | 14.32.0 | 14.34.0 |
+| :---: | :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -38,6 +38,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hides the notifications navigation button, when enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hides the search navigation button, when enabled in Morphe settings. |  |
 | [Hide ad views](#hide-ad-views) | Collapses Pinterest's ad-only views, so no ad chrome is drawn even if the app builds one. Follows the "Disable ads" switch. |  |
+| [Hide comments](#hide-comments) | Hides the pin comments section, the comment preview and the comments button, when the matching Morphe setting is enabled. |  |
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section on the search screen and below the search bar. Pinterest still logs searches server-side. |  |
@@ -46,9 +47,11 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |
 | [Morphe settings screen (manifest)](#morphe-settings-screen-manifest) | Registers the Morphe settings Activity in the manifest, with an intent-filter for the morphe:// scheme. |  |
 | [Neutralize advertising ID](#neutralize-advertising-id) | Returns an empty Google Advertising ID and forces "limit ad tracking", without crashing the app. |  |
+| [Open links in the default browser](#open-links-in-the-default-browser) | Opens links in the phone's default browser instead of Pinterest's in-app browser, when the matching Morphe setting is enabled. |  |
 | [Sanitize copied links](#sanitize-copied-links) | Turns the pin.it link that "Copy link" copies, whose slug identifies who shared it, into the plain pin link. Switchable from Morphe settings. |  |
 | [Sanitize shared links](#sanitize-shared-links) | Strips tracking parameters from the link on the Android share sheet and resolves pin.it short links to the plain pin link. Switchable from Morphe settings. |  |
 | [Set pin as wallpaper](#set-pin-as-wallpaper) | Adds a "Set as wallpaper" option to the pin menu, which downloads the image and sets it as the device wallpaper. |  |
+| [Use the system share sheet](#use-the-system-share-sheet) | Opens the Android system share sheet instead of Pinterest's in-app share sheet, when the matching Morphe setting is enabled. |  |
 
 </details>
 

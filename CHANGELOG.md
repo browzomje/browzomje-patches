@@ -1,3 +1,9 @@
+## [1.10.0](https://github.com/browzomje/browzomje-patches/compare/v1.9.0...v1.10.0) (2026-09-03)
+
+### ✨ New Features
+
+* **pinterest:** bypass in-app browser, system share sheet, hide comments and support 14.34.0 (closes [#35](https://github.com/browzomje/browzomje-patches/issues/35), [#36](https://github.com/browzomje/browzomje-patches/issues/36), [#38](https://github.com/browzomje/browzomje-patches/issues/38)) ([453c44d](https://github.com/browzomje/browzomje-patches/commit/453c44d8f694b8f57d823af5375fac7c2451f94e))
+
 ## [1.9.0](https://github.com/browzomje/browzomje-patches/compare/v1.8.0...v1.9.0) (2026-08-19)
 
 ### 🐛 Bug Fixes
