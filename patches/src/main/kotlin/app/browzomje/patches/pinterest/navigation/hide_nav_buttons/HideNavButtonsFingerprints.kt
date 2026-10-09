@@ -10,13 +10,19 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 // per forma: è l'unico `void <nome>()` della classe che inizia impostando l'orientamento
 // (`setOrientation(1)`) prima di aggiungere i tasti.
 //   rg -n 'setOrientation\(1\)' sources/com/pinterest/navigation/view/lego/LegoFloatingBottomNavBar.java
-private const val NAV_BAR_CLASS = "Lcom/pinterest/navigation/view/lego/LegoFloatingBottomNavBar;"
+// 14.39.0: l'XML activity_main_bottom_nav_hide_floating_nav_view usa FloatingBottomNavBar.
+// Conserviamo il vecchio nome per le versioni precedenti; entrambi sono nomi pubblici
+// imposti dai layout, non nomi offuscati. X0() sulla 14.39 mantiene setOrientation in testa.
+private val NAV_BAR_CLASSES = setOf(
+    "Lcom/pinterest/navigation/view/lego/LegoFloatingBottomNavBar;",
+    "Lcom/pinterest/navigation/view/FloatingBottomNavBar;",
+)
 
 object BottomNavBarSetupFingerprint : Fingerprint(
     returnType = "V",
     parameters = emptyList(),
     custom = { method, classDef ->
-        classDef.type == NAV_BAR_CLASS && method.callsSetOrientationEarly()
+        classDef.type in NAV_BAR_CLASSES && method.callsSetOrientationEarly()
     }
 )
 

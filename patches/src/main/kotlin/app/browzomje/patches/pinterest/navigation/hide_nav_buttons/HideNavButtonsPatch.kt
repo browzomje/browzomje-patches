@@ -4,7 +4,7 @@ import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.patch.bytecodePatch
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
-import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 
@@ -15,7 +15,7 @@ private const val TAB_ORDINAL_CREATE = 1
 private const val TAB_ORDINAL_NOTIFICATIONS = 2
 private const val TAB_ORDINAL_SEARCH = 4
 
-// Accoda hideNavBarTab(this, tabOrdinal) prima del return-void del metodo di setup della barra.
+// Cattura this all'ingresso del setup e rimanda hideNavBarTab fino a barra costruita.
 // L'hook è sempre iniettato (default = true): è PinterestUtils.hideNavBarTab, guidato dalla
 // schermata Morphe (vedi MorpheSettingsStore), a decidere a runtime se nascondere davvero il
 // tasto.
@@ -25,22 +25,24 @@ private const val TAB_ORDINAL_SEARCH = 4
 // stessa per rimetterlo. HOME resta l'unico modo garantito di tornare al feed.
 private fun MutableMethod.appendHideNavBarTab(patchName: String, tabOrdinal: Int) {
     val registerCount = implementation!!.registerCount
-    val p0 = registerCount - (parameters.size + 1) // il metodo non ha parametri: p0 = registerCount - 1
+    check(parameters.isEmpty() && registerCount >= 3) {
+        "Navigation setup needs two local registers and no parameters"
+    }
 
     // hideNavBarTab(Object, int) vuole due registri contigui in ordine (navBar, tabOrdinal), ma
     // p0 è il registro più alto del frame: non c'è un p0+1 disponibile per l'int che lo segua.
-    // Copiamo quindi navBar in v0/v1 (bassi, sempre contigui) invece di usare p0 nel range.
-    // move-object/from16 regge un sorgente oltre v15 (p0 può superarlo), a differenza di
-    // move-object. Siamo subito prima di un return: nessuna istruzione originale segue che
-    // legga v0/v1 dopo.
-    val injectedAt = addInstructionsBeforeEveryReturn(
+    // Su 14.39 X0() riusa p0 per boolean/oggetti prima del return. Catturiamo this in
+    // testa, quando i due locali non contengono ancora dati vivi; l'extension rimanda
+    // la lettura dei tab con View.post, fino a costruzione della barra conclusa.
+    addInstructions(
+        0,
         """
-        move-object/from16 v0, v$p0
+        move-object/from16 v0, p0
         const/4 v1, 0x$tabOrdinal
-        invoke-static/range { v0 .. v1 }, $EXTENSION_CLASS->hideNavBarTab(Ljava/lang/Object;I)V
+        invoke-static/range { v0 .. v1 }, $EXTENSION_CLASS->hideNavBarTabWhenReady(Ljava/lang/Object;I)V
         """.trimIndent(),
     )
-    PatchLog.hooked(patchName, this, "tab ordinal $tabOrdinal, $injectedAt exits")
+    PatchLog.hooked(patchName, this, "tab ordinal $tabOrdinal, deferred from setup entry")
 }
 
 private fun hideNavButtonPatch(name: String, description: String, tabOrdinal: Int) =

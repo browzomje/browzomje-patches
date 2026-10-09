@@ -2,6 +2,8 @@
 
 A collection of patches for Android applications, designed for the [Morphe](https://morphe.software) patcher.
 
+[Pinterest 14.39.0 — checklist completa delle verifiche](docs/pinterest/VERIFICATION_14.39.0.md) (collaudo dispositivo ancora aperto).
+
 ## ❓ About
 
 This repository provides custom enhancements and modifications for Android apps, currently supporting: 

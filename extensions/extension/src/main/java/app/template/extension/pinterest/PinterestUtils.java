@@ -649,6 +649,14 @@ public final class PinterestUtils {
      * <p>Si nasconde la View invece di rimuovere l'elemento dalla lista: gli indici restano
      * validi e il resto del codice della barra continua a funzionare.
      */
+    public static void hideNavBarTabWhenReady(Object navBar, int tabOrdinal) {
+        if (navBar instanceof ViewGroup) {
+            ((ViewGroup) navBar).post(() -> hideNavBarTab(navBar, tabOrdinal));
+        } else {
+            MorpheLog.e(MorpheLog.NAVBAR, "navigation setup did not pass a ViewGroup");
+        }
+    }
+
     public static void hideNavBarTab(Object navBar, int tabOrdinal) {
         String tabName = navTabName(tabOrdinal);
         MorpheLog.hookFired(MorpheLog.NAVBAR, "tab " + tabName);
