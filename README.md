@@ -14,15 +14,15 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.10.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.10.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;33 patches total
+> **[v1.11.0-dev.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.11.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;36 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;28 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;31 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.23.0 | 14.28.0 | 14.32.0 | 14.34.0 |
-| :---: | :---: | :---: | :---: |
+| 14.23.0 | 14.28.0 | 14.32.0 | 14.34.0 | 14.39.0 |
+| :---: | :---: | :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -34,8 +34,10 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Closes the "confirm your email" modal, and similar ones, when enabled in Morphe settings. |  |
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |
+| [Download images in highest available quality](#download-images-in-highest-available-quality) | Uses the largest image variant provided by Pinterest for the native Download image menu action. |  |
 | [Download pin from long press](#download-pin-from-long-press) | Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it. |  |
 | [Download video](#download-video) | Adds a "Download video" option to the pin menu, saving the clip to the Downloads folder. |  |
+| [Filter pin menu actions](#filter-pin-menu-actions) | Hides selected native pin menu actions by their localized labels, one per line. |  |
 | [Hide Create nav button](#hide-create-nav-button) | Hides the "+" (create Pin) navigation button, when enabled in Morphe settings. |  |
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hides the notifications navigation button, when enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hides the search navigation button, when enabled in Morphe settings. |  |
@@ -53,6 +55,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Sanitize copied links](#sanitize-copied-links) | Turns the pin.it link that "Copy link" copies, whose slug identifies who shared it, into the plain pin link. Switchable from Morphe settings. |  |
 | [Sanitize shared links](#sanitize-shared-links) | Strips tracking parameters from the link on the Android share sheet and resolves pin.it short links to the plain pin link. Switchable from Morphe settings. |  |
 | [Set pin as wallpaper](#set-pin-as-wallpaper) | Adds a "Set as wallpaper" option to the pin menu, which downloads the image and sets it as the device wallpaper. |  |
+| [Show pin image information](#show-pin-image-information) | Adds optional image dimensions and format information to the pin menu. |  |
 | [Use the system share sheet](#use-the-system-share-sheet) | Opens the Android system share sheet instead of Pinterest's in-app share sheet, when the matching Morphe setting is enabled. |  |
 
 </details>
