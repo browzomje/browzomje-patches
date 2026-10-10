@@ -1,3 +1,9 @@
+## [1.11.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.11.0-dev.1...v1.11.0-dev.2) (2026-10-10)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** collapse hidden navigation tabs and clarify settings ([bae0451](https://github.com/browzomje/browzomje-patches/commit/bae0451c663f9a4df245c4b9319abef6f6343580))
+
 ## [1.11.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.10.0...v1.11.0-dev.1) (2026-10-10)
 
 ### 🐛 Bug Fixes
