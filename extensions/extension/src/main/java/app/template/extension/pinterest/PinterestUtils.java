@@ -705,7 +705,7 @@ public final class PinterestUtils {
                         + tab.getClass().getName());
                 return;
             }
-            MorpheViews.hidePersistently(tabView, MorpheLog.NAVBAR, "tasto " + tabName);
+            MorpheViews.hideHorizontalSlot(tabView, MorpheLog.NAVBAR, "tasto " + tabName);
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.NAVBAR, "could not hide tab " + tabName, t);
         }
@@ -801,8 +801,36 @@ public final class PinterestUtils {
         return null;
     }
 
+    private static View interfaceItemView(Object tab, Class<?> contract) {
+        if (contract.getName().startsWith("android.")) return null;
+        for (Method method : contract.getDeclaredMethods()) {
+            if (method.getParameterTypes().length != 0 || method.getReturnType() != View.class)
+                continue;
+            try {
+                method.setAccessible(true);
+                Object result = method.invoke(tab);
+                if (result instanceof View) return (View) result;
+            } catch (Throwable ignored) {
+                // Try an inherited interface or the legacy fallback.
+            }
+        }
+        for (Class<?> parent : contract.getInterfaces()) {
+            View result = interfaceItemView(tab, parent);
+            if (result != null) return result;
+        }
+        return null;
+    }
+
     /** @return la View restituita dall'unico metodo senza argomenti che ne restituisce una. */
     private static View findViewAccessor(Object tab) {
+        // The tab interface exposes its complete item View. Concrete Gestalt widgets also
+        // expose icon/root/label getters; reflection order must not select one of those.
+        for (Class<?> type = tab.getClass(); type != null; type = type.getSuperclass()) {
+            for (Class<?> contract : type.getInterfaces()) {
+                View item = interfaceItemView(tab, contract);
+                if (item != null) return item;
+            }
+        }
         for (Method method : tab.getClass().getMethods()) {
             if (method.getParameterTypes().length != 0
                     || !View.class.isAssignableFrom(method.getReturnType())) {
@@ -918,7 +946,15 @@ public final class PinterestUtils {
                         + "header: the hook fired at the right place but the header has changed");
                 return;
             }
-            MorpheViews.hidePersistently(button, MorpheLog.HEADER, what);
+            // The resource ID can belong to an icon inside a fixed-size button wrapper.
+            // Collapse the whole direct child of the header's horizontal container.
+            View container = findByName(root, HEADER_CONTAINER_ID);
+            View slot = button;
+            while (slot.getParent() instanceof View && slot.getParent() != container) {
+                slot = (View) slot.getParent();
+            }
+            if (slot.getParent() != container) slot = button;
+            MorpheViews.hideHorizontalSlot(slot, MorpheLog.HEADER, what);
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.HEADER, "could not hide " + what, t);
         }

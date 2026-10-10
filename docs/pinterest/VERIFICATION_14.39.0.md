@@ -1,6 +1,6 @@
 # Pinterest 14.39.0 — checklist completa delle patch
 
-Aggiornata il 2026-10-10. Include tutte le patch Pinterest già implementate e, in fondo, le richieste nuove. Le patch di Easy Sudoku non appartengono a questo collaudo.
+Aggiornata il 2026-10-11. Include tutte le patch Pinterest già implementate e, in fondo, le richieste nuove. Le patch di Easy Sudoku non appartengono a questo collaudo.
 
 Una casella si spunta solo dopo la verifica funzionale documentata per questo APK. Compilazione, applicazione, presenza di ancore e prove di versioni precedenti **non** verificano il comportamento sulla 14.39.0. Per ogni risultato aggiungere data, build/hash, procedura ed evidenza; una modifica ai sorgenti invalida le prove interessate e richiede regressione.
 
@@ -31,9 +31,9 @@ Una casella si spunta solo dopo la verifica funzionale documentata per questo AP
 | [ ] | Morphe settings screen (label) | Applicata | Da verificare | Voce Morphe corretta nelle lingue italiana e inglese; controllare risorse teen safety. |
 | [ ] | Morphe runtime names | Applicata | PASS toast nativo: fingerprint corretto a iz2.e; copia mostra feedback Pinterest senza ResourcesNotFound. | Log delle classi risolte; toast nativi e riga impostazioni funzionanti senza errori reflection. |
 | [ ] | Hide greeting header buttons | Applicata | VARIANTE ASSENTE: account con Crea/Notifiche nella navbar. Header privo di questi pulsanti; serve altra variante UI. | ON/OFF: Crea e Notifiche dell’header; feed e layout funzionanti. |
-| [x] | Hide Create nav button | Applicata | PASS ON/OFF + force-stop, screenshot navbar-on/off.png; resto della barra accessibile. | ON/OFF e riavvio: pulsante Crea nascosto/ripristinato; Home e Profilo raggiungibili. |
-| [x] | Hide Notifications nav button | Applicata | PASS ON/OFF + force-stop, nessuno spazio visivo residuo. | ON/OFF e riavvio: Notifiche nascoste/ripristinate; barra senza spazi residui. |
-| [x] | Hide Search nav button | Applicata | PASS ON/OFF + force-stop, Home e Profilo funzionanti. | ON/OFF e riavvio: Ricerca nascosta/ripristinata; navigazione restante funzionante. |
+| [x] | Hide Create nav button | Applicata | PASS finale 11/10: Crea da solo ON/OFF, 4 elementi equidistanti senza buco; dettagli e hash sotto. | ON/OFF e riavvio: pulsante Crea nascosto/ripristinato; Home e Profilo raggiungibili. |
+| [x] | Hide Notifications nav button | Applicata | PASS finale 11/10: Notifiche da sole ON/OFF, 4 elementi equidistanti senza buco; dettagli e hash sotto. | ON/OFF e riavvio: Notifiche nascoste/ripristinate; barra senza spazi residui. |
+| [x] | Hide Search nav button | Applicata | PASS finale 11/10: Ricerca da sola ON/OFF, 4 elementi equidistanti senza buco; Home/Profilo presenti, dettagli sotto. | ON/OFF e riavvio: Ricerca nascosta/ripristinata; navigazione restante funzionante. |
 | [ ] | Download pin from long press | Applicata | Da verificare | Pressione lunga su due pin diversi: icona corretta, download del pin scelto, file apribile. |
 | [ ] | Copy direct link | Applicata | PARZIALE: voce nativa aggiunta, pin identificato e menu chiuso. Toast nativo corretto e verificato; manca confronto appunti su due pin. | Due pin consecutivi: URL del pin giusto, appunti corretti, menu chiuso e toast visibile. |
 | [ ] | Set pin as wallpaper | Applicata | Da verificare | Immagine corretta e selettore sfondo; annullamento sicuro. Applicazione effettiva manuale. |
@@ -151,3 +151,16 @@ apertura a freddo delle impostazioni, caricamento preferenze e selettore italian
 Release: https://github.com/browzomje/browzomje-patches/releases/tag/v1.11.0-dev.1
 Workflow: https://github.com/browzomje/browzomje-patches/actions/runs/38038823117
 Policy del proprietario: lavoro e pre-release su dev; main dopo completamento del collaudo.
+
+## Build locale del 2026-10-11 — regressione UI e default
+
+APK 14.39.0 ricostruito dai sorgenti aggiornati (non coincide con l’asset pubblicato v1.11.0-dev.1): SHA-256 `b65a2c1b3d5bd3694c8ee2191b5f81805b65662f21433dc6fff7a3f4d64b4c35`. Build/lint riusciti, 31/31 patch applicate, firma verificata con lo stesso certificato Morphe; installazione `adb install -r` riuscita senza cancellare login o preferenze. Log locale `build_14.39.0_ui_oct11_final.log`.
+
+- [x] Default dei 19 toggle: 14 attivi, disattivi solo commenti, massima qualità e i tre pulsanti della navigazione. Verifica configurazione sorgente; preferenze già salvate preservate.
+- [x] Tutte le 61 stringhe Morphe hanno 14 traduzioni non mancanti, comprese le nuove descrizioni pubblicità/prodotti. Rendering delle due descrizioni verificato in italiano e arabo (`oct11-description-it.xml`, `oct11-description-ar.xml`).
+- [x] Scrollbar dell’editor sempre visibile senza gesto recente: screenshot `oct11-scrollbar-it.png` e `oct11-scrollbar-ar.png`, anche RTL. Selezioni esistenti preservate.
+- [ ] Variante header con Crea/Notifiche in alto: collasso del figlio diretto implementato, ma questo account usa i pulsanti nella barra inferiore; richiede prova manuale su quella variante.
+
+La precedente prova combinata dei tre pulsanti non copriva i buchi con un solo pulsante nascosto, segnalati dall’utente. La prima build dell’11 ottobre ha riprodotto il difetto su Ricerca; la correzione finale usa il View accessor del contratto del tab invece di un getter Gestalt della sola icona. Le prove specifiche della build finale sono riportate sotto e sostituiscono il precedente criterio generico “nessuno spazio residuo”. Le altre verifiche manuali della checklist restano aperte; non è autorizzata una release stabile finché non sono completate.
+
+- [x] Ricerca, Crea e Notifiche: ciascun toggle provato da solo ON/OFF con force-stop, sulla build finale. La barra passa da 5 a 4 elementi reali; gli elementi rimasti hanno centri x = 168/416/664/912, distanza uniforme 248 px. Nessun contenitore accessibile residuo per il tab nascosto. Ripristino: di nuovo 5 elementi, distanze 198–199 px. Evidenze `nav-oct11-hidden-0/1/2.xml` e `.png`, `nav-oct11-restored.xml`, `nav-oct11-bounds.json`; screenshot controllati e assert geometrici superati. I tre toggle sono stati lasciati OFF al termine.

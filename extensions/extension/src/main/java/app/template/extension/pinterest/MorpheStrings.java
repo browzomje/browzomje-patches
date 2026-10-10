@@ -25,6 +25,8 @@ final class MorpheStrings {
     static final String SECTION_BACKUP = "section_backup";
     static final String SECTION_DIAGNOSTICS = "section_diagnostics";
 
+    static final String ADS_DESCRIPTION = "ads_description";
+    static final String SHOPPING_PINS_DESCRIPTION = "shopping_pins_description";
     static final String ADS_TITLE = "ads_title";
     static final String SHOPPING_PINS_TITLE = "shopping_pins_title";
     static final String SEARCH_HISTORY_TITLE = "search_history_title";
@@ -102,6 +104,37 @@ final class MorpheStrings {
     private static final Map<String, String[]> TRANSLATIONS = new HashMap<>();
 
     static {
+        put(ADS_DESCRIPTION,
+            "Hides advertising Pins in feeds and related recommendations.",
+            "Nasconde i Pin pubblicitari nei feed e nei suggerimenti correlati.",
+            "Oculta los Pines publicitarios en los feeds y las recomendaciones relacionadas.",
+            "Masque les épingles publicitaires dans les fils et les recommandations associées.",
+            "Blendet Werbe-Pins in Feeds und ähnlichen Empfehlungen aus.",
+            "Oculta Pins publicitários nos feeds e nas recomendações relacionadas.",
+            "Скрывает рекламные пины в лентах и похожих рекомендациях.",
+            "フィードや関連するおすすめの広告ピンを非表示にします。",
+            "隐藏信息流和相关推荐中的广告 Pin。",
+            "피드와 관련 추천에서 광고 핀을 숨깁니다.",
+            "Ukrywa reklamowe piny w aktualnościach i powiązanych rekomendacjach.",
+            "Verbergt advertentiepins in feeds en gerelateerde aanbevelingen.",
+            "Akışlarda ve ilgili önerilerde reklam Pinlerini gizler.",
+            "يخفي الدبابيس الإعلانية في الخلاصات والتوصيات ذات الصلة.");
+
+        put(SHOPPING_PINS_DESCRIPTION,
+            "Hides shopping and sponsored product recommendations.",
+            "Nasconde i suggerimenti di acquisto e i prodotti sponsorizzati.",
+            "Oculta las recomendaciones de compra y los productos patrocinados.",
+            "Masque les suggestions d’achat et les produits sponsorisés.",
+            "Blendet Einkaufsempfehlungen und gesponserte Produkte aus.",
+            "Oculta recomendações de compras e produtos patrocinados.",
+            "Скрывает рекомендации покупок и спонсируемые товары.",
+            "ショッピングのおすすめやスポンサー商品を非表示にします。",
+            "隐藏购物推荐和赞助商品。",
+            "쇼핑 추천과 스폰서 제품을 숨깁니다.",
+            "Ukrywa rekomendacje zakupowe i produkty sponsorowane.",
+            "Verbergt winkelaanbevelingen en gesponsorde producten.",
+            "Alışveriş önerilerini ve sponsorlu ürünleri gizler.",
+            "يخفي توصيات التسوق والمنتجات الممولة.");
         put(IMAGE_INFO_TITLE,
             "Image information",
             "Informazioni immagine",

@@ -80,3 +80,13 @@ Pinterest, memorizzazione per nome risorsa indipendente dalla lingua, risoluzion
 al filtro e migrazione dei nomi noti del prototipo. Annulla non salva; Salva persiste la
 selezione. Il filtro attraversa anche i gruppi delle azioni See more/See less, escludendo
 interi sottoalberi di righe Morphe marcate. Collaudo corrente nella checklist.
+
+## Revisione UI del 2026-10-11
+
+L’editor delle voci del menu mantiene la scrollbar verticale visibile (`setScrollbarFadingEnabled(false)`, larghezza 4 dp, inset interno). La selezione esistente resta invariata.
+
+La ricerca del View accessor dei tab deve partire dal contratto dell’interfaccia: su 14.39 `x82.y0.i(): View` restituisce l’intero elemento. Scegliere il primo getter View della classe concreta può restituire solo l’icona Gestalt, lasciando il contenitore vuoto. Il fallback alle classi concrete resta per varianti precedenti. Per i contenitori orizzontali si azzerano larghezza, margini start/end e peso, oltre ad altezza e visibilità; un listener mantiene il collasso dopo i layout nativi. Nell’header si risale al figlio diretto di `home_feed_greeting_header_icon_container`, senza alterare la lista/model dei tab.
+
+Default: tutte le 19 opzioni booleane sono attive tranne commenti, massima qualità e i tre pulsanti di navigazione. Il filtro menu conserva la selezione vuota come default. Nessuna migrazione sovrascrive preferenze già salvate. Aggiunte descrizioni per pubblicità e prodotti: tutte le 61 stringhe Morphe hanno 14 traduzioni (en/it/es/fr/de/pt/ru/ja/zh/ko/pl/nl/tr/ar).
+
+La massima qualità intercetta la voce nativa `download_image` nel menu overflow del Pin, se disponibile, e usa la variante del modello `images` con `width` maggiore. DownloadManager scarica direttamente l’URL in `Download/Pinterest/Pins`; nessun ingrandimento, ricompressione o ricerca di un originale non esposto dal modello. Il download da una bacheca sceglie già la stessa variante; l’intercettazione non copre automaticamente ogni download dal foglio Condividi.

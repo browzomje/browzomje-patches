@@ -83,10 +83,10 @@ public final class MorpheSettingsActivity extends Activity {
         root.setBackgroundColor(Color.BLACK);
 
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_CONTENT), "ic_vr_sparkle_gestalt");
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.ADS_TITLE), null,
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.ADS_TITLE), MorpheStrings.get(MorpheStrings.ADS_DESCRIPTION),
                 MorpheSettingsStore.KEY_DISABLE_ADS,
                 MorpheSettingsStore.isAdsDisabled());
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.SHOPPING_PINS_TITLE), null,
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.SHOPPING_PINS_TITLE), MorpheStrings.get(MorpheStrings.SHOPPING_PINS_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_SHOPPING_PINS,
                 MorpheSettingsStore.isShoppingPinsHidden());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SEARCH_MODULES_TITLE),
@@ -431,6 +431,10 @@ public final class MorpheSettingsActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         ScrollView options = new ScrollView(this);
+        options.setVerticalScrollBarEnabled(true);
+        options.setScrollbarFadingEnabled(false);
+        options.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
+        options.setScrollBarSize(dp(4));
         options.addView(choices);
         card.addView(options, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,

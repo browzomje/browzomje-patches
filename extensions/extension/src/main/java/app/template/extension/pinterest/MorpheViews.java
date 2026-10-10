@@ -74,6 +74,39 @@ final class MorpheViews {
         }
     }
 
+    /** Collapse both dimensions, margins and weight of a horizontal navigation slot. */
+    static void hideHorizontalSlot(final View view, final String channel, final String what) {
+        hidePersistently(view, channel, what);
+        collapseHorizontalSlot(view);
+        final int key = 0x02000000 | ("morphe_horizontal_hidden".hashCode() & 0x00ffffff);
+        if (Boolean.TRUE.equals(view.getTag(key))) return;
+        view.setTag(key, Boolean.TRUE);
+        view.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) ->
+                collapseHorizontalSlot(v));
+    }
+
+    private static void collapseHorizontalSlot(View view) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) return;
+        boolean changed = params.width != 0;
+        params.width = 0;
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+            changed |= margins.leftMargin != 0 || margins.rightMargin != 0
+                    || margins.getMarginStart() != 0 || margins.getMarginEnd() != 0;
+            margins.leftMargin = margins.rightMargin = 0;
+            margins.setMarginStart(0);
+            margins.setMarginEnd(0);
+        }
+        if (params instanceof android.widget.LinearLayout.LayoutParams) {
+            android.widget.LinearLayout.LayoutParams linear =
+                    (android.widget.LinearLayout.LayoutParams) params;
+            changed |= linear.weight != 0;
+            linear.weight = 0;
+        }
+        if (changed) view.setLayoutParams(params);
+    }
+
     /** Rende di nuovo visibile una View precedentemente nascosta (toggle spento a runtime). */
     static void show(View view, int originalHeight) {
         if (view == null) {

@@ -135,6 +135,8 @@ public final class MorpheSettingsStore {
      */
     static boolean defaultOf(String key) {
         switch (key) {
+            case KEY_IMAGE_INFO:
+            case KEY_HIDE_SEARCH_HISTORY:
             case KEY_DISABLE_ADS:
             case KEY_HIDE_SHOPPING_PINS:
             case KEY_DISABLE_EMAIL_CONFIRM_DIALOG:
