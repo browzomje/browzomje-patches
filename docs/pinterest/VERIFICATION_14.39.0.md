@@ -83,7 +83,7 @@ Anche questi comportamenti vanno verificati separatamente: condividono una patch
 ## Release
 
 - [ ] Tutte le prove applicabili superate e manuali confermate: release completa.
-- [ ] Build e smoke test superati, verifiche manuali residue elencate: candidata pre-release dev.
+- [x] Build e smoke test superati, verifiche manuali residue elencate: candidata pre-release dev.
 
 Smoke test sul dispositivo riuscito; nessuna release pubblicata durante il collaudo. Regressione nei toast corretta e verificata; nuove feature implementate dopo lo smoke test. Nessun commento pubblicato sulle issue.
 
@@ -127,3 +127,5 @@ Le prove precedenti del campo testo sono storiche e non verificano questa nuova 
 - [x] Ripristino prova: filtro senza selezioni, lingua applicazione di sistema, opzioni info immagine/qualità massima OFF come default. Selettore italiano pronto sul telefono.
 
 Il tutorial Pinterest “Scarica immagine è stata spostata in Condividi” intercetta il primo tap sui tre puntini: attendere/chiudere il suggerimento e ripetere il tap prima di giudicare il menu. Le asserzioni di collaudo richiedono la presenza di Copia link diretto per assicurarsi che sia davvero aperto l’overflow.
+
+Candidata destinata a dev, non alla release completa. Le caselle aperte richiedono ancora conferma manuale; nessun risultato di applicazione viene contato come prova funzionale.
