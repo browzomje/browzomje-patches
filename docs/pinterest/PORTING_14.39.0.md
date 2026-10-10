@@ -90,3 +90,7 @@ La ricerca del View accessor dei tab deve partire dal contratto dell’interfacc
 Default: tutte le 19 opzioni booleane sono attive tranne commenti, massima qualità e i tre pulsanti di navigazione. Il filtro menu conserva la selezione vuota come default. Nessuna migrazione sovrascrive preferenze già salvate. Aggiunte descrizioni per pubblicità e prodotti: tutte le 61 stringhe Morphe hanno 14 traduzioni (en/it/es/fr/de/pt/ru/ja/zh/ko/pl/nl/tr/ar).
 
 La massima qualità intercetta la voce nativa `download_image` nel menu overflow del Pin, se disponibile, e usa la variante del modello `images` con `width` maggiore. DownloadManager scarica direttamente l’URL in `Download/Pinterest/Pins`; nessun ingrandimento, ricompressione o ricerca di un originale non esposto dal modello. Il download da una bacheca sceglie già la stessa variante; l’intercettazione non copre automaticamente ogni download dal foglio Condividi.
+
+### Versioni nella schermata Morphe
+
+In testa sono mostrate la versione dell’app installata (`PackageManager.versionName`) e quella del bundle applicato (`BuildConfig.PATCHES_VERSION`). L’extension genera il campo dal valore Gradle `version`, aggiornato da semantic-release prima della build di pubblicazione: non viene letto un tag remoto o il numero dell’ultima release, che potrebbero differire dal bundle installato. Etichette tradotte in tutte le 14 lingue, per un totale di 63 stringhe Morphe complete.

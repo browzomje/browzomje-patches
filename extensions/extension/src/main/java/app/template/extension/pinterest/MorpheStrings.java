@@ -17,6 +17,9 @@ import java.util.Map;
  */
 final class MorpheStrings {
 
+    static final String APP_VERSION_LABEL = "app_version_label";
+    static final String PATCHES_VERSION_LABEL = "patches_version_label";
+
     // ------------------------------------------------------------------ chiavi
 
     static final String SECTION_CONTENT = "section_content";
@@ -104,6 +107,37 @@ final class MorpheStrings {
     private static final Map<String, String[]> TRANSLATIONS = new HashMap<>();
 
     static {
+        put(APP_VERSION_LABEL,
+            "App version",
+            "Versione app",
+            "Versión de la app",
+            "Version de l’application",
+            "App-Version",
+            "Versão do app",
+            "Версия приложения",
+            "アプリのバージョン",
+            "应用版本",
+            "앱 버전",
+            "Wersja aplikacji",
+            "Appversie",
+            "Uygulama sürümü",
+            "إصدار التطبيق");
+
+        put(PATCHES_VERSION_LABEL,
+            "Patches version",
+            "Versione patch",
+            "Versión de los parches",
+            "Version des correctifs",
+            "Patch-Version",
+            "Versão dos patches",
+            "Версия патчей",
+            "パッチのバージョン",
+            "补丁版本",
+            "패치 버전",
+            "Wersja poprawek",
+            "Patchversie",
+            "Yama sürümü",
+            "إصدار التصحيحات");
         put(ADS_DESCRIPTION,
             "Hides advertising Pins in feeds and related recommendations.",
             "Nasconde i Pin pubblicitari nei feed e nei suggerimenti correlati.",

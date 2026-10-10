@@ -82,6 +82,15 @@ public final class MorpheSettingsActivity extends Activity {
         root.setPadding(pad, 0, pad, pad);
         root.setBackgroundColor(Color.BLACK);
 
+        try {
+            String appVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            addNote(root, MorpheStrings.get(MorpheStrings.APP_VERSION_LABEL) + ": " + appVersion
+                    + "\n" + MorpheStrings.get(MorpheStrings.PATCHES_VERSION_LABEL) + ": "
+                    + app.template.extension.BuildConfig.PATCHES_VERSION);
+        } catch (android.content.pm.PackageManager.NameNotFoundException impossible) {
+            MorpheLog.w(MorpheLog.SETTINGS_ENTRY, "could not read installed app version", impossible);
+        }
+
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_CONTENT), "ic_vr_sparkle_gestalt");
         addToggleRow(root, MorpheStrings.get(MorpheStrings.ADS_TITLE), MorpheStrings.get(MorpheStrings.ADS_DESCRIPTION),
                 MorpheSettingsStore.KEY_DISABLE_ADS,
