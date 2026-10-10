@@ -129,3 +129,25 @@ Le prove precedenti del campo testo sono storiche e non verificano questa nuova 
 Il tutorial Pinterest “Scarica immagine è stata spostata in Condividi” intercetta il primo tap sui tre puntini: attendere/chiudere il suggerimento e ripetere il tap prima di giudicare il menu. Le asserzioni di collaudo richiedono la presenza di Copia link diretto per assicurarsi che sia davvero aperto l’overflow.
 
 Candidata destinata a dev, non alla release completa. Le caselle aperte richiedono ancora conferma manuale; nessun risultato di applicazione viene contato come prova funzionale.
+
+## Artefatto pubblicato — v1.11.0-dev.1
+
+Pre-release pubblicata da semantic-release su dev; workflow `38038823117` concluso
+con successo, inclusa verifica delle note e attestazione. Nessun aggiornamento di main.
+Corretto preset conventionalcommits 10 incompatibile con writer 8: ripristinato 9.3.1,
+lock aggiornato, verifica reale feat/fix/bump nella pipeline e guard Dependabot per major.
+
+Bundle pubblico SHA256 `676d6c18c3ff3d32e801da331e2f001278de4450440e78cc3840e826f9d11a2d`,
+confrontato con digest dell’asset GitHub. Applicazione dell’asset scaricato all’originale
+14.39: **31/31**, rebuild/firma riusciti senza force, report locale
+`patch_result_release_1.11.0-dev.1.json`. APK risultante SHA256
+`982c149d19db39cb39b37f4e4b471b64d5a47c419ce4528b6364a2134122aa66`,
+firma v3 valida, stesso certificato dei collaudi precedenti; installato senza perdere login.
+Questo è ora `pinterest/pinterest_patched.apk` e la build sul telefono per il collaudo manuale.
+Le prove più estese sopra riguardano le candidate locali indicate; il bundle pubblico
+contiene lo stesso codice funzionale e metadata di release aggiornati. Smoke test corrente:
+apertura a freddo delle impostazioni, caricamento preferenze e selettore italiano.
+
+Release: https://github.com/browzomje/browzomje-patches/releases/tag/v1.11.0-dev.1
+Workflow: https://github.com/browzomje/browzomje-patches/actions/runs/38038823117
+Policy del proprietario: lavoro e pre-release su dev; main dopo completamento del collaudo.
