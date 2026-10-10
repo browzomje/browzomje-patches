@@ -1,3 +1,16 @@
+## [1.11.0](https://github.com/browzomje/browzomje-patches/compare/v1.10.0...v1.11.0) (2026-10-10)
+
+### 🐛 Bug Fixes
+
+* **ci:** keep release notes preset compatible with writer 8 ([fb26297](https://github.com/browzomje/browzomje-patches/commit/fb26297c26e606d098824deecec2d45ce6e47702))
+* **Pinterest:** collapse hidden navigation tabs and clarify settings ([bae0451](https://github.com/browzomje/browzomje-patches/commit/bae0451c663f9a4df245c4b9319abef6f6343580))
+* **Pinterest:** port navigation patches to 14.39.0 and track verification ([166c974](https://github.com/browzomje/browzomje-patches/commit/166c974af77056fd741c3f6313e404c53845a5f5))
+
+### ✨ New Features
+
+* **Pinterest:** add localized pin menu controls and image tools ([432b535](https://github.com/browzomje/browzomje-patches/commit/432b535dd31e632ab197508a6c38649c0263225b))
+* **Pinterest:** display installed app and applied patch versions ([102146a](https://github.com/browzomje/browzomje-patches/commit/102146a76bf2d7e42047d022a8663efee63f880d))
+
 ## [1.11.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.11.0-dev.1...v1.11.0-dev.2) (2026-10-10)
 
 ### 🐛 Bug Fixes
