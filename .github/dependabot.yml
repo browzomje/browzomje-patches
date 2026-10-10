@@ -11,6 +11,11 @@ updates:
     labels: []
     directory: /
     target-branch: dev
+    # Preset 10 requires writer 9; release-notes-generator 14 still loads writer 8.
+    # Upgrade them together when the semantic-release stack supports writer 9.
+    ignore:
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types: ["version-update:semver-major"]
     schedule:
       interval: weekly
 
