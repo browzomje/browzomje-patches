@@ -118,3 +118,16 @@ internal object PinActionBarConstructorFingerprint : Fingerprint(
     definingClass = "Lcom/pinterest/feature/pin/closeup/view/UnifiedPinActionBarView;",
     name = "<init>",
 )
+
+/** Standalone comments action used by the newer social action bar. */
+internal object StandaloneCommentsActionFingerprint : Fingerprint(
+    name = "<init>",
+    parameters = listOf("Landroid/content/Context;"),
+    custom = { method, classDef ->
+        classDef.fields.any { it.type == "Lcom/pinterest/gestalt/iconcomponent/GestaltIcon;" } &&
+            method.implementation?.instructions?.any { instruction ->
+                val field = (instruction as? ReferenceInstruction)?.reference as? FieldReference
+                field?.name == "action_module_comments_icon" && field.type == "I"
+            } == true
+    },
+)

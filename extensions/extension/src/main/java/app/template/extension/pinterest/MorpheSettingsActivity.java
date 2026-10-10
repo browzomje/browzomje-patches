@@ -135,6 +135,19 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheSettingsStore.KEY_BOARD_DOWNLOAD,
                 MorpheSettingsStore.isBoardDownloadEnabled());
 
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIGH_QUALITY_TITLE),
+                MorpheStrings.get(MorpheStrings.HIGH_QUALITY_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIGH_QUALITY_IMAGES,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIGH_QUALITY_IMAGES));
+
+        addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_PIN_MENU),
+                "ic_vr_ellipsis_gestalt");
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.IMAGE_INFO_TITLE),
+                MorpheStrings.get(MorpheStrings.IMAGE_INFO_DESCRIPTION),
+                MorpheSettingsStore.KEY_IMAGE_INFO,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_IMAGE_INFO));
+        addMenuFilterRow(root);
+
         // Home e Profilo non compaiono qui: vedi MorpheSettingsStore.isNavTabHidden. Nasconderli
         // renderebbe irraggiungibile questa stessa schermata.
         // Ogni riga porta l'icona del tasto che nasconde: dal nome non è ovvio quale sia, e da
@@ -335,6 +348,126 @@ public final class MorpheSettingsActivity extends Activity {
             MorpheLog.w(MorpheLog.SETTINGS_ENTRY, "icon " + name + " could not be loaded", t);
         }
         return null;
+    }
+
+    private void addMenuFilterRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(14), 0, dp(14));
+        row.setClickable(true);
+        row.setFocusable(true);
+        LinearLayout labels = new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        TextView title = menuText(MorpheStrings.get(MorpheStrings.MENU_FILTER_TITLE), 16,
+                TEXT_PRIMARY, false);
+        labels.addView(title);
+        TextView description = menuText(MorpheStrings.get(MorpheStrings.MENU_FILTER_HINT), 12,
+                TEXT_SECONDARY, false);
+        description.setPadding(0, dp(4), dp(12), 0);
+        labels.addView(description);
+        row.addView(labels, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView arrow = menuText("›", 26, TEXT_SECONDARY, false);
+        arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(arrow);
+        row.setBackground(new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(DIVIDER), null, null));
+        row.setOnClickListener(v -> showMenuFilterEditor());
+        parent.addView(row);
+        View divider = new View(this);
+        divider.setBackgroundColor(DIVIDER);
+        parent.addView(divider, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+    }
+
+    private TextView menuText(String text, int size, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(size);
+        view.setTextColor(color);
+        view.setTypeface(bold ? (fontBold != null ? fontBold : Typeface.DEFAULT_BOLD)
+                : (fontRegular != null ? fontRegular : Typeface.DEFAULT));
+        return view;
+    }
+
+    private void showMenuFilterEditor() {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(24), dp(24), dp(24), dp(24));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xFF1A1A1A);
+        background.setCornerRadii(new float[] { dp(24), dp(24), dp(24), dp(24), 0, 0, 0, 0 });
+        card.setBackground(background);
+        TextView title = menuText(MorpheStrings.get(MorpheStrings.MENU_FILTER_TITLE), 22,
+                TEXT_PRIMARY, true);
+        card.addView(title);
+        TextView description = menuText(MorpheStrings.get(MorpheStrings.MENU_FILTER_DESCRIPTION),
+                14, TEXT_SECONDARY, false);
+        description.setPadding(0, dp(12), 0, dp(20));
+        description.setLineSpacing(dp(2), 1f);
+        card.addView(description);
+        java.util.Set<String> selected = PinMenuFilter.selected(this);
+        LinearLayout choices = new LinearLayout(this);
+        choices.setOrientation(LinearLayout.VERTICAL);
+        for (String action : PinMenuFilter.ACTIONS) {
+            String label = PinMenuFilter.label(this, action);
+            if (label == null) continue;
+            android.widget.CheckBox choice = new android.widget.CheckBox(this);
+            choice.setText(label);
+            choice.setTextSize(16);
+            choice.setTextColor(TEXT_PRIMARY);
+            choice.setTypeface(fontRegular != null ? fontRegular : Typeface.DEFAULT);
+            choice.setButtonTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+            choice.setPadding(dp(8), dp(10), dp(8), dp(10));
+            choice.setMinHeight(dp(52));
+            choice.setChecked(selected.contains(action));
+            choice.setOnCheckedChangeListener((button, checked) -> {
+                if (checked) selected.add(action); else selected.remove(action);
+            });
+            choices.addView(choice, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        ScrollView options = new ScrollView(this);
+        options.addView(choices);
+        card.addView(options, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Math.min(dp(360), getResources().getDisplayMetrics().heightPixels / 3)));
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END);
+        actions.setPadding(0, dp(20), 0, 0);
+        Button cancel = newButton(MorpheStrings.get(MorpheStrings.BUTTON_CANCEL));
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        actions.addView(cancel);
+        Button save = newButton(MorpheStrings.get(MorpheStrings.BUTTON_SAVE));
+        GradientDrawable saveBackground = new GradientDrawable();
+        saveBackground.setColor(TEXT_PRIMARY);
+        saveBackground.setCornerRadius(dp(24));
+        save.setBackground(saveBackground);
+        save.setTextColor(Color.BLACK);
+        save.setOnClickListener(v -> {
+            MorpheSettingsStore.setMenuFilter(PinMenuFilter.encode(selected));
+            dialog.dismiss();
+        });
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        saveParams.setMarginStart(dp(12));
+        actions.addView(save, saveParams);
+        card.addView(actions);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(card);
+        dialog.setContentView(scroll);
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setGravity(Gravity.BOTTOM);
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+        dialog.show();
+        if (window != null) window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /** Testo esplicativo che non appartiene a nessun toggle in particolare. */

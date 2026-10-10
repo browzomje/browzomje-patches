@@ -38,10 +38,45 @@ stato letto direttamente il dex, non dedotto il risultato dal Java decompilato.
 - 28/28 patch applicate su 14.39, APK prodotto e firma v3 verificata.
 - Metadata 14.39 aggiunto; build finale applicata senza force.
 - Controprova 14.34 con la correzione navbar: 28/28 e APK prodotto.
-- Nessuna prova funzionale: il telefono non ha ancora autorizzato adb.
+- Xiaomi 11T Pro / Android 14: installazione e login riusciti; impostazioni e navbar ON/OFF verificati. Collaudo completo in corso.
 - Nessuna release stabile/pre-release pubblicata, nessun commento alle issue.
 
 La [checklist completa](VERIFICATION_14.39.0.md) distingue applicazione e runtime,
-include tutte le patch già presenti, subopzioni e regressioni. #41 resta da
-riprodurre. #42, #44 e #45 sono state valutate, ma le feature nuove restano
+include tutte le patch già presenti, subopzioni e regressioni. #41 non si
+riproduce al tap sul dispositivo attuale; Sony Android 15 resta da verificare. #42, #44 e #45 sono state valutate, ma le feature nuove restano
 subordinate al collaudo del porting richiesto dall’utente.
+
+## Regressioni trovate dal collaudo
+
+Il fingerprint toast `(String,int)` selezionava `yt.u4`, un modello in cui int
+è una risorsa stringa, causando ResourcesNotFound per 5000. Ora si richiede nel
+builder la scrittura IPUT del campo intero di `gestalt.toast.c`: due candidati
+`iz2.e/d`, scelta la base `iz2.e`. Verificato toast nativo dopo copia sul device.
+
+La variante social action bar costruisce un pulsante commenti `eb1.i` a sé,
+con `action_module_comments_icon`, fuori da UnifiedPinActionBarView. Agganciato
+il costruttore dopo super per nome del campo risorsa e presenza GestaltIcon;
+HideComments cerca sia wrapper storico sia icon della variante nuova.
+
+Stile menu: il primo TextView può essere intestazione/preview, non una voce
+azione. Copiare solo una RelativeLayout cliccabile e visibile evita il font
+più piccolo/sottile nelle righe Morphe. Si copiano anche spaziatura e proprietà
+font variabile (API26 guardata), oltre a dimensione, typeface e colori.
+
+Traduzioni: rivisti backup, diagnostica, cronologia e download prolungato in
+EN + tutte le 13 lingue delle impostazioni. Il backup spiega disinstallazione/
+cancellazione dati, non un generico aggiornamento. Corretto imperativo olandese
+“Directe link kopiëren”, completati feedback download polacchi e distinti
+messaggi di download malese/indonesiano e ceco/slovacco.
+
+## Nuove opzioni e interfaccia — 2026-10-10
+
+31 patch applicate e APK installato: informazioni immagine dal modello del pin corrente, download nativo collegato alla variante di maggiore width disponibile, filtro di sole righe native per etichette localizzate esatte. Le righe Morphe sono marcate e escluse dal filtro. Nessuna riscrittura arbitraria degli URL e nessuna dimensione file inventata.
+
+Filtro impostazioni: sezione Menu dei Pin, riga coerente con i toggle, editor inferiore arrotondato con PinSans, campo multilinea e Annulla/Salva. Prova visiva con tastiera e senza; tutte le nuove etichette presenti in 14 lingue. Backup conserva anche la lista filtro e valida il payload prima di modificare preferenze. Stato del collaudo completo nella checklist.
+
+La revisione finale elimina il campo testo: checkbox con etichette delle risorse native
+Pinterest, memorizzazione per nome risorsa indipendente dalla lingua, risoluzione locale
+al filtro e migrazione dei nomi noti del prototipo. Annulla non salva; Salva persiste la
+selezione. Il filtro attraversa anche i gruppi delle azioni See more/See less, escludendo
+interi sottoalberi di righe Morphe marcate. Collaudo corrente nella checklist.

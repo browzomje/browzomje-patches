@@ -28,6 +28,8 @@ public final class MorpheSettingsStore {
     public static final String KEY_SHARE_LINK_ONLY = "share_link_only";
     public static final String KEY_EXTERNAL_BROWSER = "external_browser";
     public static final String KEY_SYSTEM_SHARE_SHEET = "system_share_sheet";
+    public static final String KEY_IMAGE_INFO = "image_info";
+    public static final String KEY_HIGH_QUALITY_IMAGES = "high_quality_images";
     public static final String KEY_HIDE_COMMENTS = "hide_comments";
 
     /**
@@ -51,11 +53,25 @@ public final class MorpheSettingsStore {
         KEY_DISABLE_EMAIL_CONFIRM_DIALOG,
         KEY_BOARD_DOWNLOAD,
         KEY_LONG_PRESS_DOWNLOAD,
+        KEY_IMAGE_INFO,
+        KEY_HIGH_QUALITY_IMAGES,
         KEY_HIDE_SEARCH_BUTTON,
         KEY_HIDE_CREATE_BUTTON,
         KEY_HIDE_NOTIFICATIONS_BUTTON,
         KEY_VERBOSE_LOGGING,
     };
+
+    static final String KEY_MENU_FILTER = "hidden_pin_menu_actions";
+
+    static String menuFilter() {
+        SharedPreferences sp = prefs();
+        return sp == null ? "" : sp.getString(KEY_MENU_FILTER, "");
+    }
+
+    static void setMenuFilter(String value) {
+        SharedPreferences sp = prefs();
+        if (sp != null) sp.edit().putString(KEY_MENU_FILTER, value).apply();
+    }
 
     private MorpheSettingsStore() {}
 

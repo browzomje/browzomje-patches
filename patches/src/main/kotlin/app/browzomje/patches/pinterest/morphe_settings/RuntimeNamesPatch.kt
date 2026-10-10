@@ -7,6 +7,9 @@ import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.inputRegisterCount
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 private const val PATCH_NAME = "Morphe runtime names"
 private const val RUNTIME_NAMES_CLASS = "Lapp/browzomje/extension/pinterest/MorpheRuntimeNames;"
@@ -44,8 +47,15 @@ internal object ApplicationOnCreateFingerprint : Fingerprint(
 internal object TextToastModelFingerprint : Fingerprint(
     returnType = BASE_TOAST,
     parameters = listOf(TOAST_CONTAINER),
-    custom = { _, classDef ->
-        classDef.methods.any { method ->
+    custom = { method, classDef ->
+        // (String, int) also matches a navigation toast whose int is a string resource.
+        // The text model writes its duration into the native Gestalt toast builder.
+        val writesDuration = method.implementation?.instructions?.any { instruction ->
+            val field = (instruction as? ReferenceInstruction)?.reference as? FieldReference
+            instruction.opcode == Opcode.IPUT &&
+                field?.definingClass == "Lcom/pinterest/gestalt/toast/c;" && field.type == "I"
+        } == true
+        writesDuration && classDef.methods.any { method ->
             method.name == "<init>" &&
                 method.parameters.size == 2 &&
                 method.parameters[0].type == "Ljava/lang/String;" &&

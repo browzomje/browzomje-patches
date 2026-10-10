@@ -16,8 +16,8 @@ import java.util.Locale;
 /**
  * Esportazione e importazione delle impostazioni Morphe come file JSON.
  *
- * <p>Serve a non dover rimettere a mano tutti gli interruttori dopo ogni ripatch: l'APK patchato
- * si reinstalla da capo a ogni nuova build, e con esso se ne vanno le SharedPreferences.
+ * <p>Permette di ripristinare le impostazioni dopo disinstallazione o cancellazione dei dati.
+ * Un aggiornamento con la stessa firma conserva normalmente le SharedPreferences.
  *
  * <p>Il formato è leggibile e modificabile a mano di proposito — è un file di configurazione, non
  * un dump binario:
@@ -65,6 +65,8 @@ final class MorpheSettingsBackup {
             settings.put(key, MorpheSettingsStore.effective(key));
         }
 
+        settings.put(MorpheSettingsStore.KEY_MENU_FILTER, MorpheSettingsStore.menuFilter());
+
         JSONObject header = new JSONObject();
         header.put("format", FORMAT);
         header.put("exported_at",
@@ -95,18 +97,23 @@ final class MorpheSettingsBackup {
                     + "this is not a Morphe settings file");
         }
 
-        int applied = 0;
+        // Validate the entire known payload before changing any preference.
+        java.util.Map<String, Boolean> values = new java.util.LinkedHashMap<>();
         for (String key : MorpheSettingsStore.KEYS) {
-            if (!settings.has(key)) {
-                continue;
-            }
-            MorpheSettingsStore.set(key, settings.getBoolean(key));
-            applied++;
+            if (settings.has(key)) values.put(key, settings.getBoolean(key));
         }
-
-        if (applied == 0) {
-            throw new JSONException("no known setting in the file");
+        String filter = null;
+        if (settings.has(MorpheSettingsStore.KEY_MENU_FILTER)) {
+            Object value = settings.get(MorpheSettingsStore.KEY_MENU_FILTER);
+            if (!(value instanceof String)) throw new JSONException("menu filter must be text");
+            filter = (String) value;
         }
+        int applied = values.size() + (filter == null ? 0 : 1);
+        if (applied == 0) throw new JSONException("no known setting in the file");
+        for (java.util.Map.Entry<String, Boolean> value : values.entrySet()) {
+            MorpheSettingsStore.set(value.getKey(), value.getValue());
+        }
+        if (filter != null) MorpheSettingsStore.setMenuFilter(filter);
         MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "imported " + applied + " settings out of "
                 + MorpheSettingsStore.KEYS.length);
         return applied;

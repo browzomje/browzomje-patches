@@ -93,6 +93,14 @@ val hideCommentsPatch = bytecodePatch(
             }
         }
 
+        StandaloneCommentsActionFingerprint.matchAllOrNull().orEmpty().forEach { match ->
+            match.method.addInstructionsAfterSuperConstructor(
+                "invoke-static/range { p0 .. p0 }, " +
+                    "$EXTENSION_CLASS->hideCommentsActionButton(Ljava/lang/Object;)V",
+            )
+            PatchLog.hooked(PATCH_NAME, match.method, "standalone comments action, after super()")
+        }
+
         // ------------------------------------------------ il fumetto nella barra azioni
         //
         // Ci si aggancia **subito dopo la chiamata al costruttore della superclasse**, e non prima

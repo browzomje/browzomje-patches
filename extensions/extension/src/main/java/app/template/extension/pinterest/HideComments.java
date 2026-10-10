@@ -132,6 +132,10 @@ public final class HideComments {
                 View button = MorpheViews.findDescendantByIdName(
                         bar, ACTION_BAR_COMMENTS_ID, MorpheLog.COMMENTS);
                 if (button == null) {
+                    button = MorpheViews.findDescendantByIdName(
+                            bar, "action_module_comments_icon", MorpheLog.COMMENTS);
+                }
+                if (button == null) {
                     MorpheLog.w(MorpheLog.COMMENTS, "@id/" + ACTION_BAR_COMMENTS_ID
                             + " is not in this action bar: nothing to hide here");
                     return;

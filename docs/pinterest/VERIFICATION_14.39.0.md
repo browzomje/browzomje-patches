@@ -1,6 +1,6 @@
 # Pinterest 14.39.0 — checklist completa delle patch
 
-Aggiornata il 2026-10-09. Include tutte le patch Pinterest già implementate e, in fondo, le richieste nuove. Le patch di Easy Sudoku non appartengono a questo collaudo.
+Aggiornata il 2026-10-10. Include tutte le patch Pinterest già implementate e, in fondo, le richieste nuove. Le patch di Easy Sudoku non appartengono a questo collaudo.
 
 Una casella si spunta solo dopo la verifica funzionale documentata per questo APK. Compilazione, applicazione, presenza di ancore e prove di versioni precedenti **non** verificano il comportamento sulla 14.39.0. Per ogni risultato aggiungere data, build/hash, procedura ed evidenza; una modifica ai sorgenti invalida le prove interessate e richiede regressione.
 
@@ -10,44 +10,44 @@ Una casella si spunta solo dopo la verifica funzionale documentata per questo AP
 - [x] Controllo iniziale: 58/59, persa la vecchia navbar; dopo aggiornamento dell’ancora al nuovo nome: 59/59.
 - [x] Toolchain recuperato: plugin 1.3.2 e patcher 1.5.2 compilati da tag upstream, SDK 36 locale, CLI ufficiale 1.9.1.
 - [x] Compilazione finale dopo correzione navbar: build/lint riusciti; unit test NO-SOURCE.
-- [x] Applicazione: 28/28 patch, APK ricomposto e firmato, build finale senza `--force`.
-- [ ] Installazione: tentata, bloccata da `adb: device unauthorized`.
-- [ ] Prova funzionale completa: nessuna eseguita; necessario accettare debug USB sul telefono.
+- [x] Applicazione: 31/31 patch, APK ricomposto e firmato, build finale senza `--force`.
+- [x] Installazione e login: Xiaomi 11T Pro, Android 14. Reinstallazione autorizzata per cambio firma; connessione USB risolta.
+- [ ] Prova funzionale completa: in corso; risultati sotto. Smoke test di avvio e feed riuscito.
 - [x] Firma APK v3 valida; manifest, package/versione e iniezioni navbar controllati.
-- [x] Controprova di applicazione 14.34.0: 28/28, APK prodotto con la correzione navbar prima dell’aggiunta del metadata finale 14.39.
+- [x] Controprova di applicazione 14.34.0: 31/31; versione precedente alla sola revisione grafica dell’editor.
 
 ## Tutte le patch esistenti
 
 | Verificata | Patch | Applicazione 14.39.0 | Prova dispositivo | Procedura / criterio |
 |---|---|---|---|---|
-| [ ] | Disable ads | Applicata | Bloccata: adb unauthorized | Feed, ricerca, pin correlati e bacheca: nessun promosso; scroll infinito anche su pagine filtrate. Toggle OFF ripristina il comportamento nativo. |
-| [ ] | Disable email confirmation dialog | Applicata | Bloccata: adb unauthorized | Account che mostra il prompt: ON chiude, OFF preserva; login e account funzionanti. |
-| [ ] | Hide ad views | Applicata | Bloccata: adb unauthorized | Pin promosso e schede Shop now: nessuna view o spazio residuo; nessun crash nel closeup. |
-| [ ] | Download board | Applicata | Bloccata: adb unauthorized | Bacheca multipagina: tutti i media, duplicati, annullamento, errori rete e file apribili. |
-| [ ] | Open links in the default browser | Applicata | Bloccata: adb unauthorized | Visita sito, link descrizione e CCT aprono il browser; toggle OFF ripristina Pinterest. |
-| [ ] | Hide comments | Applicata | Bloccata: adb unauthorized | Anteprima, modulo completo e fumetto nascosti con ON; presenti con OFF; apertura pin sana. |
-| [ ] | Morphe settings entry | Applicata | Bloccata: adb unauthorized | Profilo → Impostazioni → Morphe apre la schermata al tap (#41); ripetere dopo riavvio. |
-| [ ] | Morphe settings screen (manifest) | Applicata | Bloccata: adb unauthorized | Apertura esplicita e morphe://settings; back torna a Pinterest; nessun crash. |
-| [ ] | Morphe settings screen (label) | Applicata | Bloccata: adb unauthorized | Voce Morphe corretta nelle lingue italiana e inglese; controllare risorse teen safety. |
-| [ ] | Morphe runtime names | Applicata | Bloccata: adb unauthorized | Log delle classi risolte; toast nativi e riga impostazioni funzionanti senza errori reflection. |
-| [ ] | Hide greeting header buttons | Applicata | Bloccata: adb unauthorized | ON/OFF: Crea e Notifiche dell’header; feed e layout funzionanti. |
-| [ ] | Hide Create nav button | Applicata | Bloccata: adb unauthorized | ON/OFF e riavvio: pulsante Crea nascosto/ripristinato; Home e Profilo raggiungibili. |
-| [ ] | Hide Notifications nav button | Applicata | Bloccata: adb unauthorized | ON/OFF e riavvio: Notifiche nascoste/ripristinate; barra senza spazi residui. |
-| [ ] | Hide Search nav button | Applicata | Bloccata: adb unauthorized | ON/OFF e riavvio: Ricerca nascosta/ripristinata; navigazione restante funzionante. |
-| [ ] | Download pin from long press | Applicata | Bloccata: adb unauthorized | Pressione lunga su due pin diversi: icona corretta, download del pin scelto, file apribile. |
-| [ ] | Copy direct link | Applicata | Bloccata: adb unauthorized | Due pin consecutivi: URL del pin giusto, appunti corretti, menu chiuso e toast visibile. |
-| [ ] | Set pin as wallpaper | Applicata | Bloccata: adb unauthorized | Immagine corretta e selettore sfondo; annullamento sicuro. Applicazione effettiva manuale. |
-| [ ] | Sanitize shared links | Applicata | Bloccata: adb unauthorized | Condivisione pin/bacheca/profilo: rimuove tracking preservando destinazione e testo. |
-| [ ] | Sanitize copied links | Applicata | Bloccata: adb unauthorized | Copia URL lungo e pin.it: tracking rimosso, destinazione corretta; testo normale intatto. |
-| [ ] | Neutralize advertising ID | Applicata | Bloccata: adb unauthorized | Ispezione bytecode patchato e prova runtime del valore ID; non basta assenza di pubblicità. |
-| [ ] | Disable AppsFlyer tracking | Applicata | Bloccata: adb unauthorized | Ispezione hook init/start/isStopped e prova runtime/log o rete; avvio app sano. |
-| [ ] | Disable Google Engage worker | Applicata | Bloccata: adb unauthorized | Ispezione worker patchato, esecuzione/risultato neutro e assenza crash. |
-| [ ] | Disable Google Engage | Applicata | Bloccata: adb unauthorized | Manifest patchato senza componenti Engage; avvio, receiver e job residui. |
-| [ ] | Disable third-party trackers | Applicata | Bloccata: adb unauthorized | Manifest e impostazioni SDK effettive; prova rete separata dall’assenza di crash. |
-| [ ] | Hide screenshot share menu | Applicata | Bloccata: adb unauthorized | Screenshot nel closeup: niente upsell con ON; comportamento nativo con OFF. |
-| [ ] | Hide search history | Applicata | Bloccata: adb unauthorized | Ricerche recenti assenti con toggle ON, presenti con OFF; suggerimenti e ricerca funzionano. |
-| [ ] | Use the system share sheet | Applicata | Bloccata: adb unauthorized | Pin/bacheca/profilo: foglio Android, URL corretto, annullamento e toggle OFF. |
-| [ ] | Download video | Applicata | Bloccata: adb unauthorized | Pin video: URL e download valido; verificare anche yt-dlp e assenza voce su immagine. |
+| [ ] | Disable ads | Applicata | PARZIALE: feed e correlati caricano; log rimuove is_promoted (5 pin ultima sessione). Manca controllo OFF e tutte le superfici. | Feed, ricerca, pin correlati e bacheca: nessun promosso; scroll infinito anche su pagine filtrate. Toggle OFF ripristina il comportamento nativo. |
+| [ ] | Disable email confirmation dialog | Applicata | Da verificare | Account che mostra il prompt: ON chiude, OFF preserva; login e account funzionanti. |
+| [ ] | Hide ad views | Applicata | Da verificare | Pin promosso e schede Shop now: nessuna view o spazio residuo; nessun crash nel closeup. |
+| [ ] | Download board | Applicata | Da verificare | Bacheca multipagina: tutti i media, duplicati, annullamento, errori rete e file apribili. |
+| [ ] | Open links in the default browser | Applicata | Da verificare | Visita sito, link descrizione e CCT aprono il browser; toggle OFF ripristina Pinterest. |
+| [ ] | Hide comments | Applicata | PARZIALE: fumetto standalone ON/OFF verificato; moduli di commenti non vuoti restano manuali. | Anteprima, modulo completo e fumetto nascosti con ON; presenti con OFF; apertura pin sana. |
+| [x] | Morphe settings entry | Applicata | PASS: tap reale Profilo → Impostazioni → Morphe; XML settings-via-row.xml. #41 non riprodotta su questo dispositivo. | Profilo → Impostazioni → Morphe apre la schermata al tap (#41); ripetere dopo riavvio. |
+| [x] | Morphe settings screen (manifest) | Applicata | PASS: apertura esplicita e morphe://settings, riavvio e persistenza toggle; ritorno al feed. | Apertura esplicita e morphe://settings; back torna a Pinterest; nessun crash. |
+| [ ] | Morphe settings screen (label) | Applicata | Da verificare | Voce Morphe corretta nelle lingue italiana e inglese; controllare risorse teen safety. |
+| [ ] | Morphe runtime names | Applicata | PASS toast nativo: fingerprint corretto a iz2.e; copia mostra feedback Pinterest senza ResourcesNotFound. | Log delle classi risolte; toast nativi e riga impostazioni funzionanti senza errori reflection. |
+| [ ] | Hide greeting header buttons | Applicata | VARIANTE ASSENTE: account con Crea/Notifiche nella navbar. Header privo di questi pulsanti; serve altra variante UI. | ON/OFF: Crea e Notifiche dell’header; feed e layout funzionanti. |
+| [x] | Hide Create nav button | Applicata | PASS ON/OFF + force-stop, screenshot navbar-on/off.png; resto della barra accessibile. | ON/OFF e riavvio: pulsante Crea nascosto/ripristinato; Home e Profilo raggiungibili. |
+| [x] | Hide Notifications nav button | Applicata | PASS ON/OFF + force-stop, nessuno spazio visivo residuo. | ON/OFF e riavvio: Notifiche nascoste/ripristinate; barra senza spazi residui. |
+| [x] | Hide Search nav button | Applicata | PASS ON/OFF + force-stop, Home e Profilo funzionanti. | ON/OFF e riavvio: Ricerca nascosta/ripristinata; navigazione restante funzionante. |
+| [ ] | Download pin from long press | Applicata | Da verificare | Pressione lunga su due pin diversi: icona corretta, download del pin scelto, file apribile. |
+| [ ] | Copy direct link | Applicata | PARZIALE: voce nativa aggiunta, pin identificato e menu chiuso. Toast nativo corretto e verificato; manca confronto appunti su due pin. | Due pin consecutivi: URL del pin giusto, appunti corretti, menu chiuso e toast visibile. |
+| [ ] | Set pin as wallpaper | Applicata | Da verificare | Immagine corretta e selettore sfondo; annullamento sicuro. Applicazione effettiva manuale. |
+| [ ] | Sanitize shared links | Applicata | Da verificare | Condivisione pin/bacheca/profilo: rimuove tracking preservando destinazione e testo. |
+| [ ] | Sanitize copied links | Applicata | Da verificare | Copia URL lungo e pin.it: tracking rimosso, destinazione corretta; testo normale intatto. |
+| [ ] | Neutralize advertising ID | Applicata | Da verificare | Ispezione bytecode patchato e prova runtime del valore ID; non basta assenza di pubblicità. |
+| [ ] | Disable AppsFlyer tracking | Applicata | Da verificare | Ispezione hook init/start/isStopped e prova runtime/log o rete; avvio app sano. |
+| [ ] | Disable Google Engage worker | Applicata | Da verificare | Ispezione worker patchato, esecuzione/risultato neutro e assenza crash. |
+| [ ] | Disable Google Engage | Applicata | Da verificare | Manifest patchato senza componenti Engage; avvio, receiver e job residui. |
+| [ ] | Disable third-party trackers | Applicata | Da verificare | Manifest e impostazioni SDK effettive; prova rete separata dall’assenza di crash. |
+| [ ] | Hide screenshot share menu | Applicata | PARZIALE: log observer non avviato; serve screenshot reale e controllo OFF. | Screenshot nel closeup: niente upsell con ON; comportamento nativo con OFF. |
+| [ ] | Hide search history | Applicata | Da verificare | Ricerche recenti assenti con toggle ON, presenti con OFF; suggerimenti e ricerca funzionano. |
+| [ ] | Use the system share sheet | Applicata | PARZIALE: foglio Android su pin, URL corretto e annullamento verificati. | Pin: foglio Android e toggle OFF. Bacheca/profilo conservano il flusso nativo previsto. |
+| [ ] | Download video | Applicata | PARZIALE: voce assente su pin statico come previsto; serve pin video. | Pin video: URL e download valido; verificare anche yt-dlp e assenza voce su immagine. |
 
 ## Opzioni e comportamenti inclusi nelle patch
 
@@ -71,36 +71,59 @@ Anche questi comportamenti vanno verificati separatamente: condividono una patch
 - [ ] Annullamento di condivisione/download/sfondo senza effetti indesiderati.
 - [ ] Controprova di applicazione su APK originale 14.34.0 dopo modifiche condivise.
 
-## Richieste da valutare dopo il porting
+## Nuove patch implementate (31 patch totali)
 
 | Richiesta | Implementazione | Verifica |
 |---|---|---|
-| #41 — tap impostazioni Morphe | Indagine da completare | Non verificata |
-| #42 — dimensioni e formato immagine | Da valutare | Non verificata |
-| #44 — download qualità massima | Da valutare, confrontare anche download già esistenti | Non verificata |
-| #45 — filtro voci menu ⋮ | Da valutare | Non verificata |
+| #41 — tap impostazioni Morphe | Nessuna modifica necessaria sul device attuale | Tap verificato su Android 14; Sony Android 15 resta manuale |
+| #42 — Show pin image information | Implementata, opzione disattivata inizialmente | PARZIALE: due pin, 736×805 e 720×1599 px · JPEG; altri formati/carousel manuali |
+| #44 — Download images in highest available quality | Implementata, opzione disattivata inizialmente | PARZIALE: download nativo intercettato, JPEG 736×805 valido e coincidente con la variante maggiore del modello; fallback/altri media manuali |
+| #45 — Filter pin menu actions | Implementata, lista inizialmente vuota | PASS base: selezione Segnala ON/OFF nel menu reale, Copia link diretto preservata; Salva/Annulla e cambio lingua persistenti. Altre azioni e varianti restano manuali |
 
 ## Release
 
 - [ ] Tutte le prove applicabili superate e manuali confermate: release completa.
 - [ ] Build e smoke test superati, verifiche manuali residue elencate: candidata pre-release dev.
 
-Build candidata pronta; nessuna release pubblicata perché manca anche lo smoke test sul dispositivo. Le nuove feature sono subordinate alla verifica del porting. Nessun commento pubblicato sulle issue.
+Smoke test sul dispositivo riuscito; nessuna release pubblicata durante il collaudo. Regressione nei toast corretta e verificata; nuove feature implementate dopo lo smoke test. Nessun commento pubblicato sulle issue.
 
 ## Evidenze della build candidata
 
 - Originale SHA-256: `4ecc7f9a34c89fd98d0e2133c294517772857b935969847bfd92b3e25b13e78d`.
-- APK patchato SHA-256: `f07ed214f0f43352da2c8cb1f2b64a7160cb0009652909d12c3627de5041addf`.
-- Bundle SHA-256: `4145f01d526bd5b5129e08d513c89f29ac63cc65ed3bb7c3180485dbade5821d`.
+- APK patchato SHA-256: `825e66b8238fd1f98399e4cca998b21457536dd371e32633ed24f5caf80a9b79`.
+- Bundle SHA-256: `8696803d9b70ffc5cf642ab14ebf1755fe4761f33323279a86dd89cedfc14ed9`.
 
-La compilazione finale è registrata nel workspace in `pinterest/build_14.39.0_final.log`;
-il primo report di applicazione in `pinterest/build/verification_14.39.0/patch_result.json`
-(28 patch, nessuna fallita), la controprova in `patch_result_14.34.0.json`.
-Il report JSON iniziale precede solo l’aggiornamento dei metadata di compatibilità;
-il log finale conferma le stesse 28 applicazioni senza force. Hash sopra della build finale.
-Firma, manifest e dump dell’iniezione sono nella stessa cartella locale di verifica.
+La build corrente è registrata in `pinterest/build_14.39.0_menu_choices_final.log` (31 patch, nessuna fallita). I report iniziali da 28 patch e le screenshot del 9 ottobre documentano il porting precedente; non sono prove della nuova interfaccia. La controprova delle 31 patch su 14.34 è in `pinterest/patch_regression_14.34.0_final.log`. Firma corrente verificata in `build/verification_14.39.0/signature-final.txt`.
 
-Indagini sulle issue: #42 ha dati width/height/type/url nel modello immagine;
-#44 i download Morphe scelgono già la maggiore width, quello nativo resta da studiare;
-#45 fattibile nel builder del menu con filtro di sole righe native. #41 non è ancora
-riprodotta: presenza della voce e intent-filter non verificano il tap.
+## Sessione dispositivo del 2026-10-09
+
+Le prove del 9 ottobre precedono la build grafica corrente; i risultati invariati sono conservati con questa distinzione. Le tre opzioni navbar sono state ripristinate OFF. XML accessibility conserva alcuni nodi dei tab nascosti, mentre gli screenshot mostrano la barra corretta: resta da approfondire per lettori schermo. Evidenze locali in `pinterest/build/verification_14.39.0/`, escluse da Git per contenuti dell’account. La successiva correzione toast richiede ripetere i test interessati sulla nuova build.
+
+## Sessione del 2026-10-10 — interfaccia filtro
+
+Build/lint e applicazione 31/31 riusciti, APK sopra installato. Editor con PinSans, pannello inferiore arrotondato, campo multilinea e pulsanti Annulla/Salva; riga di apertura allineata alle altre impostazioni nella sezione Menu dei Pin. Screenshot locali `filter-style-editor.png` e `filter-style-keyboard.png`: contenuto e pulsanti raggiungibili anche con tastiera. Controllo statico: 59 gruppi di traduzioni, ognuno completo in EN + 13 lingue, placeholder coerenti. Il controllo automatico dei testi non sostituisce una revisione madrelingua.
+
+Controprova 14.34: 31/31 applicazioni riuscite prima della sola revisione grafica dell’editor; non equivale a collaudo sul dispositivo 14.34. Ispezione dex privacy: ID pubblicitario vuoto e limit tracking=true, AppsFlyer neutralizzato, worker Engage neutralizzato. La verifica del traffico di rete resta manuale, quindi le relative caselle non sono spuntate.
+
+- [x] Interfaccia filtro: titolo, descrizione, Annulla e Salva controllati sul telefono in en/it/es/fr/de/pt/ru/ja/zh/ko/pl/nl/tr/ar; screenshot/XML locali `locale-*-editor`. Arabo con layout RTL controllato visivamente. Lingua applicazione ripristinata a quella di sistema.
+- [ ] Revisione madrelingua della qualità delle traduzioni.
+
+## Revisione successiva: selezione delle voci, senza testo libero
+
+L’editor iniziale era una lista di nomi digitati dall’utente: quei nomi non si traducevano
+cambiando lingua e rendevano il filtro dipendente dalla lingua. Sostituito con caselle
+selezionabili che usano le etichette originali localizzate di Pinterest. Il backup salva
+nomi di risorsa stabili (`@resource:...`), non le etichette; il filtro risolve i testi nella
+lingua corrente. Migrazione dei nomi noti del prototipo nelle 14 lingue settings.
+Le voci Morphe sono escluse e mantengono le loro opzioni separate.
+Le prove precedenti del campo testo sono storiche e non verificano questa nuova selezione.
+
+- [x] Selettore finale: Annulla conserva le selezioni; Salva persiste dopo force-stop.
+- [x] Scelta Segnala in italiano ancora selezionata con etichetta araba الإبلاغ dopo cambio lingua; deselezione persistente dopo riavvio. Evidenza locale `filter-choices-final.log` e `choices-ar-selected.png`.
+- [ ] Tutte le azioni e varianti del menu (incluse quelle disponibili solo ai proprietari del Pin).
+
+- [x] Filtro finale sul menu reale: Segnala assente ON, presente OFF; Copia link diretto preservata. `filter-native-final.log`, `choices-filter-on-menu.png`, `choices-filter-off-menu.png`.
+- [x] Tutte le 20 scelte hanno risorse tradotte in en/it/es/fr/de/pt/ru/ja/zh/ko/pl/nl/tr/ar nell’APK madre; nessuna etichetta tecnica o inglese imposta dal selettore.
+- [x] Ripristino prova: filtro senza selezioni, lingua applicazione di sistema, opzioni info immagine/qualità massima OFF come default. Selettore italiano pronto sul telefono.
+
+Il tutorial Pinterest “Scarica immagine è stata spostata in Condividi” intercetta il primo tap sui tre puntini: attendere/chiudere il suggerimento e ripetere il tap prima di giudicare il menu. Le asserzioni di collaudo richiedono la presenza di Copia link diretto per assicurarsi che sia davvero aperto l’overflow.
