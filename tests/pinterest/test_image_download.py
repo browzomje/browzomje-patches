@@ -70,7 +70,7 @@ SOURCES.update({
 'org/json/JSONObject.java': """package org.json;public class JSONObject {
  private static final java.util.Map<String,JSONObject> objects=new java.util.HashMap<>();private final java.util.Map<String,Object> values;
  public JSONObject(){values=new java.util.HashMap<>();}public JSONObject(String s){values=objects.get(s).values;}
- public JSONObject put(String k,Object v){values.put(k,v);return this;}public String getString(String k){return (String)values.get(k);}public int getInt(String k){return ((Number)values.get(k)).intValue();}public long getLong(String k){return ((Number)values.get(k)).longValue();}public boolean getBoolean(String k){return (Boolean)values.get(k);}
+ public JSONObject put(String k,Object v){values.put(k,v);return this;}public String getString(String k){return (String)values.get(k);}public int getInt(String k){return ((Number)values.get(k)).intValue();}public long optLong(String k,long d){Object v=values.get(k);return v instanceof Number?((Number)v).longValue():d;}public long getLong(String k){return ((Number)values.get(k)).longValue();}public boolean getBoolean(String k){return (Boolean)values.get(k);}
  public String toString(){String id=java.util.UUID.randomUUID().toString();objects.put(id,this);return id;}
 }""",
 'app/browzomje/extension/pinterest/PinDownloadQueue.java': """package app.browzomje.extension.pinterest;class PinDownloadQueue {static void add(android.content.Context c,String id,String source,int w,int h,String folder,boolean hq,Runnable completion){}}""",
@@ -94,10 +94,16 @@ public class DownloaderTest {
    String source=mode==5?URL.replace(".jpg",".gif"):URL;
    PinImageResolver.Result result=PinImageResolver.resolve(context,source,150,150,mode!=4);
    boolean expectedOriginal=mode==0||mode==5||mode==6;
-   check(result.original==expectedOriginal,"original/fallback case "+mode);check(result.width==(expectedOriginal?200:100),"verified width");check(result.extension.equals(mode==5?"gif":mode==6?"webp":expectedOriginal?"png":"jpg"),"actual format independent of URL");
-   int before=requests;PinImageResolver.Result cached=PinImageResolver.resolve(context,source,150,150,mode!=4);check(requests==before,"same download choice from cache");check(cached.url.equals(result.url),"same selected URL");
+   check(result.fileSize==1001,"total size from range, not prefix");check(result.describe().contains("kB"),"size label");check(result.original==expectedOriginal,"original/fallback case "+mode);check(result.width==(expectedOriginal?200:100),"verified width");check(result.extension.equals(mode==5?"gif":mode==6?"webp":expectedOriginal?"png":"jpg"),"actual format independent of URL");
+   int before=requests;PinImageResolver.Result cached=PinImageResolver.resolve(context,source,150,150,mode!=4);check(requests==before,"same download choice from cache");check(cached.fileSize==result.fileSize,"size cached");check(cached.url.equals(result.url),"same selected URL");
+   java.lang.reflect.Field cache=PinImageResolver.class.getDeclaredField("CACHE");cache.setAccessible(true);((Map<?,?>)cache.get(null)).clear();
+   PinImageResolver.Result persisted=PinImageResolver.resolve(context,source,150,150,mode!=4);check(persisted.fileSize==1001&&requests==before,"persisted size without network");
    PinImageResolver.invalidate(context,source,150,150,mode!=4);System.out.println("PASS metadata/cache case "+mode);
   }
+  String[][] headers={{"206","bytes 0-1023/98010","1024","","98010"},{"206","bytes 0-1023/*","1024","","-1"},{"206","bytes 0-1023/100","1024","","-1"},{"206","bytes 0-1023/999999999999999999999999","1024","","-1"},{"200","","98010","","98010"},{"200","","","","-1"},{"200","","-5","","-1"},{"200","","98010","gzip","-1"},{"206","bad","1024","","-1"}};
+  for(String[] h:headers){Connection c=new Connection(new URL(URL)){public String getHeaderField(String k){return k.equals("Content-Range")?h[1]:k.equals("Content-Length")?h[2]:k.equals("Content-Encoding")&&!h[3].isEmpty()?h[3]:null;}};check(PinImageResolver.responseSize(c,Integer.parseInt(h[0]))==Long.parseLong(h[4]),"size headers "+Arrays.toString(h));}
+  check(!new PinImageResolver.Result(URL,"jpg",100,100,false).describe().contains("kB"),"unknown size omitted");
+  System.out.println("PASS total size: partial/full/missing/invalid/encoded headers");
   System.exit(0);
  }
 }'''

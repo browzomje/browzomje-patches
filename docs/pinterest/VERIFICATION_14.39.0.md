@@ -212,3 +212,17 @@ on-device verification. WebP and the native share-panel download action still ne
 fixture; this account does not expose that download action. Boards cover captured/loaded pins,
 without independently fetching unvisited pages. Android force-stop can defer jobs and completion
 receivers until the app is reopened; ordinary backgrounding keeps system downloads running.
+
+
+### File size in image information (development)
+
+The shared image resolver includes the selected download file's size when
+provided by the existing bounded metadata response. HTTP 206 uses the complete
+length from Content-Range; HTTP 200 uses Content-Length. Unknown, malformed,
+overflowing or encoded lengths are omitted, without additional requests or full
+image downloads. SI units (kB/MB) use the current locale's decimal separator.
+Size is persisted alongside dimensions and format; older cache entries remain
+valid with size omitted until their normal expiry. Fallback selection updates all
+metadata together. JVM tests cover full/partial responses, unknown totals, invalid
+headers, content encoding and persistence. Device layout verification remains
+pending; this change does not claim a new device test.
