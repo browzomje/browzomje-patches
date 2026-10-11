@@ -1,3 +1,9 @@
+## [1.13.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.1...v1.13.0-dev.2) (2026-10-11)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** order pin settings and enforce image information dependencies ([44c965e](https://github.com/browzomje/browzomje-patches/commit/44c965ef82066bd03fd507b9eca077b2adde78b6))
+
 ## [1.13.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.12.0...v1.13.0-dev.1) (2026-10-11)
 
 ### ✨ New Features
