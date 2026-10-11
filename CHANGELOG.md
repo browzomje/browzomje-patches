@@ -1,3 +1,15 @@
+## [1.12.0](https://github.com/browzomje/browzomje-patches/compare/v1.11.0...v1.12.0) (2026-10-11)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** prevent restart notices from reappearing after relaunch ([869d63f](https://github.com/browzomje/browzomje-patches/commit/869d63f54c2e9331f22b6882d4ddf5675c600520))
+
+### ✨ New Features
+
+* **Pinterest:** add creator settings preset and expanded pin menu controls ([a8eaba3](https://github.com/browzomje/browzomje-patches/commit/a8eaba3d010a9f13dd569eead6cb2babfdffc34e))
+* **Pinterest:** label custom settings as Morphe - browzomje ([81ca494](https://github.com/browzomje/browzomje-patches/commit/81ca49405abb37241b9dd5a1dd5da313dc3a694c))
+* **Pinterest:** share verified image metadata across persistent high-quality downloads ([7f2ff26](https://github.com/browzomje/browzomje-patches/commit/7f2ff26e78539740e1dcab16b3bbe3fb265a6e08))
+
 ## [1.11.0](https://github.com/browzomje/browzomje-patches/compare/v1.10.0...v1.11.0) (2026-10-10)
 
 ### 🐛 Bug Fixes
