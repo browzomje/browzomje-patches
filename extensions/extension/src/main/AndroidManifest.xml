@@ -1,1 +1,11 @@
-<manifest/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Mirrored by MorpheSettingsResourcePatch in the target APK. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <application>
+        <service android:name="app.browzomje.extension.pinterest.PinDownloadJob"
+            android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
+        <receiver android:name="app.browzomje.extension.pinterest.PinDownloadReceiver" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.DOWNLOAD_COMPLETE" /></intent-filter>
+        </receiver>
+    </application>
+</manifest>

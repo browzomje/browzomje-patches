@@ -66,6 +66,7 @@ final class BoardDownloadHandler {
         String boardId;
         String boardName;
         String imageUrl;
+        int imageWidth, imageHeight;
         String videoUrl;      // MP4 diretto, scaricabile
         boolean videoOnlyStreaming; // video presente ma solo HLS/DASH
     }
@@ -240,6 +241,11 @@ final class BoardDownloadHandler {
         CapturedPin pin = new CapturedPin();
         pin.id = (String) id;
         pin.imageUrl = bestImageUrl(item);
+        Object image = PinImageMenu.bestImage(item);
+        Object width = AdDetector.fieldValueBySerializedName(image, "width");
+        Object height = AdDetector.fieldValueBySerializedName(image, "height");
+        pin.imageWidth = width instanceof Number ? ((Number) width).intValue() : 0;
+        pin.imageHeight = height instanceof Number ? ((Number) height).intValue() : 0;
 
         // Ogni pin dichiara la bacheca in cui è salvato: è così che i pin vengono raggruppati,
         // senza dover dipendere dall'URL della richiesta.
@@ -271,25 +277,9 @@ final class BoardDownloadHandler {
      * i nomi cambiano, il campo `width` no.
      */
     private static String bestImageUrl(Object pin) {
-        Object images = AdDetector.fieldValueBySerializedName(pin, "images");
-        if (!(images instanceof Map)) {
-            return null;
-        }
-        String bestUrl = null;
-        double bestWidth = -1;
-        for (Object image : ((Map<?, ?>) images).values()) {
-            Object url = AdDetector.fieldValueBySerializedName(image, "url");
-            if (!(url instanceof String) || ((String) url).isEmpty()) {
-                continue;
-            }
-            Object width = AdDetector.fieldValueBySerializedName(image, "width");
-            double w = width instanceof Number ? ((Number) width).doubleValue() : 0;
-            if (w > bestWidth) {
-                bestWidth = w;
-                bestUrl = (String) url;
-            }
-        }
-        return bestUrl;
+        Object image = PinImageMenu.bestImage(pin);
+        Object url = image == null ? null : AdDetector.fieldValueBySerializedName(image, "url");
+        return url instanceof String ? (String) url : null;
     }
 
     // ------------------------------------------------------------------ superficie corrente
@@ -407,6 +397,20 @@ final class BoardDownloadHandler {
         PinterestUtils.showNativeToast(context, folder + " — "
                 + PinterestUtils.getString("board_download_started").replace("%d", String.valueOf(pins.size())));
 
+        // Persist the entire image batch before starting any network work.
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            java.util.List<String[]> batch = new java.util.ArrayList<>();
+            for (CapturedPin pin : pins) if (pin.videoUrl == null && !pin.videoOnlyStreaming && pin.imageUrl != null)
+                batch.add(new String[] { pin.id, pin.imageUrl, String.valueOf(pin.imageWidth), String.valueOf(pin.imageHeight) });
+            try { PinDownloadQueue.addBoard(context.getApplicationContext(), batch, folder,
+                    MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIGH_QUALITY_IMAGES)); }
+            catch (Exception failure) {
+                MorpheLog.w(MorpheLog.BOARD, "could not persist board image downloads", failure);
+                PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+                return;
+            }
+        }
+
         // Il download vero e proprio è delegato a DownloadManager (che lavora in background),
         // ma le chiamate di accodamento vengono fatte fuori dal main thread: con bacheche
         // grandi sono centinaia di IPC e bloccherebbero la UI.
@@ -443,11 +447,12 @@ final class BoardDownloadHandler {
                                     "pin " + pin.id + ": streaming only, skipped");
                         } else if (pin.imageUrl != null) {
                             String fileName = pin.id + extensionOf(pin.imageUrl);
-                            if (alreadyDownloaded(folder, fileName)) {
+                            if (android.os.Build.VERSION.SDK_INT < 29 && alreadyDownloaded(folder, fileName)) {
                                 alreadyThere++;
                                 continue;
                             }
-                            enqueue(manager, pin.imageUrl, folder, fileName);
+                            if (android.os.Build.VERSION.SDK_INT < 29)
+                                enqueue(manager, pin.imageUrl, folder, fileName);
                             images++;
                         }
                     } catch (Throwable t) {
@@ -487,6 +492,15 @@ final class BoardDownloadHandler {
                 return;
             }
             Object id = AdDetector.fieldValueBySerializedName(pin, "id");
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                Object image = PinImageMenu.bestImage(pin);
+                Object width = AdDetector.fieldValueBySerializedName(image, "width");
+                Object height = AdDetector.fieldValueBySerializedName(image, "height");
+                PinImageDownloader.download(context, id instanceof String ? (String) id : null, url,
+                        width instanceof Number ? ((Number) width).intValue() : 0,
+                        height instanceof Number ? ((Number) height).intValue() : 0);
+                return;
+            }
             String name = (id instanceof String ? (String) id : "pin") + extensionOf(url);
 
             DownloadManager manager =
@@ -508,7 +522,9 @@ final class BoardDownloadHandler {
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle(name);
         request.setDescription("Pinterest — " + folder);
-        request.setMimeType(name.endsWith(".mp4") ? "video/mp4" : "image/jpeg");
+        String extension = extensionOf(name).substring(1).toLowerCase(java.util.Locale.ROOT);
+        String mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        if (mime != null) request.setMimeType(mime);
 
         // VISIBILE SOLO DURANTE il download, non a fine download: scaricando una bacheca
         // intera si parla di centinaia di file, e una notifica di completamento per ciascuno

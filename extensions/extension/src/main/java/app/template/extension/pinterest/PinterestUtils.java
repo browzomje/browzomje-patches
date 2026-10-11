@@ -142,7 +142,7 @@ public final class PinterestUtils {
     }
 
     public static void addPinImageInfo(final Object menu) {
-        whenMenuIsReady(menu, () -> PinImageMenu.addInfo(menu));
+        // Kept as a binary compatibility entry point; image info now lives in the closeup.
     }
 
     public static void upgradePinImageDownload(final Object menu) {
@@ -1946,20 +1946,20 @@ public final class PinterestUtils {
             return "Started downloading %d pins…";
         }
         if ("board_download_done".equals(key)) {
-            if (isIt) return "Scaricate %1 immagini e %2 video.";
-            if (isEs) return "Descargadas %1 imágenes y %2 vídeos.";
-            if (isFr) return "%1 images et %2 vidéos téléchargées.";
-            if (isDe) return "%1 Bilder und %2 Videos heruntergeladen.";
-            if (isPt) return "Baixadas %1 imagens e %2 vídeos.";
-            if (isRu) return "Скачано %1 изображений и %2 видео.";
-            if (isJa) return "画像 %1 件、動画 %2 件をダウンロードしました。";
-            if (isZh) return "已下载 %1 张图片和 %2 个视频。";
-            if (isKo) return "이미지 %1개, 동영상 %2개를 다운로드했습니다.";
-            if (isPl) return "Pobrano %1 obrazów i %2 filmów.";
-            if (isNl) return "%1 afbeeldingen en %2 video's gedownload.";
-            if (isTr) return "%1 resim ve %2 video indirildi.";
-            if (isAr) return "تم تنزيل %1 صورة و%2 فيديو.";
-            return "Downloaded %1 images and %2 videos.";
+            if (isIt) return "Accodate %1 immagini e %2 video.";
+            if (isEs) return "%1 imágenes y %2 vídeos en cola.";
+            if (isFr) return "%1 images et %2 vidéos mises en file d’attente.";
+            if (isDe) return "%1 Bilder und %2 Videos in der Warteschlange.";
+            if (isPt) return "%1 imagens e %2 vídeos na fila.";
+            if (isRu) return "В очереди %1 изображений и %2 видео.";
+            if (isJa) return "画像 %1 件、動画 %2 件をキューに追加しました。";
+            if (isZh) return "已加入队列：%1 张图片和 %2 个视频。";
+            if (isKo) return "이미지 %1개, 동영상 %2개를 대기열에 추가했습니다.";
+            if (isPl) return "%1 obrazów i %2 filmów w kolejce.";
+            if (isNl) return "%1 afbeeldingen en %2 video's in de wachtrij.";
+            if (isTr) return "%1 resim ve %2 video sıraya alındı.";
+            if (isAr) return "أُضيفت %1 صورة و%2 فيديو إلى قائمة الانتظار.";
+            return "Queued %1 images and %2 videos.";
         }
         if ("board_download_already".equals(key)) {
             if (isIt) return "%d già presenti, saltati.";
