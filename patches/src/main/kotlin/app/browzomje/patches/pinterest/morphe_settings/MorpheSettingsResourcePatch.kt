@@ -41,7 +41,7 @@ val morpheSettingsManifestPatch = resourcePatch(
             val activity = doc.createElement("activity")
             activity.setAttribute("android:name", MORPHE_SETTINGS_ACTIVITY)
             activity.setAttribute("android:exported", "true")
-            activity.setAttribute("android:label", "Morphe")
+            activity.setAttribute("android:label", "Morphe - browzomje")
             activity.setAttribute("android:theme", MORPHE_SETTINGS_THEME)
 
             val intentFilter = doc.createElement("intent-filter")
@@ -175,7 +175,7 @@ val morpheSettingsLabelPatch = resourcePatch(
                     for (i in 0 until strings.length) {
                         val node = strings.item(i)
                         if (node.attributes?.getNamedItem("name")?.nodeValue == REUSED_STRING) {
-                            node.textContent = "Morphe"
+                            node.textContent = "Morphe - browzomje"
                             renamed++
                             break
                         }

@@ -221,7 +221,7 @@ public final class MorpheSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         setContentView(screen);
-        setTitle("Morphe");
+        setTitle("Morphe - browzomje");
         if (presetNotice) { presetNotice = false; showRestartNotice(); }
     }
 
@@ -254,7 +254,7 @@ public final class MorpheSettingsActivity extends Activity {
         bar.addView(back, new LinearLayout.LayoutParams(dp(24) + touch * 2, dp(24) + touch * 2));
 
         TextView title = new TextView(this);
-        title.setText("Morphe");
+        title.setText("Morphe - browzomje");
         title.setTextSize(24);
         title.setTextColor(TEXT_PRIMARY);
         title.setTypeface(fontBold != null ? fontBold : Typeface.DEFAULT_BOLD);
