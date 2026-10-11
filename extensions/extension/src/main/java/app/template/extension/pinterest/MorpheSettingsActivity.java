@@ -57,6 +57,8 @@ public final class MorpheSettingsActivity extends Activity {
     private static final int REQUEST_EXPORT = 4701;
     private static final int REQUEST_IMPORT = 4702;
 
+    private final java.util.Map<String, Switch> settingToggles = new java.util.HashMap<>();
+    private boolean refreshingDependencies;
     private TextView diagnosticsView;
     private TextView restartNotice;
     private static boolean presetNotice;
@@ -167,17 +169,18 @@ public final class MorpheSettingsActivity extends Activity {
 
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_PIN_MENU),
                 "ic_vr_ellipsis_gestalt");
+        addMenuFilterRow(root);
         addToggleRow(root, MorpheStrings.get(MorpheStrings.IMAGE_INFO_TITLE),
                 MorpheStrings.get(MorpheStrings.IMAGE_INFO_DESCRIPTION),
                 MorpheSettingsStore.KEY_IMAGE_INFO,
                 MorpheSettingsStore.effective(MorpheSettingsStore.KEY_IMAGE_INFO));
-        addMenuFilterRow(root);
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.INFO_REPLACE_TITLE), MorpheStrings.get(MorpheStrings.INFO_REPLACE_DESCRIPTION),
+                MorpheSettingsStore.KEY_INFO_REPLACE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_INFO_REPLACE));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_LIKE_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_LIKE));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON));
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.INFO_REPLACE_TITLE), MorpheStrings.get(MorpheStrings.INFO_REPLACE_DESCRIPTION),
-                MorpheSettingsStore.KEY_INFO_REPLACE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_INFO_REPLACE));
+        refreshPinDependencies();
 
         // Home e Profilo non compaiono qui: vedi MorpheSettingsStore.isNavTabHidden. Nasconderli
         // renderebbe irraggiungibile questa stessa schermata.
@@ -626,10 +629,13 @@ public final class MorpheSettingsActivity extends Activity {
         toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (refreshingDependencies) return;
                 MorpheSettingsStore.set(prefKey, isChecked);
+                refreshPinDependencies();
                 showRestartNotice();
             }
         });
+        settingToggles.put(prefKey, toggle);
         row.addView(toggle);
         parent.addView(row);
 
@@ -637,6 +643,25 @@ public final class MorpheSettingsActivity extends Activity {
         divider.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
         divider.setBackgroundColor(DIVIDER);
         parent.addView(divider);
+    }
+
+    private void refreshPinDependencies() {
+        refreshingDependencies = true;
+        try {
+            for (String key : new String[] {MorpheSettingsStore.KEY_INFO_REPLACE,
+                    MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON}) {
+                Switch toggle = settingToggles.get(key);
+                if (toggle == null) continue;
+                toggle.setChecked(MorpheSettingsStore.effective(key));
+                boolean enabled = MorpheSettingsStore.isToggleEnabled(key);
+                toggle.setEnabled(enabled);
+                if (toggle.getParent() instanceof View) {
+                    View row = (View) toggle.getParent();
+                    row.setEnabled(enabled);
+                    row.setAlpha(enabled ? 1f : 0.45f);
+                }
+            }
+        } finally { refreshingDependencies = false; }
     }
 
     /**

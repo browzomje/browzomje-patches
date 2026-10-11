@@ -123,7 +123,11 @@ public final class MorpheSettingsStore {
     public static void set(String key, boolean value) {
         SharedPreferences sp = prefs();
         if (sp != null) {
-            sp.edit().putBoolean(key, value).apply();
+            SharedPreferences.Editor edit = sp.edit().putBoolean(key, value);
+            if (KEY_IMAGE_INFO.equals(key) && !value) edit.putBoolean(KEY_INFO_REPLACE, false);
+            if (KEY_INFO_REPLACE.equals(key) && value && !effective(KEY_IMAGE_INFO))
+                edit.putBoolean(KEY_INFO_REPLACE, false);
+            edit.apply();
             Log.i(MorpheLog.TAG, "[settings] " + key + " = " + value);
         } else {
             Log.e(MorpheLog.TAG, "[settings] could not save " + key
@@ -156,7 +160,16 @@ public final class MorpheSettingsStore {
 
     /** @return il valore in vigore per questa chiave, salvato o predefinito che sia. */
     public static boolean effective(String key) {
-        return get(key, defaultOf(key));
+        boolean value = get(key, defaultOf(key));
+        // Also guard legacy/imported preferences that bypass individual toggle writes.
+        return value && (!KEY_INFO_REPLACE.equals(key) || effective(KEY_IMAGE_INFO));
+    }
+
+    static boolean isToggleEnabled(String key) {
+        if (KEY_INFO_REPLACE.equals(key)) return effective(KEY_IMAGE_INFO);
+        if (KEY_HIDE_LIKE.equals(key) || KEY_HIDE_COMMENT_BUTTON.equals(key))
+            return !effective(KEY_INFO_REPLACE);
+        return true;
     }
 
     public static boolean isAdsDisabled() {

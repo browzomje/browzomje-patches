@@ -226,3 +226,17 @@ valid with size omitted until their normal expiry. Fallback selection updates al
 metadata together. JVM tests cover full/partial responses, unknown totals, invalid
 headers, content encoding and persistence. Device layout verification remains
 pending; this change does not claim a new device test.
+
+
+### Pin settings ordering and dependencies (development fix)
+
+Pin menu section order: menu filtering, image information, information replacing
+like/comments, hide like, hide comments. Disabling information clears replacement
+atomically. Replacement is unavailable while information is off, including legacy
+or imported incompatible preferences at runtime. While replacement is active, the
+individual hide switches are disabled and their rows dimmed; their saved choices
+are preserved and become editable again when replacement is off.
+Production-store JVM tests cover every parent/replacement combination, preference
+writes, legacy/imported state, preserved individual choices and the creator preset.
+Device visual verification remains pending because the currently installed app
+has an incompatible signing certificate; no app data was removed.
