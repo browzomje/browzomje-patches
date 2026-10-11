@@ -313,7 +313,7 @@ public final class MorpheSettingsActivity extends Activity {
     }
 
     private void showRestartNotice() {
-        Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_RESTART), Toast.LENGTH_LONG).show();
+        if (restartNotice != null) restartNotice.setVisibility(View.VISIBLE);
     }
 
     /**
