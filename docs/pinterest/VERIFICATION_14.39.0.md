@@ -173,3 +173,42 @@ La precedente prova combinata dei tre pulsanti non copriva i buchi con un solo p
 - [x] Release stabile `v1.11.0` pubblicata: workflow `38093527159` completato con successo (build, verifica release notes, pubblicazione e attestazione). Main sorgente `102146a`, commit release `6897c6f`; dev aggiornato automaticamente alla release.
 - [x] Asset ufficiale `patches-1.11.0.mpp` scaricato e digest verificato contro GitHub: SHA-256 `0c734944287c97b1225295c25883c04b743f8148ac90c76a5081970e2d73bc75`. Applicazione all’originale esplicito 14.39.0: 31/31, ricomposizione e firma riuscite (`patch_result_release_1.11.0.json`).
 - [x] APK ricavato dall’asset stabile installato con update, stessa firma e dati preservati: SHA-256 `ff5b5db0f89c346278f3b37ac4a63dccec52c80859f8dad37dbeb74cbe4da808`. La schermata mostra effettivamente app 14.39.0 / patch 1.11.0 sia IT sia AR (`versions-release-1.11.0.log`, XML/screenshot `versions-it/ar`); lingua ripristinata al sistema.
+
+## Verified image downloads and recommended settings — 2026-10-11
+
+Final implementation for the next minor release:
+
+- Shared image resolver reads a bounded HTTP prefix to verify dimensions and actual format.
+  The inline label describes the selected download variant, with checking/unavailable states.
+- Single images and captured board image batches use a persisted queue and Android
+  DownloadManager. Failed original transfers retry the app variant; duplicate filenames
+  preserve existing files. Board batches are persisted before network work.
+- Optional like/comment hiding and inline metadata replacement; expanded pin menu filters,
+  including dynamic Follow/Unfollow labels, wallpaper and direct image links.
+- General creator preset after version information, with 20 enabled options and Search/search
+  history disabled. It also applies the shared recommended pin menu selection.
+- A single in-app restart notice replaces queued toasts. The title is “Morphe - browzomje”.
+
+Validation on Pinterest 14.39.0, Android 14:
+
+- Build/lint successful, all 31 patches applied and signed APK installed with data preserved.
+- JPEG fixture: app model 736×805; displayed and downloaded original 1199×1312, 98010 bytes.
+- Board: 18 loaded images downloaded in the background; all extracted files verified.
+- GIF: 500×210, 818523 bytes, all 14 frames preserved.
+- All 22 preset switches checked: 20 ON, Search and search history OFF.
+- Restart notice absent after repeated restarts, including after applying the preset.
+- JVM tests exercise production resolver/cache with PNG, GIF, WebP, HTTP failures, invalid
+  ranges and smaller originals; production dynamic menu filtering and native bridge also pass.
+
+Run from the repository root:
+
+```bash
+python3 tests/pinterest/test_image_download.py
+python3 tests/pinterest/test_pin_actions.py
+```
+
+Tests require a JDK, Python and Pillow. Android stubs in the JVM harness do not replace
+on-device verification. WebP and the native share-panel download action still need a device
+fixture; this account does not expose that download action. Boards cover captured/loaded pins,
+without independently fetching unvisited pages. Android force-stop can defer jobs and completion
+receivers until the app is reopened; ordinary backgrounding keeps system downloads running.
