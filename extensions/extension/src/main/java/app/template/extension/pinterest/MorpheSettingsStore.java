@@ -28,6 +28,9 @@ public final class MorpheSettingsStore {
     public static final String KEY_SHARE_LINK_ONLY = "share_link_only";
     public static final String KEY_EXTERNAL_BROWSER = "external_browser";
     public static final String KEY_SYSTEM_SHARE_SHEET = "system_share_sheet";
+    public static final String KEY_HIDE_LIKE = "hide_like_button";
+    public static final String KEY_HIDE_COMMENT_BUTTON = "hide_comment_button";
+    public static final String KEY_INFO_REPLACE = "image_info_replace_actions";
     public static final String KEY_IMAGE_INFO = "image_info";
     public static final String KEY_HIGH_QUALITY_IMAGES = "high_quality_images";
     public static final String KEY_HIDE_COMMENTS = "hide_comments";
@@ -54,6 +57,9 @@ public final class MorpheSettingsStore {
         KEY_BOARD_DOWNLOAD,
         KEY_LONG_PRESS_DOWNLOAD,
         KEY_IMAGE_INFO,
+        KEY_HIDE_LIKE,
+        KEY_HIDE_COMMENT_BUTTON,
+        KEY_INFO_REPLACE,
         KEY_HIGH_QUALITY_IMAGES,
         KEY_HIDE_SEARCH_BUTTON,
         KEY_HIDE_CREATE_BUTTON,
@@ -65,7 +71,7 @@ public final class MorpheSettingsStore {
 
     static String menuFilter() {
         SharedPreferences sp = prefs();
-        return sp == null ? "" : sp.getString(KEY_MENU_FILTER, "");
+        return sp == null ? "" : sp.getString(KEY_MENU_FILTER, PinMenuFilter.encode(PinMenuFilter.recommended()));
     }
 
     static void setMenuFilter(String value) {
@@ -134,26 +140,18 @@ public final class MorpheSettingsStore {
      * delle opzioni mai toccate.
      */
     static boolean defaultOf(String key) {
-        switch (key) {
-            case KEY_IMAGE_INFO:
-            case KEY_HIDE_SEARCH_HISTORY:
-            case KEY_DISABLE_ADS:
-            case KEY_HIDE_SHOPPING_PINS:
-            case KEY_DISABLE_EMAIL_CONFIRM_DIALOG:
-            case KEY_BOARD_DOWNLOAD:
-            case KEY_LONG_PRESS_DOWNLOAD:
-            case KEY_VERBOSE_LOGGING:
-            case KEY_HIDE_SEARCH_BOARD_MODULES:
-            case KEY_DISABLE_SCREENSHOT_SHARE:
-            case KEY_SANITIZE_LINKS:
-            case KEY_SHARE_LINK_ONLY:
-            case KEY_EXTERNAL_BROWSER:
-            case KEY_SYSTEM_SHARE_SHEET:
-                return true;
-            // KEY_HIDE_COMMENTS non è qui: vedi isCommentsHidden().
-            default:
-                return false;
-        }
+        return !KEY_HIDE_SEARCH_BUTTON.equals(key) && !KEY_HIDE_SEARCH_HISTORY.equals(key)
+                && java.util.Arrays.asList(KEYS).contains(key);
+    }
+
+    /** Apply the creator's complete preset atomically; preserve unrelated app preferences. */
+    static void applyRecommended() {
+        SharedPreferences sp = prefs();
+        if (sp == null) return;
+        SharedPreferences.Editor edit = sp.edit();
+        for (String key : KEYS) edit.putBoolean(key, defaultOf(key));
+        edit.putString(KEY_MENU_FILTER, PinMenuFilter.encode(PinMenuFilter.recommended()));
+        edit.commit();
     }
 
     /** @return il valore in vigore per questa chiave, salvato o predefinito che sia. */
@@ -257,10 +255,7 @@ public final class MorpheSettingsStore {
      * Nasconde la sezione commenti del pin e la sua anteprima, "Visualizza tutti" compreso
      * (issue #36).
      *
-     * <p>A differenza delle altre due arrivate con lo stesso giro di issue, questa è
-     * <b>spenta</b> per default: toglie una funzione dell'app invece di cambiare la strada con cui
-     * ci si arriva, e chi legge o scrive commenti non deve ritrovarseli spariti dopo aver
-     * aggiornato la patch. La issue stessa la chiede come interruttore, non come comportamento.
+     * <p>Attiva nel preset del creatore; le preferenze esplicite già salvate prevalgono sul default.
      */
     public static boolean isCommentsHidden() {
         return effective(KEY_HIDE_COMMENTS);

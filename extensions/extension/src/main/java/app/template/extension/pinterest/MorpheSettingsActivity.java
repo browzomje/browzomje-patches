@@ -58,6 +58,8 @@ public final class MorpheSettingsActivity extends Activity {
     private static final int REQUEST_IMPORT = 4702;
 
     private TextView diagnosticsView;
+    private TextView restartNotice;
+    private static boolean presetNotice;
 
     /** Pin Sans, il font di Pinterest, o null se l'APK non lo espone più con questo nome. */
     private Typeface fontRegular;
@@ -90,6 +92,20 @@ public final class MorpheSettingsActivity extends Activity {
         } catch (android.content.pm.PackageManager.NameNotFoundException impossible) {
             MorpheLog.w(MorpheLog.SETTINGS_ENTRY, "could not read installed app version", impossible);
         }
+
+        Button recommended = newButton(MorpheStrings.get(MorpheStrings.SETTINGS_RECOMMENDED));
+        LinearLayout.LayoutParams presetParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        presetParams.topMargin = dp(12);
+        presetParams.bottomMargin = dp(16);
+        recommended.setOnClickListener(v -> {
+            MorpheSettingsStore.applyRecommended();
+            Intent refresh = new Intent(this, MorpheSettingsActivity.class);
+            presetNotice = true;
+            startActivity(refresh);
+            finish();
+        });
+        root.addView(recommended, presetParams);
 
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_CONTENT), "ic_vr_sparkle_gestalt");
         addToggleRow(root, MorpheStrings.get(MorpheStrings.ADS_TITLE), MorpheStrings.get(MorpheStrings.ADS_DESCRIPTION),
@@ -156,6 +172,12 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheSettingsStore.KEY_IMAGE_INFO,
                 MorpheSettingsStore.effective(MorpheSettingsStore.KEY_IMAGE_INFO));
         addMenuFilterRow(root);
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_LIKE_TITLE), null,
+                MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_LIKE));
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), null,
+                MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON));
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.INFO_REPLACE_TITLE), MorpheStrings.get(MorpheStrings.INFO_REPLACE_DESCRIPTION),
+                MorpheSettingsStore.KEY_INFO_REPLACE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_INFO_REPLACE));
 
         // Home e Profilo non compaiono qui: vedi MorpheSettingsStore.isNavTabHidden. Nasconderli
         // renderebbe irraggiungibile questa stessa schermata.
@@ -186,11 +208,21 @@ public final class MorpheSettingsActivity extends Activity {
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(Color.BLACK);
         screen.addView(buildTopBar());
+        restartNotice = new TextView(this);
+        restartNotice.setText(MorpheStrings.get(MorpheStrings.TOAST_RESTART));
+        restartNotice.setTextColor(ACCENT);
+        restartNotice.setTextSize(14);
+        restartNotice.setTypeface(fontRegular);
+        restartNotice.setPadding(dp(20), dp(8), dp(20), dp(8));
+        restartNotice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        restartNotice.setVisibility(View.GONE);
+        screen.addView(restartNotice);
         screen.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         setContentView(screen);
         setTitle("Morphe");
+        if (presetNotice) { presetNotice = false; showRestartNotice(); }
     }
 
     /**
@@ -278,6 +310,10 @@ public final class MorpheSettingsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refreshDiagnostics();
+    }
+
+    private void showRestartNotice() {
+        Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_RESTART), Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -419,6 +455,7 @@ public final class MorpheSettingsActivity extends Activity {
         description.setLineSpacing(dp(2), 1f);
         card.addView(description);
         java.util.Set<String> selected = PinMenuFilter.selected(this);
+        java.util.Map<String, android.widget.CheckBox> checks = new java.util.LinkedHashMap<>();
         LinearLayout choices = new LinearLayout(this);
         choices.setOrientation(LinearLayout.VERTICAL);
         for (String action : PinMenuFilter.ACTIONS) {
@@ -436,9 +473,40 @@ public final class MorpheSettingsActivity extends Activity {
             choice.setOnCheckedChangeListener((button, checked) -> {
                 if (checked) selected.add(action); else selected.remove(action);
             });
+            checks.put(action, choice);
             choices.addView(choice, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
+        LinearLayout presets = new LinearLayout(this);
+        presets.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout selectAllRow = new LinearLayout(this);
+        selectAllRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams selectAllParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        selectAllParams.bottomMargin = dp(12);
+        presets.addView(selectAllRow, selectAllParams);
+        String[] presetTitles = { MorpheStrings.MENU_HIDE_ALL, MorpheStrings.MENU_SHOW_ALL, MorpheStrings.MENU_SUGGESTED };
+        for (int index = 0; index < presetTitles.length; index++) {
+            final int preset = index;
+            Button button = newButton(MorpheStrings.get(presetTitles[index]));
+            button.setOnClickListener(v -> {
+                java.util.Set<String> suggested = PinMenuFilter.recommended();
+                for (java.util.Map.Entry<String, android.widget.CheckBox> check : checks.entrySet())
+                    check.getValue().setChecked(preset == 0 || (preset == 2 && suggested.contains(check.getKey())));
+            });
+            if (index < 2) {
+                LinearLayout.LayoutParams half = new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                if (index == 1) half.setMarginStart(dp(12));
+                selectAllRow.addView(button, half);
+            } else {
+                LinearLayout.LayoutParams full = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                full.bottomMargin = dp(12);
+                presets.addView(button, full);
+            }
+        }
+        card.addView(presets);
         ScrollView options = new ScrollView(this);
         options.setVerticalScrollBarEnabled(true);
         options.setScrollbarFadingEnabled(false);
@@ -463,6 +531,7 @@ public final class MorpheSettingsActivity extends Activity {
         save.setOnClickListener(v -> {
             MorpheSettingsStore.setMenuFilter(PinMenuFilter.encode(selected));
             dialog.dismiss();
+            showRestartNotice();
         });
         LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -558,8 +627,7 @@ public final class MorpheSettingsActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 MorpheSettingsStore.set(prefKey, isChecked);
-                Toast.makeText(MorpheSettingsActivity.this,
-                        MorpheStrings.get(MorpheStrings.TOAST_RESTART), Toast.LENGTH_SHORT).show();
+                showRestartNotice();
             }
         });
         row.addView(toggle);
@@ -667,7 +735,7 @@ public final class MorpheSettingsActivity extends Activity {
             }
             MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "settings exported to " + uri);
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_EXPORTED),
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_LONG).show();
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "export failed", t);
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_EXPORT_FAILED) + t,
@@ -682,7 +750,7 @@ public final class MorpheSettingsActivity extends Activity {
             Toast.makeText(this,
                     MorpheStrings.get(MorpheStrings.TOAST_IMPORTED)
                             .replace("%d", String.valueOf(applied)),
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_LONG).show();
             // Gli interruttori a schermo sono stati costruiti coi valori di prima: senza
             // ricostruire la schermata mostrerebbero il contrario di ciò che è appena stato
             // importato, e il primo tocco su uno di essi riscriverebbe il valore vecchio.
@@ -757,7 +825,7 @@ public final class MorpheSettingsActivity extends Activity {
             clipboard.setPrimaryClip(ClipData.newPlainText("Morphe diagnostics",
                     MorpheLog.dumpStatus()));
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_COPIED),
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_LONG).show();
         } catch (Throwable t) {
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_COPY_FAILED) + t,
                     Toast.LENGTH_LONG).show();

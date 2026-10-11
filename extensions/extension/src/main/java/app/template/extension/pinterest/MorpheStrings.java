@@ -80,6 +80,9 @@ final class MorpheStrings {
     static final String TOAST_COPIED = "toast_copied";
     static final String TOAST_COPY_FAILED = "toast_copy_failed";
 
+    static final String SETTINGS_RECOMMENDED = "settings_recommended";
+    static final String IMAGE_INFO_PENDING = "image_info_pending";
+    static final String IMAGE_INFO_UNAVAILABLE = "image_info_unavailable";
     static final String IMAGE_INFO_TITLE = "image_info_title";
     static final String IMAGE_INFO_DESCRIPTION = "image_info_description";
     static final String HIGH_QUALITY_TITLE = "high_quality_title";
@@ -92,6 +95,26 @@ final class MorpheStrings {
     static final String SECTION_PIN_MENU = "section_pin_menu";
     static final String BUTTON_SAVE = "button_save";
     static final String BUTTON_CANCEL = "button_cancel";
+
+    static final String MENU_HIDE_ALL = "menu_hide_all";
+
+    static final String MENU_SHOW_ALL = "menu_show_all";
+
+    static final String MENU_SUGGESTED = "menu_suggested";
+
+    static final String HIDE_LIKE_TITLE = "hide_like_title";
+
+    static final String HIDE_COMMENT_BUTTON_TITLE = "hide_comment_button_title";
+
+    static final String INFO_REPLACE_TITLE = "info_replace_title";
+
+    static final String INFO_REPLACE_DESCRIPTION = "info_replace_description";
+
+    static final String IMAGE_DOWNLOAD_CHECKING = "image_download_checking";
+
+    static final String IMAGE_DOWNLOAD_FALLBACK = "image_download_fallback";
+
+    static final String IMAGE_DOWNLOAD_SAVED = "image_download_saved";
 
     // ------------------------------------------------------------------ tabella
 
@@ -107,6 +130,156 @@ final class MorpheStrings {
     private static final Map<String, String[]> TRANSLATIONS = new HashMap<>();
 
     static {
+        put(IMAGE_DOWNLOAD_SAVED,
+            "Image saved",
+            "Immagine salvata",
+            "Imagen guardada",
+            "Image enregistrée",
+            "Bild gespeichert",
+            "Imagem salva",
+            "Изображение сохранено",
+            "画像を保存しました",
+            "图片已保存",
+            "이미지 저장됨",
+            "Obraz zapisany",
+            "Afbeelding opgeslagen",
+            "Görsel kaydedildi",
+            "تم حفظ الصورة");
+        put(IMAGE_DOWNLOAD_FALLBACK,
+            "Original unavailable: downloading the best available variant",
+            "Originale non disponibile: scarico la migliore variante disponibile",
+            "Original no disponible: descargando la mejor versión disponible",
+            "Original indisponible : téléchargement de la meilleure version disponible",
+            "Original nicht verfügbar: beste verfügbare Variante wird geladen",
+            "Original indisponível: baixando a melhor versão disponível",
+            "Оригинал недоступен: скачивается лучшая доступная версия",
+            "原本が利用できないため、最適なバージョンをダウンロードします",
+            "原图不可用：正在下载最佳可用版本",
+            "원본을 사용할 수 없어 최상의 버전을 다운로드합니다",
+            "Oryginał niedostępny: pobieranie najlepszej dostępnej wersji",
+            "Origineel niet beschikbaar: beste beschikbare versie downloaden",
+            "Orijinal kullanılamıyor: en iyi mevcut sürüm indiriliyor",
+            "الأصل غير متاح: جارٍ تنزيل أفضل نسخة متاحة");
+        put(IMAGE_DOWNLOAD_CHECKING,
+            "Finding the best image…",
+            "Cerco la migliore immagine…",
+            "Buscando la mejor imagen…",
+            "Recherche de la meilleure image…",
+            "Bestes Bild wird gesucht…",
+            "Buscando a melhor imagem…",
+            "Поиск лучшего изображения…",
+            "最適な画像を検索中…",
+            "正在查找最佳图片…",
+            "최상의 이미지 찾는 중…",
+            "Szukanie najlepszego obrazu…",
+            "Beste afbeelding zoeken…",
+            "En iyi görsel aranıyor…",
+            "جارٍ البحث عن أفضل صورة…");
+        put(INFO_REPLACE_DESCRIPTION,
+            "Shows dimensions and format in the action bar and hides both buttons.",
+            "Mostra dimensioni e formato nella barra azioni e nasconde entrambi i pulsanti.",
+            "Muestra dimensiones y formato en la barra y oculta ambos botones.",
+            "Affiche dimensions et format dans la barre et masque les deux boutons.",
+            "Zeigt Größe und Format in der Aktionsleiste und blendet beide Buttons aus.",
+            "Mostra dimensões e formato na barra e oculta os dois botões.",
+            "Показывает размеры и формат на панели и скрывает обе кнопки.",
+            "アクションバーに寸法と形式を表示し、両方のボタンを非表示にします。",
+            "在操作栏显示尺寸和格式，并隐藏两个按钮。",
+            "작업 표시줄에 크기와 형식을 표시하고 두 버튼을 숨깁니다.",
+            "Pokazuje wymiary i format na pasku i ukrywa oba przyciski.",
+            "Toont afmetingen en formaat in de actiebalk en verbergt beide knoppen.",
+            "İşlem çubuğunda boyut ve biçimi gösterir, iki düğmeyi gizler.",
+            "يعرض الأبعاد والتنسيق في شريط الإجراءات ويخفي الزرين.");
+        put(INFO_REPLACE_TITLE,
+            "Image info instead of like and comment",
+            "Info immagine al posto di like e commenti",
+            "Información en lugar de Me gusta y comentarios",
+            "Infos à la place de J’aime et commentaires",
+            "Bildinfos statt Likes und Kommentaren",
+            "Informações em vez de curtidas e comentários",
+            "Информация вместо лайков и комментариев",
+            "いいね・コメントの代わりに画像情報",
+            "用图片信息替换点赞和评论",
+            "좋아요와 댓글 대신 이미지 정보",
+            "Informacje zamiast polubień i komentarzy",
+            "Afbeeldingsinfo in plaats van likes en reacties",
+            "Beğeni ve yorum yerine görsel bilgileri",
+            "معلومات الصورة بدلاً من الإعجاب والتعليقات");
+        put(HIDE_COMMENT_BUTTON_TITLE,
+            "Hide comment button",
+            "Nascondi pulsante commenti",
+            "Ocultar botón de comentarios",
+            "Masquer le bouton des commentaires",
+            "Kommentarbutton ausblenden",
+            "Ocultar botão de comentários",
+            "Скрыть кнопку комментариев",
+            "コメントボタンを非表示",
+            "隐藏评论按钮",
+            "댓글 버튼 숨기기",
+            "Ukryj przycisk komentarzy",
+            "Reactieknop verbergen",
+            "Yorum düğmesini gizle",
+            "إخفاء زر التعليقات");
+        put(HIDE_LIKE_TITLE,
+            "Hide like button",
+            "Nascondi pulsante Mi piace",
+            "Ocultar botón Me gusta",
+            "Masquer le bouton J’aime",
+            "Gefällt-mir-Button ausblenden",
+            "Ocultar botão Curtir",
+            "Скрыть кнопку «Нравится»",
+            "いいねボタンを非表示",
+            "隐藏点赞按钮",
+            "좋아요 버튼 숨기기",
+            "Ukryj przycisk polubienia",
+            "Vind-ik-leuk-knop verbergen",
+            "Beğeni düğmesini gizle",
+            "إخفاء زر الإعجاب");
+        put(MENU_SUGGESTED,
+            "Use recommended selection",
+            "Usa selezione consigliata",
+            "Usar selección recomendada",
+            "Utiliser la sélection conseillée",
+            "Empfohlene Auswahl verwenden",
+            "Usar seleção recomendada",
+            "Использовать рекомендуемый набор",
+            "おすすめの選択を使用",
+            "使用建议选择",
+            "추천 선택 사용",
+            "Użyj zalecanego wyboru",
+            "Aanbevolen selectie gebruiken",
+            "Önerilen seçimi kullan",
+            "استخدام الاختيار المقترح");
+        put(MENU_SHOW_ALL,
+            "Show all",
+            "Mostra tutte",
+            "Mostrar todas",
+            "Tout afficher",
+            "Alle anzeigen",
+            "Mostrar todas",
+            "Показать всё",
+            "すべて表示",
+            "显示全部",
+            "모두 표시",
+            "Pokaż wszystkie",
+            "Alles tonen",
+            "Tümünü göster",
+            "إظهار الكل");
+        put(MENU_HIDE_ALL,
+            "Hide all",
+            "Nascondi tutte",
+            "Ocultar todas",
+            "Tout masquer",
+            "Alle ausblenden",
+            "Ocultar todas",
+            "Скрыть всё",
+            "すべて非表示",
+            "隐藏全部",
+            "모두 숨기기",
+            "Ukryj wszystkie",
+            "Alles verbergen",
+            "Tümünü gizle",
+            "إخفاء الكل");
         put(APP_VERSION_LABEL,
             "App version",
             "Versione app",
@@ -169,37 +342,52 @@ final class MorpheStrings {
             "Verbergt winkelaanbevelingen en gesponsorde producten.",
             "Alışveriş önerilerini ve sponsorlu ürünleri gizler.",
             "يخفي توصيات التسوق والمنتجات الممولة.");
+        put(SETTINGS_RECOMMENDED,
+            "Use recommended settings", "Usa impostazioni consigliate", "Usar ajustes recomendados",
+            "Utiliser les réglages conseillés", "Empfohlene Einstellungen verwenden", "Usar configurações recomendadas",
+            "Использовать рекомендуемые настройки", "推奨設定を使用", "使用推荐设置", "권장 설정 사용",
+            "Użyj zalecanych ustawień", "Aanbevolen instellingen gebruiken", "Önerilen ayarları kullan", "استخدام الإعدادات الموصى بها");
+        put(IMAGE_INFO_PENDING,
+            "Checking download info…", "Verifico info download…", "Verificando información de descarga…",
+            "Vérification des infos de téléchargement…", "Download-Infos werden geprüft…", "Verificando informações do download…",
+            "Проверка данных загрузки…", "ダウンロード情報を確認中…", "正在检查下载信息…", "다운로드 정보 확인 중…",
+            "Sprawdzanie informacji pobierania…", "Downloadinformatie controleren…", "İndirme bilgileri kontrol ediliyor…", "جارٍ التحقق من معلومات التنزيل…");
+        put(IMAGE_INFO_UNAVAILABLE,
+            "Download info unavailable", "Info download non disponibili", "Información de descarga no disponible",
+            "Infos de téléchargement indisponibles", "Download-Infos nicht verfügbar", "Informações do download indisponíveis",
+            "Данные загрузки недоступны", "ダウンロード情報を取得できません", "下载信息不可用", "다운로드 정보를 확인할 수 없음",
+            "Informacje pobierania niedostępne", "Downloadinformatie niet beschikbaar", "İndirme bilgileri kullanılamıyor", "معلومات التنزيل غير متاحة");
         put(IMAGE_INFO_TITLE,
-            "Image information",
-            "Informazioni immagine",
-            "Información de la imagen",
-            "Informations sur l’image",
-            "Bildinformationen",
-            "Informações da imagem",
-            "Информация об изображении",
-            "画像情報",
-            "图片信息",
-            "이미지 정보",
-            "Informacje o obrazie",
-            "Afbeeldingsinformatie",
-            "Görsel bilgileri",
-            "معلومات الصورة");
+            "Show image info",
+            "Mostra info immagine",
+            "Mostrar información de imagen",
+            "Afficher les infos de l’image",
+            "Bildinfos anzeigen",
+            "Mostrar informações da imagem",
+            "Показывать информацию об изображении",
+            "画像情報を表示",
+            "显示图片信息",
+            "이미지 정보 표시",
+            "Pokaż informacje o obrazie",
+            "Afbeeldingsinfo tonen",
+            "Görsel bilgilerini göster",
+            "إظهار معلومات الصورة");
 
         put(IMAGE_INFO_DESCRIPTION,
-            "Adds image dimensions and format to the pin menu, using the largest available variant.",
-            "Mostra dimensioni e formato nel menu del Pin, usando la variante più grande disponibile.",
-            "Muestra dimensiones y formato en el menú del Pin usando la variante más grande disponible.",
-            "Affiche les dimensions et le format dans le menu de l’épingle, pour la plus grande version disponible.",
-            "Zeigt Größe und Format der größten verfügbaren Bildvariante im Pin-Menü.",
-            "Mostra dimensões e formato no menu do Pin, usando a maior versão disponível.",
-            "Показывает размеры и формат самой большой доступной версии в меню пина.",
-            "ピンのメニューに、利用可能な最大サイズの画像の寸法と形式を表示します。",
-            "在 Pin 菜单中显示最大可用图片的尺寸和格式。",
-            "핀 메뉴에 가장 큰 이미지의 크기와 형식을 표시합니다.",
-            "Pokazuje w menu pina wymiary i format największej dostępnej wersji obrazu.",
-            "Toont in het pinmenu de afmetingen en het formaat van de grootste beschikbare afbeelding.",
-            "Pin menüsünde mevcut en büyük görselin boyutlarını ve biçimini gösterir.",
-            "يعرض أبعاد أكبر نسخة متاحة من الصورة وتنسيقها في قائمة الدبوس.");
+            "Checks the dimensions and actual format of the image selected for download.",
+            "Verifica dimensioni e formato effettivo dell’immagine scelta per il download.",
+            "Verifica las dimensiones y el formato real de la imagen seleccionada para descargar.",
+            "Vérifie les dimensions et le format réel de l’image choisie pour le téléchargement.",
+            "Prüft Abmessungen und tatsächliches Format des zum Download gewählten Bildes.",
+            "Verifica as dimensões e o formato real da imagem selecionada para baixar.",
+            "Проверяет размеры и фактический формат изображения для загрузки.",
+            "ダウンロードする画像の寸法と実際の形式を確認します。",
+            "检查所选下载图片的尺寸和实际格式。",
+            "다운로드할 이미지의 크기와 실제 형식을 확인합니다.",
+            "Sprawdza wymiary i rzeczywisty format obrazu wybranego do pobrania.",
+            "Controleert de afmetingen en het werkelijke formaat van de te downloaden afbeelding.",
+            "İndirilecek görselin boyutlarını ve gerçek biçimini kontrol eder.",
+            "يتحقق من أبعاد الصورة المحددة للتنزيل وتنسيقها الفعلي.");
 
         put(HIGH_QUALITY_TITLE,
             "Download images in highest quality",
@@ -218,20 +406,20 @@ final class MorpheStrings {
             "تنزيل الصور بأعلى جودة");
 
         put(HIGH_QUALITY_DESCRIPTION,
-            "The Download image menu action uses the largest variant provided by Pinterest.",
-            "La voce Scarica immagine usa la variante più grande fornita da Pinterest.",
-            "La opción Descargar imagen usa la variante más grande proporcionada por Pinterest.",
-            "L’action Télécharger l’image utilise la plus grande version fournie par Pinterest.",
-            "Die Aktion Bild herunterladen verwendet die größte von Pinterest bereitgestellte Variante.",
-            "A opção de transferência da imagem usa a maior versão fornecida pelo Pinterest.",
-            "Пункт скачивания изображения использует самую большую версию, предоставленную Pinterest.",
-            "画像のダウンロードでは Pinterest が提供する最大サイズの画像を使用します。",
-            "下载图片时使用 Pinterest 提供的最大尺寸版本。",
-            "이미지 다운로드 메뉴에서 Pinterest가 제공하는 가장 큰 이미지를 사용합니다.",
-            "Opcja pobierania obrazu używa największej wersji udostępnionej przez Pinterest.",
-            "De optie voor het downloaden van afbeeldingen gebruikt de grootste versie die Pinterest aanbiedt.",
-            "Görsel indirme seçeneği Pinterest’in sağladığı en büyük sürümü kullanır.",
-            "يستخدم خيار تنزيل الصورة أكبر نسخة يوفّرها Pinterest.");
+            "Tries a verified original image, then falls back to the best available variant.",
+            "Cerca un originale verificato; se non disponibile, scarica la migliore variante disponibile.",
+            "Busca un original verificado; si no está disponible, descarga la mejor versión disponible.",
+            "Cherche un original vérifié, sinon télécharge la meilleure version disponible.",
+            "Sucht ein geprüftes Original und lädt sonst die beste verfügbare Variante.",
+            "Busca um original verificado; se indisponível, baixa a melhor versão disponível.",
+            "Ищет проверенный оригинал, иначе скачивает лучшую доступную версию.",
+            "確認済みの原本を探し、なければ最適なバージョンをダウンロードします。",
+            "查找经过验证的原图，否则下载最佳可用版本。",
+            "확인된 원본을 찾고 없으면 최상의 버전을 다운로드합니다.",
+            "Szuka zweryfikowanego oryginału, a następnie najlepszej dostępnej wersji.",
+            "Zoekt een gecontroleerd origineel en gebruikt anders de beste beschikbare versie.",
+            "Doğrulanmış orijinali arar, yoksa en iyi mevcut sürümü indirir.",
+            "يبحث عن أصل تم التحقق منه، وإلا ينزل أفضل نسخة متاحة.");
 
         put(MENU_FILTER_TITLE,
             "Hide pin menu actions",
@@ -266,20 +454,20 @@ final class MorpheStrings {
             "اختر الخيارات التي تريد إخفاءها");
 
         put(MENU_FILTER_DESCRIPTION,
-            "Select the Pinterest actions you want to hide. Clear the selections to show them again. Morphe actions are managed separately.",
-            "Seleziona le voci di Pinterest che vuoi nascondere. Deselezionale per mostrarle di nuovo. Le voci Morphe si gestiscono nelle altre impostazioni.",
-            "Selecciona las opciones de Pinterest que quieres ocultar. Desmárcalas para volver a mostrarlas. Las opciones de Morphe se gestionan por separado.",
-            "Sélectionnez les actions Pinterest à masquer. Décochez-les pour les réafficher. Les actions Morphe se gèrent séparément.",
-            "Wähle die Pinterest-Aktionen, die du ausblenden möchtest. Entferne die Auswahl, um sie wieder anzuzeigen. Morphe-Aktionen werden separat verwaltet.",
-            "Seleciona as opções do Pinterest que queres ocultar. Desmarca-as para as mostrar novamente. As opções Morphe são geridas separadamente.",
-            "Выберите пункты Pinterest, которые хотите скрыть. Снимите отметки, чтобы вернуть их. Пункты Morphe настраиваются отдельно.",
-            "非表示にする Pinterest の項目を選択してください。選択を解除すると再表示されます。Morphe の項目は別の設定で管理します。",
-            "勾选要隐藏的 Pinterest 选项。取消勾选即可重新显示。Morphe 选项在其他设置中管理。",
-            "숨길 Pinterest 항목을 선택하세요. 선택을 해제하면 다시 표시됩니다. Morphe 항목은 별도로 설정합니다.",
-            "Zaznacz opcje Pinterest, które chcesz ukryć. Odznacz je, aby je przywrócić. Opcje Morphe są zarządzane osobno.",
-            "Selecteer de Pinterest-acties die je wilt verbergen. Vink ze uit om ze weer te tonen. Morphe-acties beheer je apart.",
-            "Gizlemek istediğiniz Pinterest seçeneklerini işaretleyin. Yeniden göstermek için işaretlerini kaldırın. Morphe seçenekleri ayrı olarak yönetilir.",
-            "حدد خيارات Pinterest التي تريد إخفاءها. أزل التحديد لإظهارها مجددًا. تُدار خيارات Morphe بشكل منفصل.");
+            "Select the actions to hide. Clear their checkboxes to show them again.",
+            "Seleziona le voci da nascondere. Deselezionale per mostrarle di nuovo.",
+            "Selecciona las opciones que quieres ocultar. Desmárcalas para mostrarlas de nuevo.",
+            "Sélectionnez les actions à masquer. Décochez-les pour les afficher à nouveau.",
+            "Wähle die auszublendenden Aktionen. Deaktiviere die Auswahl, um sie wieder anzuzeigen.",
+            "Selecione as ações a ocultar. Desmarque-as para mostrar novamente.",
+            "Выберите действия для скрытия. Снимите отметки, чтобы показать их снова.",
+            "非表示にする項目を選択します。チェックを外すと再び表示されます。",
+            "选择要隐藏的操作。取消勾选即可重新显示。",
+            "숨길 항목을 선택하세요. 선택을 해제하면 다시 표시됩니다.",
+            "Wybierz działania do ukrycia. Odznacz je, aby pokazać ponownie.",
+            "Selecteer de acties die je wilt verbergen. Deselecteer ze om ze opnieuw te tonen.",
+            "Gizlenecek işlemleri seçin. Yeniden göstermek için seçimlerini kaldırın.",
+            "حدد الإجراءات المراد إخفاؤها. أزل تحديدها لإظهارها مجدداً.");
 
         put(SECTION_PIN_MENU,
             "Pin menu",
