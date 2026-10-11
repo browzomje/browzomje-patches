@@ -1,3 +1,9 @@
+## [1.13.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.12.0...v1.13.0-dev.1) (2026-10-11)
+
+### ✨ New Features
+
+* **Pinterest:** show cached download file size from existing metadata headers ([1da81c4](https://github.com/browzomje/browzomje-patches/commit/1da81c4adf3d0178feba8f1d3c3dc2193b301351))
+
 ## [1.12.0](https://github.com/browzomje/browzomje-patches/compare/v1.11.0...v1.12.0) (2026-10-11)
 
 ### 🐛 Bug Fixes
