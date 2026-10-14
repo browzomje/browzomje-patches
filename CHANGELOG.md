@@ -1,3 +1,9 @@
+## [1.13.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.2...v1.13.0-dev.3) (2026-10-14)
+
+### ✨ New Features
+
+* **Pinterest:** preserve Home feed and clarify comment controls ([b09c8e8](https://github.com/browzomje/browzomje-patches/commit/b09c8e888c45ebf9e1733b5f7865a5777689d5d8))
+
 ## [1.13.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.1...v1.13.0-dev.2) (2026-10-11)
 
 ### 🐛 Bug Fixes
