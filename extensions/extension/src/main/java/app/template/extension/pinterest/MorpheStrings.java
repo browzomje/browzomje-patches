@@ -79,6 +79,8 @@ final class MorpheStrings {
 
     static final String BUTTON_REFRESH = "button_refresh";
     static final String BUTTON_COPY = "button_copy";
+    static final String SETTINGS_SEARCH = "settings_search";
+    static final String SETTINGS_SEARCH_EMPTY = "settings_search_empty";
     static final String TOAST_RESTART = "toast_restart";
     static final String TOAST_COPIED = "toast_copied";
     static final String TOAST_COPY_FAILED = "toast_copy_failed";
@@ -1128,6 +1130,9 @@ final class MorpheStrings {
             "Copia", "Copiar", "Copier", "Kopieren", "Copiar", "Копировать",
             "コピー", "复制", "복사", "Kopiuj", "Kopiëren", "Kopyala", "نسخ");
 
+        put(SETTINGS_SEARCH, "Search settings", "Cerca impostazioni", "Buscar ajustes", "Rechercher des paramètres", "Einstellungen suchen", "Pesquisar definições", "Поиск настроек", "設定を検索", "搜索设置", "설정 검색", "Szukaj ustawień", "Instellingen zoeken", "Ayarları ara", "البحث في الإعدادات");
+        put(SETTINGS_SEARCH_EMPTY, "No settings found", "Nessuna impostazione trovata", "No se encontraron ajustes", "Aucun paramètre trouvé", "Keine Einstellungen gefunden", "Nenhuma definição encontrada", "Настройки не найдены", "設定が見つかりません", "未找到设置", "설정을 찾을 수 없습니다", "Nie znaleziono ustawień", "Geen instellingen gevonden", "Ayar bulunamadı", "لم يتم العثور على إعدادات");
+
         put(TOAST_RESTART,
             "Restart Pinterest to apply everywhere",
             "Riavvia Pinterest per applicare ovunque",
@@ -1194,6 +1199,22 @@ final class MorpheStrings {
      *     tradotte. Non restituisce mai null: una chiave sconosciuta torna com'è, così un
      *     eventuale refuso si vede a schermo invece di far sparire l'etichetta.
      */
+    static String normalizeSearch(String text) {
+        return java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT);
+    }
+
+    /** Index every supported translation of the visible label, including English. */
+    static String searchAliases(String visibleText) {
+        StringBuilder result = new StringBuilder(visibleText);
+        for (String[] values : TRANSLATIONS.values()) {
+            boolean matches = false;
+            for (String value : values) if (visibleText.equals(value)) { matches = true; break; }
+            if (matches) for (String value : values) if (value != null) result.append(' ').append(value);
+        }
+        return result.toString();
+    }
+
     static String get(String key) {
         String[] values = TRANSLATIONS.get(key);
         if (values == null) {

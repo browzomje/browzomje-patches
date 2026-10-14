@@ -16,6 +16,10 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -61,7 +65,8 @@ public final class MorpheSettingsActivity extends Activity {
     private boolean refreshingDependencies;
     private TextView diagnosticsView;
     private TextView restartNotice;
-    private static boolean presetNotice;
+    private final java.util.Set<View> sectionHeaders = new java.util.HashSet<>();
+    private final Runnable hideRestartNotice = () -> restartNotice.setVisibility(View.GONE);
 
     /** Pin Sans, il font di Pinterest, o null se l'APK non lo espone più con questo nome. */
     private Typeface fontRegular;
@@ -103,7 +108,7 @@ public final class MorpheSettingsActivity extends Activity {
         recommended.setOnClickListener(v -> {
             MorpheSettingsStore.applyRecommended();
             Intent refresh = new Intent(this, MorpheSettingsActivity.class);
-            presetNotice = true;
+            refresh.putExtra("show_restart_notice", true);
             startActivity(refresh);
             finish();
         });
@@ -215,21 +220,32 @@ public final class MorpheSettingsActivity extends Activity {
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(Color.BLACK);
         screen.addView(buildTopBar());
-        restartNotice = new TextView(this);
-        restartNotice.setText(MorpheStrings.get(MorpheStrings.TOAST_RESTART));
-        restartNotice.setTextColor(ACCENT);
-        restartNotice.setTextSize(14);
-        restartNotice.setTypeface(fontRegular);
-        restartNotice.setPadding(dp(20), dp(8), dp(20), dp(8));
-        restartNotice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        restartNotice.setVisibility(View.GONE);
-        screen.addView(restartNotice);
+        screen.addView(buildSettingsSearch(root, scrollView));
         screen.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        setContentView(screen);
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.addView(screen, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        restartNotice = new TextView(this);
+        restartNotice.setText(MorpheStrings.get(MorpheStrings.TOAST_RESTART));
+        restartNotice.setTextColor(TEXT_PRIMARY);
+        restartNotice.setTextSize(14);
+        restartNotice.setTypeface(fontRegular);
+        restartNotice.setPadding(dp(20), dp(16), dp(20), dp(16));
+        restartNotice.setBackgroundColor(BUTTON_BACKGROUND);
+        restartNotice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        restartNotice.setVisibility(View.GONE);
+        FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+        noticeParams.setMargins(dp(12), 0, dp(12), dp(12));
+        overlay.addView(restartNotice, noticeParams);
+        setContentView(overlay);
         setTitle("Morphe - browzomje");
-        if (presetNotice) { presetNotice = false; showRestartNotice(); }
+        if (getIntent().getBooleanExtra("show_restart_notice", false)) {
+            getIntent().removeExtra("show_restart_notice");
+            showRestartNotice();
+        }
     }
 
     /**
@@ -320,7 +336,86 @@ public final class MorpheSettingsActivity extends Activity {
     }
 
     private void showRestartNotice() {
-        if (restartNotice != null) restartNotice.setVisibility(View.VISIBLE);
+        if (restartNotice == null) return;
+        restartNotice.removeCallbacks(hideRestartNotice);
+        restartNotice.setVisibility(View.VISIBLE);
+        restartNotice.postDelayed(hideRestartNotice, 5000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (restartNotice != null) restartNotice.removeCallbacks(hideRestartNotice);
+        super.onDestroy();
+    }
+
+    private String searchableText(View view) {
+        StringBuilder text = new StringBuilder();
+        if (view instanceof TextView) text.append(MorpheStrings.searchAliases(
+                ((TextView) view).getText().toString()));
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++)
+                text.append(' ').append(searchableText(group.getChildAt(i)));
+        }
+        return MorpheStrings.normalizeSearch(text.toString());
+    }
+
+    private View buildSettingsSearch(LinearLayout root, ScrollView scroll) {
+        EditText search = new EditText(this);
+        search.setSingleLine(true);
+        search.setTextColor(TEXT_PRIMARY);
+        search.setHintTextColor(TEXT_SECONDARY);
+        search.setHint(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH));
+        search.setTextSize(16);
+        search.setPadding(dp(20), dp(8), dp(20), dp(8));
+        search.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        java.util.Map<View, String> index = new java.util.HashMap<>();
+        for (int i = 0; i < root.getChildCount(); i++) {
+            View child = root.getChildAt(i);
+            index.put(child, searchableText(child));
+        }
+        TextView empty = new TextView(this);
+        empty.setText(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH_EMPTY));
+        empty.setTextColor(TEXT_SECONDARY);
+        empty.setPadding(0, dp(20), 0, dp(20));
+        empty.setVisibility(View.GONE);
+        root.addView(empty);
+        search.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = MorpheStrings.normalizeSearch(s.toString()).trim();
+                String[] words = query.split("\\s+");
+                View header = null;
+                boolean sectionMatch = false;
+                boolean anyMatch = false;
+                boolean previousMatch = false;
+                for (int i = 0; i < root.getChildCount() - 1; i++) {
+                    View child = root.getChildAt(i);
+                    if (sectionHeaders.contains(child)) {
+                        if (header != null) header.setVisibility(query.isEmpty() || sectionMatch ? View.VISIBLE : View.GONE);
+                        header = child;
+                        sectionMatch = false;
+                        previousMatch = false;
+                        continue;
+                    }
+                    String text = index.get(child);
+                    boolean match = query.isEmpty();
+                    if (!match && text != null && !text.trim().isEmpty()) {
+                        match = true;
+                        for (String word : words) if (!text.contains(word)) { match = false; break; }
+                    }
+                    // Dividers follow the visibility of their setting.
+                    if (text == null || text.trim().isEmpty()) match = query.isEmpty() || previousMatch;
+                    else { previousMatch = match; anyMatch |= match; sectionMatch |= match; }
+                    child.setVisibility(match ? View.VISIBLE : View.GONE);
+                }
+                if (header != null) header.setVisibility(query.isEmpty() || sectionMatch ? View.VISIBLE : View.GONE);
+                empty.setVisibility(!query.isEmpty() && !anyMatch ? View.VISIBLE : View.GONE);
+                scroll.scrollTo(0, 0);
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+        return search;
     }
 
     /**
@@ -379,6 +474,7 @@ public final class MorpheSettingsActivity extends Activity {
         header.setTextColor(ACCENT);
         row.addView(header);
 
+        sectionHeaders.add(row);
         parent.addView(row);
     }
 
