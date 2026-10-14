@@ -16,6 +16,10 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -57,9 +61,12 @@ public final class MorpheSettingsActivity extends Activity {
     private static final int REQUEST_EXPORT = 4701;
     private static final int REQUEST_IMPORT = 4702;
 
+    private final java.util.Map<String, Switch> settingToggles = new java.util.HashMap<>();
+    private boolean refreshingDependencies;
     private TextView diagnosticsView;
     private TextView restartNotice;
-    private static boolean presetNotice;
+    private final java.util.Set<View> sectionHeaders = new java.util.HashSet<>();
+    private final Runnable hideRestartNotice = () -> restartNotice.setVisibility(View.GONE);
 
     /** Pin Sans, il font di Pinterest, o null se l'APK non lo espone più con questo nome. */
     private Typeface fontRegular;
@@ -101,7 +108,7 @@ public final class MorpheSettingsActivity extends Activity {
         recommended.setOnClickListener(v -> {
             MorpheSettingsStore.applyRecommended();
             Intent refresh = new Intent(this, MorpheSettingsActivity.class);
-            presetNotice = true;
+            refresh.putExtra("show_restart_notice", true);
             startActivity(refresh);
             finish();
         });
@@ -126,10 +133,6 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheStrings.get(MorpheStrings.SCREENSHOT_DESCRIPTION),
                 MorpheSettingsStore.KEY_DISABLE_SCREENSHOT_SHARE,
                 MorpheSettingsStore.isScreenshotShareDisabled());
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_TITLE),
-                MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_DESCRIPTION),
-                MorpheSettingsStore.KEY_HIDE_COMMENTS,
-                MorpheSettingsStore.isCommentsHidden());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_TITLE),
                 MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_DESCRIPTION),
                 MorpheSettingsStore.KEY_SANITIZE_LINKS,
@@ -167,23 +170,32 @@ public final class MorpheSettingsActivity extends Activity {
 
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_PIN_MENU),
                 "ic_vr_ellipsis_gestalt");
+        addMenuFilterRow(root);
         addToggleRow(root, MorpheStrings.get(MorpheStrings.IMAGE_INFO_TITLE),
                 MorpheStrings.get(MorpheStrings.IMAGE_INFO_DESCRIPTION),
                 MorpheSettingsStore.KEY_IMAGE_INFO,
                 MorpheSettingsStore.effective(MorpheSettingsStore.KEY_IMAGE_INFO));
-        addMenuFilterRow(root);
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_LIKE_TITLE), null,
-                MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_LIKE));
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), null,
-                MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.INFO_REPLACE_TITLE), MorpheStrings.get(MorpheStrings.INFO_REPLACE_DESCRIPTION),
                 MorpheSettingsStore.KEY_INFO_REPLACE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_INFO_REPLACE));
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_LIKE_TITLE), null,
+                MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_LIKE));
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_TITLE),
+                MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_COMMENTS,
+                MorpheSettingsStore.isCommentsHidden());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON));
+        refreshPinDependencies();
 
         // Home e Profilo non compaiono qui: vedi MorpheSettingsStore.isNavTabHidden. Nasconderli
         // renderebbe irraggiungibile questa stessa schermata.
         // Ogni riga porta l'icona del tasto che nasconde: dal nome non è ovvio quale sia, e da
         // 14.28 "Crea" e "Notifiche" non stanno nemmeno più nella barra ma in alto a destra.
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_NAVBAR), "ic_vr_home_gestalt");
+        if (HomeFeedRefresh.isAvailable()) addToggleRow(root, MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_TITLE),
+                MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_DESCRIPTION),
+                MorpheSettingsStore.KEY_KEEP_HOME_FEED,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_KEEP_HOME_FEED));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_SEARCH_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_SEARCH_BUTTON,
                 MorpheSettingsStore.isSearchButtonHidden(), "ic_vr_magnifying_glass_gestalt");
@@ -208,21 +220,32 @@ public final class MorpheSettingsActivity extends Activity {
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setBackgroundColor(Color.BLACK);
         screen.addView(buildTopBar());
-        restartNotice = new TextView(this);
-        restartNotice.setText(MorpheStrings.get(MorpheStrings.TOAST_RESTART));
-        restartNotice.setTextColor(ACCENT);
-        restartNotice.setTextSize(14);
-        restartNotice.setTypeface(fontRegular);
-        restartNotice.setPadding(dp(20), dp(8), dp(20), dp(8));
-        restartNotice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        restartNotice.setVisibility(View.GONE);
-        screen.addView(restartNotice);
+        screen.addView(buildSettingsSearch(root, scrollView));
         screen.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        setContentView(screen);
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.addView(screen, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        restartNotice = new TextView(this);
+        restartNotice.setText(MorpheStrings.get(MorpheStrings.TOAST_RESTART));
+        restartNotice.setTextColor(TEXT_PRIMARY);
+        restartNotice.setTextSize(14);
+        restartNotice.setTypeface(fontRegular);
+        restartNotice.setPadding(dp(20), dp(16), dp(20), dp(16));
+        restartNotice.setBackgroundColor(BUTTON_BACKGROUND);
+        restartNotice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        restartNotice.setVisibility(View.GONE);
+        FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+        noticeParams.setMargins(dp(12), 0, dp(12), dp(12));
+        overlay.addView(restartNotice, noticeParams);
+        setContentView(overlay);
         setTitle("Morphe - browzomje");
-        if (presetNotice) { presetNotice = false; showRestartNotice(); }
+        if (getIntent().getBooleanExtra("show_restart_notice", false)) {
+            getIntent().removeExtra("show_restart_notice");
+            showRestartNotice();
+        }
     }
 
     /**
@@ -313,7 +336,86 @@ public final class MorpheSettingsActivity extends Activity {
     }
 
     private void showRestartNotice() {
-        if (restartNotice != null) restartNotice.setVisibility(View.VISIBLE);
+        if (restartNotice == null) return;
+        restartNotice.removeCallbacks(hideRestartNotice);
+        restartNotice.setVisibility(View.VISIBLE);
+        restartNotice.postDelayed(hideRestartNotice, 5000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (restartNotice != null) restartNotice.removeCallbacks(hideRestartNotice);
+        super.onDestroy();
+    }
+
+    private String searchableText(View view) {
+        StringBuilder text = new StringBuilder();
+        if (view instanceof TextView) text.append(MorpheStrings.searchAliases(
+                ((TextView) view).getText().toString()));
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++)
+                text.append(' ').append(searchableText(group.getChildAt(i)));
+        }
+        return MorpheStrings.normalizeSearch(text.toString());
+    }
+
+    private View buildSettingsSearch(LinearLayout root, ScrollView scroll) {
+        EditText search = new EditText(this);
+        search.setSingleLine(true);
+        search.setTextColor(TEXT_PRIMARY);
+        search.setHintTextColor(TEXT_SECONDARY);
+        search.setHint(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH));
+        search.setTextSize(16);
+        search.setPadding(dp(20), dp(8), dp(20), dp(8));
+        search.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        java.util.Map<View, String> index = new java.util.HashMap<>();
+        for (int i = 0; i < root.getChildCount(); i++) {
+            View child = root.getChildAt(i);
+            index.put(child, searchableText(child));
+        }
+        TextView empty = new TextView(this);
+        empty.setText(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH_EMPTY));
+        empty.setTextColor(TEXT_SECONDARY);
+        empty.setPadding(0, dp(20), 0, dp(20));
+        empty.setVisibility(View.GONE);
+        root.addView(empty);
+        search.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = MorpheStrings.normalizeSearch(s.toString()).trim();
+                String[] words = query.split("\\s+");
+                View header = null;
+                boolean sectionMatch = false;
+                boolean anyMatch = false;
+                boolean previousMatch = false;
+                for (int i = 0; i < root.getChildCount() - 1; i++) {
+                    View child = root.getChildAt(i);
+                    if (sectionHeaders.contains(child)) {
+                        if (header != null) header.setVisibility(query.isEmpty() || sectionMatch ? View.VISIBLE : View.GONE);
+                        header = child;
+                        sectionMatch = false;
+                        previousMatch = false;
+                        continue;
+                    }
+                    String text = index.get(child);
+                    boolean match = query.isEmpty();
+                    if (!match && text != null && !text.trim().isEmpty()) {
+                        match = true;
+                        for (String word : words) if (!text.contains(word)) { match = false; break; }
+                    }
+                    // Dividers follow the visibility of their setting.
+                    if (text == null || text.trim().isEmpty()) match = query.isEmpty() || previousMatch;
+                    else { previousMatch = match; anyMatch |= match; sectionMatch |= match; }
+                    child.setVisibility(match ? View.VISIBLE : View.GONE);
+                }
+                if (header != null) header.setVisibility(query.isEmpty() || sectionMatch ? View.VISIBLE : View.GONE);
+                empty.setVisibility(!query.isEmpty() && !anyMatch ? View.VISIBLE : View.GONE);
+                scroll.scrollTo(0, 0);
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+        return search;
     }
 
     /**
@@ -372,6 +474,7 @@ public final class MorpheSettingsActivity extends Activity {
         header.setTextColor(ACCENT);
         row.addView(header);
 
+        sectionHeaders.add(row);
         parent.addView(row);
     }
 
@@ -626,10 +729,13 @@ public final class MorpheSettingsActivity extends Activity {
         toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (refreshingDependencies) return;
                 MorpheSettingsStore.set(prefKey, isChecked);
+                refreshPinDependencies();
                 showRestartNotice();
             }
         });
+        settingToggles.put(prefKey, toggle);
         row.addView(toggle);
         parent.addView(row);
 
@@ -637,6 +743,25 @@ public final class MorpheSettingsActivity extends Activity {
         divider.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
         divider.setBackgroundColor(DIVIDER);
         parent.addView(divider);
+    }
+
+    private void refreshPinDependencies() {
+        refreshingDependencies = true;
+        try {
+            for (String key : new String[] {MorpheSettingsStore.KEY_INFO_REPLACE,
+                    MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON}) {
+                Switch toggle = settingToggles.get(key);
+                if (toggle == null) continue;
+                toggle.setChecked(MorpheSettingsStore.effective(key));
+                boolean enabled = MorpheSettingsStore.isToggleEnabled(key);
+                toggle.setEnabled(enabled);
+                if (toggle.getParent() instanceof View) {
+                    View row = (View) toggle.getParent();
+                    row.setEnabled(enabled);
+                    row.setAlpha(enabled ? 1f : 0.45f);
+                }
+            }
+        } finally { refreshingDependencies = false; }
     }
 
     /**

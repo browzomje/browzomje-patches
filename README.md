@@ -14,9 +14,9 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.12.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.12.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;36 patches total
+> **[v1.13.0-dev.4](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0-dev.4)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;31 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;32 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -46,6 +46,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section on the search screen and below the search bar. Pinterest still logs searches server-side. |  |
+| [Keep Home feed](#keep-home-feed) | Keeps the Home feed when returning to Home instead of refreshing automatically. Pull-to-refresh remains available. Controlled in Morphe settings. |  |
 | [Morphe runtime names](#morphe-runtime-names) | Resolves the class Pinterest builds its toasts with, so Morphe's messages look like the app's own. |  |
 | [Morphe settings entry](#morphe-settings-entry) | Adds the "Morphe" item to the Account Settings list to open the toggle screen. |  |
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |

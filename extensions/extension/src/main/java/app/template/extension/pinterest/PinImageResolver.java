@@ -25,19 +25,28 @@ public final class PinImageResolver {
         final String url, extension, mime;
         final int width, height;
         final boolean original;
-        final long checked;
+        final long checked, fileSize;
         Result(String url, String extension, int width, int height, boolean original) {
-            this(url, extension, width, height, original, System.currentTimeMillis());
+            this(url, extension, width, height, original, System.currentTimeMillis(), -1);
         }
-        Result(String url, String extension, int width, int height, boolean original, long checked) {
+        Result(String url, String extension, int width, int height, boolean original, long checked, long fileSize) {
             this.url=url; this.extension=extension; this.width=width; this.height=height;
-            this.original=original; this.checked=checked;
+            this.original=original; this.checked=checked; this.fileSize=fileSize;
             mime="image/" + (extension.equals("jpg") ? "jpeg" : extension);
         }
-        String describe() { return width + " × " + height + " px · " + (extension.equals("jpg") ? "JPEG" : extension.toUpperCase(java.util.Locale.ROOT)); }
+        String describe() { return width + " × " + height + " px · " + (extension.equals("jpg") ? "JPEG" : extension.toUpperCase(java.util.Locale.ROOT))
+                + (fileSize > 0 ? " · " + sizeLabel(fileSize) : ""); }
+        private static String sizeLabel(long bytes) {
+            if (bytes < 1000) return bytes + " B";
+            String[] units = {"kB", "MB", "GB", "TB", "PB", "EB"};
+            double value = bytes / 1000.0;
+            int unit = 0;
+            while (value >= 1000 && unit < units.length - 1) { value /= 1000; unit++; }
+            return String.format(java.util.Locale.getDefault(), "%.1f %s", value, units[unit]);
+        }
         JSONObject json() throws Exception {
             return new JSONObject().put("url",url).put("ext",extension).put("width",width)
-                    .put("height",height).put("original",original).put("checked",checked);
+                    .put("height",height).put("original",original).put("checked",checked).put("fileSize",fileSize);
         }
     }
     private PinImageResolver() {}
@@ -62,7 +71,7 @@ public final class PinImageResolver {
                 String stored=context.getSharedPreferences("morphe_image_metadata",0).getString(key,null);
                 if(stored!=null) try {
                     JSONObject j=new JSONObject(stored);
-                    cached=new Result(j.getString("url"),j.getString("ext"),j.getInt("width"),j.getInt("height"),j.getBoolean("original"),j.getLong("checked"));
+                    cached=new Result(j.getString("url"),j.getString("ext"),j.getInt("width"),j.getInt("height"),j.getBoolean("original"),j.getLong("checked"),j.optLong("fileSize",-1));
                 } catch(Exception ignored) {}
             }
             if(cached!=null && System.currentTimeMillis()-cached.checked>=0 && System.currentTimeMillis()-cached.checked<TTL) return cached;
@@ -113,6 +122,7 @@ public final class PinImageResolver {
         connection.setInstanceFollowRedirects(false);
         connection.setRequestProperty("Range","bytes=0-"+(MAX_PREFIX-1));
         connection.setRequestProperty("Accept","image/*");
+        connection.setRequestProperty("Accept-Encoding","identity");
         long deadline=android.os.SystemClock.elapsedRealtime()+timeout*2L;
         try {
             int status=connection.getResponseCode();
@@ -121,6 +131,7 @@ public final class PinImageResolver {
                 String range=connection.getHeaderField("Content-Range");
                 if(range==null || !range.startsWith("bytes 0-")) throw new java.io.IOException("invalid prefix range");
             }
+            long fileSize=responseSize(connection,status);
             try(InputStream input=connection.getInputStream();ByteArrayOutputStream output=new ByteArrayOutputStream()) {
                 byte[] buffer=new byte[1024];
                 while(output.size()<MAX_PREFIX && android.os.SystemClock.elapsedRealtime()<deadline) {
@@ -133,12 +144,34 @@ public final class PinImageResolver {
                     BitmapFactory.decodeByteArray(bytes,0,bytes.length,options);
                     if(options.outWidth>0 && options.outHeight>0) {
                         MorpheLog.d(MorpheLog.BOARD,"verified download metadata "+options.outWidth+"x"+options.outHeight+" "+format+", prefix="+bytes.length);
-                        return new Result(url,format,options.outWidth,options.outHeight,original);
+                        return new Result(url,format,options.outWidth,options.outHeight,original,System.currentTimeMillis(),fileSize);
                     }
                 }
             }
             throw new java.io.IOException("image metadata not found within prefix limit");
         } finally { connection.disconnect(); }
+    }
+    // A 206 Content-Length is only the prefix size, never the full image size.
+    static long responseSize(HttpURLConnection connection, int status) {
+        String encoding = connection.getHeaderField("Content-Encoding");
+        if (encoding != null && !encoding.trim().equalsIgnoreCase("identity")) return -1;
+        try {
+            if (status == 206) {
+                String range = connection.getHeaderField("Content-Range");
+                java.util.regex.Matcher match = java.util.regex.Pattern
+                        .compile("bytes 0-([0-9]+)/([0-9]+|\\*)").matcher(range == null ? "" : range.trim());
+                if (!match.matches() || match.group(2).equals("*")) return -1;
+                long end = Long.parseLong(match.group(1)), total = Long.parseLong(match.group(2));
+                return total > end ? total : -1;
+            }
+            if (status == 200) {
+                String length = connection.getHeaderField("Content-Length");
+                if (length == null || !length.trim().matches("[0-9]+")) return -1;
+                long total = Long.parseLong(length.trim());
+                return total > 0 ? total : -1;
+            }
+        } catch (NumberFormatException ignored) {}
+        return -1;
     }
     static String format(byte[] bytes) {
         if(bytes.length<12) return null;
