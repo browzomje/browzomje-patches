@@ -1,3 +1,9 @@
+## [1.13.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.3...v1.13.0-dev.4) (2026-10-14)
+
+### ✨ New Features
+
+* **Pinterest:** search settings across languages and show restart snackbar ([ad66991](https://github.com/browzomje/browzomje-patches/commit/ad66991ea4e6cde4713ae3e1be5009e9770b13b4))
+
 ## [1.13.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.2...v1.13.0-dev.3) (2026-10-14)
 
 ### ✨ New Features

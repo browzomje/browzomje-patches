@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-14T08:51:30",
-  "description": "## [1.13.0-dev.3](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.2...v1.13.0-dev.3) (2026-10-14)\n\n### ✨ New Features\n\n* **Pinterest:** preserve Home feed and clarify comment controls ([b09c8e8](https://github.com/browzomje/browzomje-patches/commit/b09c8e888c45ebf9e1733b5f7865a5777689d5d8))",
-  "download_url": "https://github.com/browzomje/browzomje-patches/releases/download/v1.13.0-dev.3/patches-1.13.0-dev.3.mpp",
+  "created_at": "2026-10-14T09:10:34",
+  "description": "## [1.13.0-dev.4](https://github.com/browzomje/browzomje-patches/compare/v1.13.0-dev.3...v1.13.0-dev.4) (2026-10-14)\n\n### ✨ New Features\n\n* **Pinterest:** search settings across languages and show restart snackbar ([ad66991](https://github.com/browzomje/browzomje-patches/commit/ad66991ea4e6cde4713ae3e1be5009e9770b13b4))",
+  "download_url": "https://github.com/browzomje/browzomje-patches/releases/download/v1.13.0-dev.4/patches-1.13.0-dev.4.mpp",
   "signature_download_url": "",
-  "version": "1.13.0-dev.3"
+  "version": "1.13.0-dev.4"
 }
