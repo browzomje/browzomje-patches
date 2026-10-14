@@ -33,6 +33,7 @@ public final class MorpheSettingsStore {
     public static final String KEY_INFO_REPLACE = "image_info_replace_actions";
     public static final String KEY_IMAGE_INFO = "image_info";
     public static final String KEY_HIGH_QUALITY_IMAGES = "high_quality_images";
+    public static final String KEY_KEEP_HOME_FEED = "keep_home_feed";
     public static final String KEY_HIDE_COMMENTS = "hide_comments";
 
     /**
@@ -44,11 +45,11 @@ public final class MorpheSettingsStore {
      */
     public static final String[] KEYS = {
         KEY_DISABLE_ADS,
+        KEY_KEEP_HOME_FEED,
         KEY_HIDE_SHOPPING_PINS,
         KEY_HIDE_SEARCH_BOARD_MODULES,
         KEY_HIDE_SEARCH_HISTORY,
         KEY_DISABLE_SCREENSHOT_SHARE,
-        KEY_HIDE_COMMENTS,
         KEY_SANITIZE_LINKS,
         KEY_SHARE_LINK_ONLY,
         KEY_SYSTEM_SHARE_SHEET,
@@ -58,6 +59,7 @@ public final class MorpheSettingsStore {
         KEY_LONG_PRESS_DOWNLOAD,
         KEY_IMAGE_INFO,
         KEY_HIDE_LIKE,
+        KEY_HIDE_COMMENTS,
         KEY_HIDE_COMMENT_BUTTON,
         KEY_INFO_REPLACE,
         KEY_HIGH_QUALITY_IMAGES,
@@ -167,6 +169,7 @@ public final class MorpheSettingsStore {
 
     static boolean isToggleEnabled(String key) {
         if (KEY_INFO_REPLACE.equals(key)) return effective(KEY_IMAGE_INFO);
+        if (KEY_HIDE_COMMENT_BUTTON.equals(key) && isCommentsHidden()) return false;
         if (KEY_HIDE_LIKE.equals(key) || KEY_HIDE_COMMENT_BUTTON.equals(key))
             return !effective(KEY_INFO_REPLACE);
         return true;

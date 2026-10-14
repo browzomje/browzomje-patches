@@ -19,7 +19,7 @@ STUBS = {
  public Editor putString(String k,String v){values.put(k,v);return this;}
  public void apply(){}public boolean commit(){return true;}}
 }''',
-'app/browzomje/extension/pinterest/MorpheLog.java': 'package app.browzomje.extension.pinterest;class MorpheLog {static String TAG="test";}',
+'app/browzomje/extension/pinterest/MorpheLog.java': 'package app.browzomje.extension.pinterest;class MorpheLog {static String TAG="test";static void hookFired(String c,String d){}static void ok(String c,String d){}}',
 'app/browzomje/extension/pinterest/PinMenuFilter.java': 'package app.browzomje.extension.pinterest;class PinMenuFilter {static java.util.Set<String> recommended(){return java.util.Collections.emptySet();}static String encode(java.util.Set<String> s){return "";}}',
 'app/browzomje/extension/pinterest/SettingsTest.java': '''package app.browzomje.extension.pinterest;
 public class SettingsTest {
@@ -29,6 +29,7 @@ public class SettingsTest {
   java.lang.reflect.Field field=MorpheSettingsStore.class.getDeclaredField("cachedPrefs");field.setAccessible(true);field.set(null,prefs);
   String info=MorpheSettingsStore.KEY_IMAGE_INFO,replace=MorpheSettingsStore.KEY_INFO_REPLACE;
   String like=MorpheSettingsStore.KEY_HIDE_LIKE,comment=MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON;
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_HIDE_COMMENTS,false);
   for(boolean i:new boolean[]{false,true})for(boolean r:new boolean[]{false,true}) {
    prefs.edit().putBoolean(info,i).putBoolean(replace,r).apply();
    check(MorpheSettingsStore.effective(replace)==(i&&r),"runtime dependency");
@@ -43,6 +44,14 @@ public class SettingsTest {
   MorpheSettingsStore.set(replace,true);check(!MorpheSettingsStore.effective(replace),"cannot enable without info");
   MorpheSettingsStore.set(info,true);check(!MorpheSettingsStore.effective(replace),"replacement stays off after info reenabled");
   check(!MorpheSettingsStore.effective(like)&&MorpheSettingsStore.effective(comment),"individual choices preserved");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_HIDE_COMMENTS,true);
+  check(!MorpheSettingsStore.isToggleEnabled(comment),"all comments supersedes button");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_HIDE_COMMENTS,false);
+  check(MorpheSettingsStore.isToggleEnabled(comment)&&MorpheSettingsStore.effective(comment),"button choice restored");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_KEEP_HOME_FEED,false);
+  check(!HomeFeedRefresh.shouldKeepFeed(),"original refresh selectable");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_KEEP_HOME_FEED,true);
+  check(HomeFeedRefresh.shouldKeepFeed(),"keep feed gate");
   MorpheSettingsStore.applyRecommended();check(MorpheSettingsStore.effective(replace)&&!MorpheSettingsStore.isToggleEnabled(like),"preset dependency");
   System.out.println("PASS settings combinations, writes, legacy/imported values and preset");
  }
@@ -52,5 +61,5 @@ with tempfile.TemporaryDirectory(prefix='pinterest-settings-test-') as tmp:
     files=[]
     for name, content in STUBS.items():
         path=Path(tmp)/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content);files.append(str(path))
-    subprocess.run(['javac','-d',tmp,*files,str(SOURCE)],check=True)
+    subprocess.run(['javac','-d',tmp,*files,str(SOURCE),str(SOURCE.with_name("HomeFeedRefresh.java"))],check=True)
     subprocess.run(['java','-cp',tmp,'app.browzomje.extension.pinterest.SettingsTest'],check=True)

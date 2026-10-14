@@ -47,6 +47,9 @@ final class MorpheStrings {
     static final String SYSTEM_SHARE_SHEET_DESCRIPTION = "system_share_sheet_description";
     static final String EXTERNAL_BROWSER_TITLE = "external_browser_title";
     static final String EXTERNAL_BROWSER_DESCRIPTION = "external_browser_description";
+    static final String KEEP_HOME_FEED_TITLE = "keep_home_feed_title";
+    static final String KEEP_HOME_FEED_DESCRIPTION = "keep_home_feed_description";
+    static final String HIDE_COMMENT_BUTTON_DESCRIPTION = "hide_comment_button_description";
     static final String HIDE_COMMENTS_TITLE = "hide_comments_title";
     static final String HIDE_COMMENTS_DESCRIPTION = "hide_comments_description";
 
@@ -768,14 +771,62 @@ final class MorpheStrings {
             "يفتح زر \"زيارة الموقع\" متصفحك بدل متصفح Pinterest الداخلي الذي يعمل داخل التطبيق. "
                 + "أما صفحات Pinterest نفسها فتبقى داخل التطبيق.");
 
+        put(KEEP_HOME_FEED_TITLE,
+            "Keep the Home feed",
+            "Conserva il feed Home",
+            "Conservar el feed de inicio",
+            "Conserver le fil d’accueil",
+            "Home-Feed beibehalten",
+            "Manter o feed inicial",
+            "Сохранять главную ленту",
+            "ホームフィードを保持",
+            "保留主页动态",
+            "홈 피드 유지",
+            "Zachowaj kanał główny",
+            "Homefeed behouden",
+            "Ana sayfa akışını koru",
+            "الاحتفاظ بموجز الصفحة الرئيسية");
+
+        put(KEEP_HOME_FEED_DESCRIPTION,
+            "Prevents automatic refresh when returning to Home. Pull down to refresh manually.",
+            "Evita il refresh automatico tornando alla Home. Trascina verso il basso per aggiornare manualmente.",
+            "Evita la actualización automática al volver a Inicio. Desliza hacia abajo para actualizar.",
+            "Évite l’actualisation automatique au retour à l’accueil. Tirez vers le bas pour actualiser.",
+            "Verhindert automatisches Aktualisieren bei Rückkehr zu Home. Zum Aktualisieren nach unten ziehen.",
+            "Evita atualizar automaticamente ao voltar ao início. Puxe para baixo para atualizar.",
+            "Без автообновления при возврате на главную. Потяните вниз для обновления.",
+            "ホームに戻ったときの自動更新を防ぎます。下に引いて手動更新できます。",
+            "返回主页时不自动刷新。下拉可手动刷新。",
+            "홈으로 돌아갈 때 자동 새로고침을 막습니다. 아래로 당겨 새로고침하세요.",
+            "Zapobiega automatycznemu odświeżaniu po powrocie. Pociągnij w dół, aby odświeżyć.",
+            "Voorkomt automatisch verversen bij terugkeer naar Home. Trek omlaag om te verversen.",
+            "Ana sayfaya dönünce otomatik yenilemeyi önler. Yenilemek için aşağı çekin.",
+            "يمنع التحديث التلقائي عند العودة للرئيسية. اسحب للأسفل للتحديث يدوياً.");
+
+        put(HIDE_COMMENT_BUTTON_DESCRIPTION,
+            "Hides only the speech bubble below the Pin. Unavailable while all comments are hidden or image information replaces the buttons.",
+            "Nasconde solo il fumetto sotto il Pin. Non disponibile se nascondi tutti i commenti o se le informazioni immagine sostituiscono i pulsanti.",
+            "Oculta solo el globo bajo el Pin. No disponible si ocultas todos los comentarios o sustituyes los botones por información.",
+            "Masque seulement la bulle sous le Pin. Indisponible si tous les commentaires sont masqués ou remplacés par les informations.",
+            "Blendet nur die Sprechblase unter dem Pin aus. Nicht verfügbar, wenn alle Kommentare ausgeblendet oder Tasten durch Bildinfos ersetzt sind.",
+            "Oculta só o balão sob o Pin. Indisponível com todos os comentários ocultos ou informações no lugar dos botões.",
+            "Скрывает только значок под пином. Недоступно при скрытии всех комментариев или замене кнопок сведениями.",
+            "ピン下の吹き出しのみ非表示。全コメント非表示や画像情報でボタンを置換中は変更できません。",
+            "仅隐藏图钉下方的气泡。隐藏全部评论或用图片信息替换按钮时不可用。",
+            "핀 아래 말풍선만 숨깁니다. 모든 댓글 숨김 또는 이미지 정보로 버튼 대체 시 사용할 수 없습니다.",
+            "Ukrywa tylko dymek pod Pinem. Niedostępne po ukryciu wszystkich komentarzy lub zastąpieniu przycisków informacjami.",
+            "Verbergt alleen de tekstballon onder de Pin. Niet beschikbaar als alle reacties verborgen zijn of beeldinfo de knoppen vervangt.",
+            "Yalnızca Pinin altındaki balonu gizler. Tüm yorumlar gizliyken veya düğmeler bilgiyle değiştirilirken kullanılamaz.",
+            "يخفي فقاعة التعليقات فقط. غير متاح عند إخفاء كل التعليقات أو استبدال الأزرار بمعلومات الصورة.");
+
         put(HIDE_COMMENTS_TITLE,
-            "Hide comments",
-            "Nascondi i commenti", "Ocultar los comentarios",
-            "Masquer les commentaires", "Kommentare ausblenden",
-            "Ocultar os comentários", "Скрыть комментарии",
-            "コメントを非表示にする", "隐藏评论", "댓글 숨기기",
-            "Ukryj komentarze", "Reacties verbergen",
-            "Yorumları gizle", "إخفاء التعليقات");
+            "Hide all comments",
+            "Nascondi tutti i commenti", "Ocultar todos los comentarios",
+            "Masquer tous les commentaires", "Alle Kommentare ausblenden",
+            "Ocultar todos os comentários", "Скрыть все комментарии",
+            "すべてのコメントを非表示", "隐藏全部评论", "모든 댓글 숨기기",
+            "Ukryj wszystkie komentarze", "Alle reacties verbergen",
+            "Tüm yorumları gizle", "إخفاء كل التعليقات");
 
         put(HIDE_COMMENTS_DESCRIPTION,
             "Removes the comments section, the preview with \"view all\" and the comment button, "

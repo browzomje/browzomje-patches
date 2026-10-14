@@ -128,10 +128,6 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheStrings.get(MorpheStrings.SCREENSHOT_DESCRIPTION),
                 MorpheSettingsStore.KEY_DISABLE_SCREENSHOT_SHARE,
                 MorpheSettingsStore.isScreenshotShareDisabled());
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_TITLE),
-                MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_DESCRIPTION),
-                MorpheSettingsStore.KEY_HIDE_COMMENTS,
-                MorpheSettingsStore.isCommentsHidden());
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_TITLE),
                 MorpheStrings.get(MorpheStrings.SANITIZE_LINKS_DESCRIPTION),
                 MorpheSettingsStore.KEY_SANITIZE_LINKS,
@@ -178,7 +174,11 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheSettingsStore.KEY_INFO_REPLACE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_INFO_REPLACE));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_LIKE_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_LIKE, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_LIKE));
-        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), null,
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_TITLE),
+                MorpheStrings.get(MorpheStrings.HIDE_COMMENTS_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_COMMENTS,
+                MorpheSettingsStore.isCommentsHidden());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_TITLE), MorpheStrings.get(MorpheStrings.HIDE_COMMENT_BUTTON_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON, MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON));
         refreshPinDependencies();
 
@@ -187,6 +187,10 @@ public final class MorpheSettingsActivity extends Activity {
         // Ogni riga porta l'icona del tasto che nasconde: dal nome non è ovvio quale sia, e da
         // 14.28 "Crea" e "Notifiche" non stanno nemmeno più nella barra ma in alto a destra.
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_NAVBAR), "ic_vr_home_gestalt");
+        if (HomeFeedRefresh.isAvailable()) addToggleRow(root, MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_TITLE),
+                MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_DESCRIPTION),
+                MorpheSettingsStore.KEY_KEEP_HOME_FEED,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_KEEP_HOME_FEED));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_SEARCH_TITLE), null,
                 MorpheSettingsStore.KEY_HIDE_SEARCH_BUTTON,
                 MorpheSettingsStore.isSearchButtonHidden(), "ic_vr_magnifying_glass_gestalt");
