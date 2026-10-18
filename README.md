@@ -16,7 +16,7 @@ The optional **Hide video pins (experimental)** setting is off by default. It fi
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.13.0-dev.3](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0-dev.3)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
+> **[v1.13.0-dev.4](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0-dev.4)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;32 patches</summary>
 <br>
