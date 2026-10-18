@@ -94,3 +94,36 @@ object ModelListWithBookmarkConstructorFingerprint : Fingerprint(
         method.parameters.firstOrNull()?.type == "Ljava/util/List;"
     },
 )
+
+// Search and restored legacy PinFeed use a separate path from the modern response wrappers.
+// Replace a copy before Feed installs its list and rebuilds its ID index (never mutate adapter data).
+object LegacyFeedItemsFingerprint : Fingerprint(
+    definingClass = "Lcom/pinterest/legacy/feeds/Feed;",
+    returnType = "V",
+    parameters = listOf("Ljava/util/List;"),
+)
+
+// 14.39.0 dynamic grid: filter input before queued operations capture lists and indices.
+object DynamicGridAppendFingerprint : Fingerprint(
+    definingClass = "Ltu1/g0;", name = "A", returnType = "V",
+    parameters = listOf("Ljava/util/List;", "Z"),
+)
+object DynamicGridReplaceFingerprint : Fingerprint(
+    definingClass = "Ltu1/g0;", name = "j0", returnType = "V",
+    parameters = listOf("Ljava/util/List;", "Z"),
+)
+object DynamicGridInsertFingerprint : Fingerprint(
+    definingClass = "Ltu1/g0;", name = "Y", returnType = "V",
+    parameters = listOf("I", "Ljava/util/List;"),
+)
+
+object RawGridAppendFingerprint : Fingerprint(
+    definingClass = "Ltu1/p;", name = "b", returnType = "V",
+    parameters = listOf("Ljava/util/List;"),
+)
+
+// GraphQL ParsedResponse consumed by kc1.a: filter before pagination test and diff callback capture.
+object RawGridResponseFingerprint : Fingerprint(
+    definingClass = "Ltu1/k;", name = "<init>", returnType = "V",
+    parameters = listOf("Ljava/lang/String;", "Ljava/util/List;", "Z"),
+)

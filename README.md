@@ -11,7 +11,15 @@ This repository provides custom enhancements and modifications for Android apps,
 
 These patches allow you to remove advertisements, block tracking, and add new utility features directly to the apps.
 
-The optional **Hide video pins (experimental)** setting is off by default. It filters video Pins in mixed feeds; pages made entirely of filtered items may remain visible to preserve pagination. It is not a complete video blocker.
+The optional **Hide video pins** setting is off by default. It filters video Pins in feeds and search, including Story Pins identified by their video duration. Pages containing only videos may become empty; search suggestions and their thumbnails remain visible. Pinterest has several feed formats, so broader device coverage is still needed.
+
+The **Choose startup tab** patch (Pinterest 14.39.0) adds Home, Search and Saved
+choices in Morphe settings, with native icons. Home is the default. The choice
+applies to fresh launches from the app icon; links and restored sessions keep
+their destination. Hidden Search falls back to Home.
+
+External video downloads open YTDLnis directly when installed, then Seal.
+Android's share chooser is the fallback when neither supported app is available.
 
 ## 🩹 Patches list
 
@@ -32,7 +40,7 @@ The optional **Hide video pins (experimental)** setting is off by default. It fi
 | [Disable AppsFlyer tracking](#disable-appsflyer-tracking) | Neutralises the AppsFlyer attribution SDK, so no install, event or uninstall data leaves the device. |  |
 | [Disable Google Engage](#disable-google-engage) | Stops Pinterest publishing your content to Google (Discover, Assistant, Play Store). |  |
 | [Disable Google Engage worker](#disable-google-engage-worker) | Blocks the periodic Google Engage job, the other way content reaches Google. |  |
-| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, and the experimental opt-in "Hide video pins" filter, all switchable from the Morphe settings screen. |  |
+| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, and the opt-in "Hide video pins" filter, all switchable from the Morphe settings screen. |  |
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Closes the "confirm your email" modal, and similar ones, when enabled in Morphe settings. |  |
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |

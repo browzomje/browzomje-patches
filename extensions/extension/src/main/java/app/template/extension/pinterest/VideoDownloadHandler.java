@@ -287,19 +287,12 @@ class VideoDownloadHandler {
         }
     }
 
-    /**
-     * Fires an Android share-sheet with the streaming URL so the user can
-     * choose Seal / PowerTube / any yt-dlp-backed app to handle the download.
-     */
+    /** Opens YTDLnis or Seal directly; falls back to Android sharing when neither is available. */
     private static void shareLinkToDownloader(Context context, String url) {
         try {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_TEXT, url);
-            context.startActivity(Intent.createChooser(intent,
-                PinterestUtils.getString("download_video_external_label")));
+            ExternalVideoDownloader.open(context, url);
         } catch (Throwable t) {
-            Log.e(TAG, "could not open the downloader chooser", t);
+            Log.e(TAG, "could not open the external downloader", t);
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
         }
     }

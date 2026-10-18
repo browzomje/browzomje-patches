@@ -71,6 +71,24 @@ public final class MorpheSettingsStore {
         KEY_VERBOSE_LOGGING,
     };
 
+    static final String KEY_STARTUP_TAB = "startup_tab";
+
+    static boolean validStartupTab(String tab) {
+        return "HOME".equals(tab) || "PROFILE".equals(tab) || "SEARCH".equals(tab);
+    }
+
+    static String startupTab() {
+        SharedPreferences sp = prefs();
+        String tab = sp == null ? "HOME" : sp.getString(KEY_STARTUP_TAB, "HOME");
+        return validStartupTab(tab) ? tab : "HOME";
+    }
+
+    static void setStartupTab(String tab) {
+        if (!validStartupTab(tab)) throw new IllegalArgumentException("Invalid startup tab");
+        SharedPreferences sp = prefs();
+        if (sp != null) sp.edit().putString(KEY_STARTUP_TAB, tab).apply();
+    }
+
     static final String KEY_MENU_FILTER = "hidden_pin_menu_actions";
 
     static String menuFilter() {
@@ -160,6 +178,7 @@ public final class MorpheSettingsStore {
         SharedPreferences.Editor edit = sp.edit();
         for (String key : KEYS) edit.putBoolean(key, defaultOf(key));
         edit.putString(KEY_MENU_FILTER, PinMenuFilter.encode(PinMenuFilter.recommended()));
+        edit.putString(KEY_STARTUP_TAB, "HOME");
         edit.commit();
     }
 

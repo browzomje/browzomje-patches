@@ -65,6 +65,7 @@ final class MorpheSettingsBackup {
             settings.put(key, MorpheSettingsStore.effective(key));
         }
 
+        settings.put(MorpheSettingsStore.KEY_STARTUP_TAB, MorpheSettingsStore.startupTab());
         settings.put(MorpheSettingsStore.KEY_MENU_FILTER, MorpheSettingsStore.menuFilter());
 
         JSONObject header = new JSONObject();
@@ -108,12 +109,20 @@ final class MorpheSettingsBackup {
             if (!(value instanceof String)) throw new JSONException("menu filter must be text");
             filter = (String) value;
         }
-        int applied = values.size() + (filter == null ? 0 : 1);
+        String startup = null;
+        if (settings.has(MorpheSettingsStore.KEY_STARTUP_TAB)) {
+            Object value = settings.get(MorpheSettingsStore.KEY_STARTUP_TAB);
+            if (!(value instanceof String) || !MorpheSettingsStore.validStartupTab((String) value))
+                throw new JSONException("invalid startup tab");
+            startup = (String) value;
+        }
+        int applied = values.size() + (filter == null ? 0 : 1) + (startup == null ? 0 : 1);
         if (applied == 0) throw new JSONException("no known setting in the file");
         for (java.util.Map.Entry<String, Boolean> value : values.entrySet()) {
             MorpheSettingsStore.set(value.getKey(), value.getValue());
         }
         if (filter != null) MorpheSettingsStore.setMenuFilter(filter);
+        if (startup != null) MorpheSettingsStore.setStartupTab(startup);
         MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "imported " + applied + " settings out of "
                 + MorpheSettingsStore.KEYS.length);
         return applied;

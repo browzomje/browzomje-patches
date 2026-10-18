@@ -196,6 +196,7 @@ public final class MorpheSettingsActivity extends Activity {
         // Ogni riga porta l'icona del tasto che nasconde: dal nome non è ovvio quale sia, e da
         // 14.28 "Crea" e "Notifiche" non stanno nemmeno più nella barra ma in alto a destra.
         addSectionHeader(root, MorpheStrings.get(MorpheStrings.SECTION_NAVBAR), "ic_vr_home_gestalt");
+        if (StartupTab.isAvailable()) addStartupTabRow(root);
         if (HomeFeedRefresh.isAvailable()) addToggleRow(root, MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_TITLE),
                 MorpheStrings.get(MorpheStrings.KEEP_HOME_FEED_DESCRIPTION),
                 MorpheSettingsStore.KEY_KEEP_HOME_FEED,
@@ -529,6 +530,89 @@ public final class MorpheSettingsActivity extends Activity {
             MorpheLog.w(MorpheLog.SETTINGS_ENTRY, "icon " + name + " could not be loaded", t);
         }
         return null;
+    }
+
+    private void addStartupTabRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(14), 0, dp(14));
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setBackground(new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(DIVIDER), null, null));
+        LinearLayout labels = new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        TextView title = menuText(MorpheStrings.get(MorpheStrings.STARTUP_TAB_TITLE), 16, TEXT_PRIMARY, false);
+        labels.addView(title);
+        TextView description = menuText(MorpheStrings.get(MorpheStrings.STARTUP_TAB_DESCRIPTION), 12, TEXT_SECONDARY, false);
+        description.setPadding(0, dp(4), dp(12), 0);
+        labels.addView(description);
+        row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView value = menuText(startupTabLabel(MorpheSettingsStore.startupTab()), 14, ACCENT, false);
+        value.setPaddingRelative(dp(8), 0, 0, 0);
+        setStartupIcon(value, MorpheSettingsStore.startupTab());
+        row.addView(value);
+        row.setOnClickListener(v -> showStartupTabEditor(value));
+        parent.addView(row);
+        View divider = new View(this);
+        divider.setBackgroundColor(DIVIDER);
+        parent.addView(divider, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+    }
+
+    private String startupTabLabel(String tab) {
+        return MorpheStrings.get("PROFILE".equals(tab) ? MorpheStrings.STARTUP_PROFILE :
+                "SEARCH".equals(tab) ? MorpheStrings.STARTUP_SEARCH : MorpheStrings.STARTUP_HOME);
+    }
+
+    private void setStartupIcon(TextView view, String tab) {
+        Drawable icon = pinterestIcon("PROFILE".equals(tab) ? "ic_vr_bookmark_gestalt" :
+                "SEARCH".equals(tab) ? "ic_vr_magnifying_glass_gestalt" : "ic_vr_home_gestalt");
+        if (icon != null) {
+            icon = icon.mutate();
+            icon.setTint(view.getCurrentTextColor());
+            icon.setBounds(0, 0, dp(20), dp(20));
+        }
+        view.setCompoundDrawablesRelative(icon, null, null, null);
+        view.setCompoundDrawablePadding(dp(8));
+    }
+
+    private void showStartupTabEditor(TextView selected) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(24), dp(20), dp(24), dp(20));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xFF1A1A1A);
+        background.setCornerRadius(dp(20));
+        card.setBackground(background);
+        card.addView(menuText(MorpheStrings.get(MorpheStrings.STARTUP_TAB_TITLE), 20, TEXT_PRIMARY, true));
+        for (String tab : new String[]{"HOME", "SEARCH", "PROFILE"}) {
+            android.widget.RadioButton choice = new android.widget.RadioButton(this);
+            choice.setText(startupTabLabel(tab));
+            setStartupIcon(choice, tab);
+            choice.setTextSize(16);
+            choice.setTextColor(TEXT_PRIMARY);
+            choice.setTypeface(fontRegular != null ? fontRegular : Typeface.DEFAULT);
+            choice.setButtonTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+            choice.setMinHeight(dp(48));
+            choice.setChecked(tab.equals(MorpheSettingsStore.startupTab()));
+            choice.setOnClickListener(v -> {
+                MorpheSettingsStore.setStartupTab(tab);
+                selected.setText(startupTabLabel(tab));
+                setStartupIcon(selected, tab);
+                dialog.dismiss();
+                showRestartNotice();
+            });
+            card.addView(choice);
+        }
+        dialog.setContentView(card);
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(getResources().getDisplayMetrics().widthPixels - dp(40), ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void addMenuFilterRow(LinearLayout parent) {

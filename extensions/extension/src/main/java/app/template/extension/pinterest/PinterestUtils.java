@@ -499,7 +499,9 @@ public final class PinterestUtils {
             synchronized (items) {
                 int total = items.size();
                 int matching = 0;
+                int videoMatches = 0;
                 for (Object item : items) {
+                    if (removeVideos && AdDetector.isVideoPin(item)) videoMatches++;
                     if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)
                             || isSearchModule(item, removeSearchModules)
                             || (removeVideos && AdDetector.isVideoPin(item))) {
@@ -517,7 +519,7 @@ public final class PinterestUtils {
                     }
                     return;
                 }
-                if (matching >= total) {
+                if (matching >= total && videoMatches == 0) {
                     MorpheLog.w(MorpheLog.ADS, "page made only of items to remove (" + total
                             + "): leaving it alone, or the app would think the feed is over");
                     return;
@@ -564,7 +566,7 @@ public final class PinterestUtils {
                             + totalShoppingPinsRemoved + " product pins removed so far");
                 }
                 if (videos > 0) {
-                    MorpheLog.i(MorpheLog.ADS, "removed " + videos + " video pins out of " + total);
+                    MorpheLog.i("video-filter", "removed " + videos + " video pins out of " + total);
                 }
                 if (modules > 0) {
                     // Canale a sé: sono moduli della ricerca, non annunci, e tenerli distinti

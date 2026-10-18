@@ -100,9 +100,31 @@ final class AdDetector {
         return matches(model, markersFor(model), "ad");
     }
 
-    /** Authoritative network flag; thumbnails, GIFs and unrelated video metadata are not enough. */
+    /** Network flag or actual video tracks; never classify an animated image alone as video. */
     static boolean isVideoPin(Object model) {
-        return Boolean.TRUE.equals(fieldValueBySerializedName(model, "is_video"));
+        if (Boolean.TRUE.equals(fieldValueBySerializedName(model, "is_video"))) return true;
+        if (hasVideoTracks(fieldValueBySerializedName(model, "videos"))) return true;
+        Object story = fieldValueBySerializedName(model, "story_pin_data");
+        // Search's GraphQL -> legacy conversion keeps duration but may omit pages/tracks.
+        Object duration = fieldValueBySerializedName(story, "total_video_duration");
+        if (duration instanceof Number || duration instanceof String) {
+            try {
+                double seconds = Double.parseDouble(duration.toString());
+                if (seconds > 0 && !Double.isInfinite(seconds)) return true;
+            } catch (NumberFormatException ignored) { }
+        }
+        for (String key : new String[]{"pages", "pages_preview"}) {
+            Object pages = fieldValueBySerializedName(story, key);
+            if (pages instanceof List) for (Object page : (List<?>) pages) {
+                if (hasVideoTracks(fieldValueBySerializedName(page, "video"))) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasVideoTracks(Object video) {
+        Object tracks = fieldValueBySerializedName(video, "video_list");
+        return tracks instanceof Map && !((Map<?, ?>) tracks).isEmpty();
     }
 
     /**
@@ -275,6 +297,7 @@ final class AdDetector {
      * @return il valore del campo, oppure null se il modello non ha un campo con quel nome JSON.
      */
     static Object fieldValueBySerializedName(Object model, String jsonName) {
+        if (model instanceof Map) return ((Map<?, ?>) model).get(jsonName);
         if (model == null) {
             return null;
         }

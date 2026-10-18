@@ -15,13 +15,39 @@ private const val PATCH_NAME = "Disable ads"
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Removes sponsored pins from the home, search, related and board feeds. Also carries the \"Hide product pins\" and \"Hide board modules in search\" filters, and the experimental opt-in \"Hide video pins\" filter, all switchable from the Morphe settings screen.",
+    description = "Removes sponsored pins from the home, search, related and board feeds. Also carries the \"Hide product pins\" and \"Hide board modules in search\" filters, and the opt-in \"Hide video pins\" filter, all switchable from the Morphe settings screen.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
     extendWith("extensions/extension.mpe")
 
     execute {
+        if (packageMetadata.versionName == "14.39.0") for ((fingerprint, parameter) in listOf(
+            RawGridResponseFingerprint to "p2",
+            RawGridAppendFingerprint to "p1",
+            DynamicGridAppendFingerprint to "p1",
+            DynamicGridReplaceFingerprint to "p1",
+            DynamicGridInsertFingerprint to "p2",
+        )) {
+            val target = fingerprint.method
+            check(target.implementation!!.registerCount <= 256)
+            target.addInstructions(0, """
+                invoke-static/range {$parameter .. $parameter}, Lapp/browzomje/extension/pinterest/VideoFeedFilter;->filter(Ljava/util/List;)Ljava/util/List;
+                move-result-object $parameter
+            """.trimIndent())
+            PatchLog.hooked(PATCH_NAME, target, "filter video list before dynamic grid operation captures indices")
+        }
+        val legacySetter = LegacyFeedItemsFingerprint.methodOrNull
+        if (legacySetter != null) {
+            check(legacySetter.implementation!!.registerCount <= 256) { "Legacy Feed setter frame too wide" }
+            legacySetter.addInstructions(0, """
+                invoke-static/range {p1 .. p1}, Lapp/browzomje/extension/pinterest/VideoFeedFilter;->filter(Ljava/util/List;)Ljava/util/List;
+                move-result-object p1
+            """.trimIndent())
+            PatchLog.hooked(PATCH_NAME, legacySetter, "copy video-filtered legacy/search list before ID index rebuild")
+        } else {
+            PatchLog.warn(PATCH_NAME, "Legacy Feed list setter not found: cached search video filtering unavailable")
+        }
         // 1) Costruttori delle risposte di rete: filtrano la prima pagina appena arriva.
         for (fingerprint in listOf(
             PinterestAdsFingerprint,
