@@ -90,7 +90,7 @@ final class MorpheSettingsBackup {
      * @return quante impostazioni sono state applicate.
      * @throws JSONException se il file non è JSON o non ha la forma attesa.
      */
-    static int apply(String json) throws JSONException {
+    static int apply(String json) throws JSONException, IOException {
         JSONObject root = new JSONObject(json);
         JSONObject settings = root.optJSONObject(OBJECT_SETTINGS);
         if (settings == null) {
@@ -101,7 +101,11 @@ final class MorpheSettingsBackup {
         // Validate the entire known payload before changing any preference.
         java.util.Map<String, Boolean> values = new java.util.LinkedHashMap<>();
         for (String key : MorpheSettingsStore.KEYS) {
-            if (settings.has(key)) values.put(key, settings.getBoolean(key));
+            if (settings.has(key)) {
+                Object value = settings.get(key);
+                if (!(value instanceof Boolean)) throw new JSONException(key + " must be boolean");
+                values.put(key, (Boolean) value);
+            }
         }
         String filter = null;
         if (settings.has(MorpheSettingsStore.KEY_MENU_FILTER)) {
@@ -118,13 +122,9 @@ final class MorpheSettingsBackup {
         }
         int applied = values.size() + (filter == null ? 0 : 1) + (startup == null ? 0 : 1);
         if (applied == 0) throw new JSONException("no known setting in the file");
-        for (java.util.Map.Entry<String, Boolean> value : values.entrySet()) {
-            MorpheSettingsStore.set(value.getKey(), value.getValue());
-        }
-        if (filter != null) MorpheSettingsStore.setMenuFilter(filter);
-        if (startup != null) MorpheSettingsStore.setStartupTab(startup);
+        MorpheSettingsStore.restore(values, filter, startup);
         MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "imported " + applied + " settings out of "
-                + MorpheSettingsStore.KEYS.length);
+                + (MorpheSettingsStore.KEYS.length + 2));
         return applied;
     }
 

@@ -157,6 +157,22 @@ public final class MorpheSettingsStore {
         }
     }
 
+    /** Persist a validated backup in one transaction before reporting success. */
+    static void restore(java.util.Map<String, Boolean> values, String filter, String startup)
+            throws java.io.IOException {
+        SharedPreferences sp = prefs();
+        if (sp == null) throw new java.io.IOException("SharedPreferences not available");
+        SharedPreferences.Editor edit = sp.edit();
+        for (java.util.Map.Entry<String, Boolean> value : values.entrySet())
+            edit.putBoolean(value.getKey(), value.getValue());
+        boolean info = values.containsKey(KEY_IMAGE_INFO)
+                ? values.get(KEY_IMAGE_INFO) : effective(KEY_IMAGE_INFO);
+        if (!info) edit.putBoolean(KEY_INFO_REPLACE, false);
+        if (filter != null) edit.putString(KEY_MENU_FILTER, filter);
+        if (startup != null) edit.putString(KEY_STARTUP_TAB, startup);
+        if (!edit.commit()) throw new java.io.IOException("could not persist imported settings");
+    }
+
     /**
      * Valore predefinito di una chiave, cioè quello che vale finché l'utente non tocca il
      * relativo interruttore.
