@@ -1,3 +1,9 @@
+## [1.14.1-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.14.0...v1.14.1-dev.1) (2026-10-18)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** persist settings imports together and verify complete backup coverage ([32863a5](https://github.com/browzomje/browzomje-patches/commit/32863a56244c715a9b502425adb76d6714cb051e))
+
 ## [1.14.0](https://github.com/browzomje/browzomje-patches/compare/v1.13.0...v1.14.0) (2026-10-18)
 
 ### ✨ New Features
