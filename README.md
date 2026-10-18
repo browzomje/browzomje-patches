@@ -16,9 +16,9 @@ The optional **Hide video pins (experimental)** setting is off by default. It fi
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.13.0-dev.4](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0-dev.4)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
+> **[v1.13.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;38 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;32 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;33 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -46,6 +46,7 @@ The optional **Hide video pins (experimental)** setting is off by default. It fi
 | [Hide ad views](#hide-ad-views) | Collapses Pinterest's ad-only views, so no ad chrome is drawn even if the app builds one. Follows the "Disable ads" switch. |  |
 | [Hide comments](#hide-comments) | Hides the pin comments section, the comment preview and the comments button, when the matching Morphe setting is enabled. |  |
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled. |  |
+| [Hide save for later tooltip](#hide-save-for-later-tooltip) | Always hides the save-for-later education popup without disabling the Save button. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section on the search screen and below the search bar. Pinterest still logs searches server-side. |  |
 | [Keep Home feed](#keep-home-feed) | Keeps the Home feed when returning to Home instead of refreshing automatically. Pull-to-refresh remains available. Off by default and in the recommended preset; enable it in Morphe settings. |  |
