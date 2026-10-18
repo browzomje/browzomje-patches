@@ -1,3 +1,9 @@
+## [1.14.0](https://github.com/browzomje/browzomje-patches/compare/v1.13.0...v1.14.0) (2026-10-18)
+
+### ✨ New Features
+
+* **Pinterest:** add startup screen selection, direct video downloader and improve video filtering ([9fd1db3](https://github.com/browzomje/browzomje-patches/commit/9fd1db3d3ce28f47880b499e358695528af04516))
+
 ## [1.13.0](https://github.com/browzomje/browzomje-patches/compare/v1.12.0...v1.13.0) (2026-10-18)
 
 ### 🐛 Bug Fixes

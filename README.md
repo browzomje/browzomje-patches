@@ -24,18 +24,19 @@ Android's share chooser is the fallback when neither supported app is available.
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.13.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.13.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;38 patches total
+> **[v1.14.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.14.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;39 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;33 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;34 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.23.0 | 14.28.0 | 14.32.0 | 14.34.0 | 14.39.0 |
-| :---: | :---: | :---: | :---: | :---: |
+| 14.39.0 |
+| :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
+| [Choose startup tab](#choose-startup-tab) | Choose Home, Search or Saved for fresh launcher starts. Keeps deep links, notifications and restored sessions unchanged. Configure in Morphe settings. |  |
 | [Copy direct link](#copy-direct-link) | Adds a "Copy direct link" option to the pin menu, copying the direct CDN media link instead of the Pinterest web link. |  |
 | [Disable AppsFlyer tracking](#disable-appsflyer-tracking) | Neutralises the AppsFlyer attribution SDK, so no install, event or uninstall data leaves the device. |  |
 | [Disable Google Engage](#disable-google-engage) | Stops Pinterest publishing your content to Google (Discover, Assistant, Play Store). |  |
