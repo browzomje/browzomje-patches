@@ -121,6 +121,10 @@ public final class MorpheSettingsActivity extends Activity {
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SHOPPING_PINS_TITLE), MorpheStrings.get(MorpheStrings.SHOPPING_PINS_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_SHOPPING_PINS,
                 MorpheSettingsStore.isShoppingPinsHidden());
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_VIDEO_PINS_TITLE),
+                MorpheStrings.get(MorpheStrings.HIDE_VIDEO_PINS_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_VIDEO_PINS,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SEARCH_MODULES_TITLE),
                 MorpheStrings.get(MorpheStrings.SEARCH_MODULES_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_SEARCH_BOARD_MODULES,
@@ -367,7 +371,32 @@ public final class MorpheSettingsActivity extends Activity {
         search.setHintTextColor(TEXT_SECONDARY);
         search.setHint(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH));
         search.setTextSize(16);
-        search.setPadding(dp(20), dp(8), dp(20), dp(8));
+        search.setTypeface(fontRegular != null ? fontRegular : Typeface.DEFAULT);
+        search.setMinHeight(dp(48));
+        search.setPaddingRelative(dp(16), dp(10), dp(16), dp(10));
+        search.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+        android.graphics.drawable.StateListDrawable searchBackground =
+                new android.graphics.drawable.StateListDrawable();
+        GradientDrawable focused = new GradientDrawable();
+        focused.setColor(BUTTON_BACKGROUND);
+        focused.setCornerRadius(dp(24));
+        focused.setStroke(dp(1), ACCENT);
+        GradientDrawable idle = new GradientDrawable();
+        idle.setColor(BUTTON_BACKGROUND);
+        idle.setCornerRadius(dp(24));
+        searchBackground.addState(new int[]{android.R.attr.state_focused}, focused);
+        searchBackground.addState(new int[]{}, idle);
+        search.setBackground(searchBackground);
+        Drawable magnifier = pinterestIcon("ic_vr_magnifying_glass_gestalt");
+        if (magnifier == null) magnifier = getDrawable(android.R.drawable.ic_menu_search);
+        if (magnifier != null) {
+            magnifier = magnifier.mutate();
+            magnifier.setTint(TEXT_SECONDARY);
+            magnifier.setBounds(0, 0, dp(20), dp(20));
+            search.setCompoundDrawablesRelative(magnifier, null, null, null);
+            search.setCompoundDrawablePadding(dp(10));
+        }
+        search.setContentDescription(MorpheStrings.get(MorpheStrings.SETTINGS_SEARCH));
         search.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
         java.util.Map<View, String> index = new java.util.HashMap<>();
         for (int i = 0; i < root.getChildCount(); i++) {
@@ -415,7 +444,11 @@ public final class MorpheSettingsActivity extends Activity {
             }
             public void afterTextChanged(Editable s) {}
         });
-        return search;
+        LinearLayout container = new LinearLayout(this);
+        container.setPaddingRelative(dp(20), dp(8), dp(20), dp(12));
+        container.addView(search, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return container;
     }
 
     /**

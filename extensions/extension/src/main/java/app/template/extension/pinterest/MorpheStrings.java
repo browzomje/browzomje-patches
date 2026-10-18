@@ -30,6 +30,8 @@ final class MorpheStrings {
 
     static final String ADS_DESCRIPTION = "ads_description";
     static final String SHOPPING_PINS_DESCRIPTION = "shopping_pins_description";
+    static final String HIDE_VIDEO_PINS_TITLE = "hide_video_pins_title";
+    static final String HIDE_VIDEO_PINS_DESCRIPTION = "hide_video_pins_description";
     static final String ADS_TITLE = "ads_title";
     static final String SHOPPING_PINS_TITLE = "shopping_pins_title";
     static final String SEARCH_HISTORY_TITLE = "search_history_title";
@@ -135,6 +137,36 @@ final class MorpheStrings {
     private static final Map<String, String[]> TRANSLATIONS = new HashMap<>();
 
     static {
+        put(HIDE_VIDEO_PINS_TITLE,
+            "Hide video pins (experimental)",
+            "Nascondi Pin video (sperimentale)",
+            "Ocultar Pines de vídeo (experimental)",
+            "Masquer les Épingles vidéo (expérimental)",
+            "Video-Pins ausblenden (experimentell)",
+            "Ocultar Pins de vídeo (experimental)",
+            "Скрыть видеопины (экспериментально)",
+            "動画ピンを非表示（試験的）",
+            "隐藏视频 Pin（实验性）",
+            "동영상 핀 숨기기 (실험적)",
+            "Ukryj Piny wideo (eksperymentalne)",
+            "Videopins verbergen (experimenteel)",
+            "Video Pinlerini gizle (deneysel)",
+            "إخفاء منشورات الفيديو (تجريبي)");
+        put(HIDE_VIDEO_PINS_DESCRIPTION,
+            "Filters videos in mixed feeds. Video-only pages may remain visible to keep scrolling working.",
+            "Filtra i video nei feed misti. Le pagine con soli video possono restare visibili per consentire lo scorrimento.",
+            "Filtra vídeos en feeds mixtos. Las páginas solo de vídeos pueden mantenerse para permitir seguir cargando.",
+            "Filtre les vidéos des fils mixtes. Les pages de vidéos seules peuvent rester pour permettre le défilement.",
+            "Filtert Videos in gemischten Feeds. Reine Videoseiten können für weiteres Laden sichtbar bleiben.",
+            "Filtra vídeos em feeds mistos. Páginas só de vídeos podem permanecer para permitir continuar a carregar.",
+            "Фильтрует видео в смешанных лентах. Страницы только с видео могут остаться для продолжения прокрутки.",
+            "混合フィードの動画を除外します。読み込みを続けるため、動画のみのページは残る場合があります。",
+            "过滤混合信息流中的视频。为继续加载，仅含视频的页面可能仍会显示。",
+            "혼합 피드의 동영상을 필터링합니다. 계속 불러오기 위해 동영상만 있는 페이지는 유지될 수 있습니다.",
+            "Filtruje filmy w mieszanych kanałach. Strony z samymi filmami mogą pozostać, aby umożliwić dalsze ładowanie.",
+            "Filtert video’s uit gemengde feeds. Pagina’s met alleen video’s kunnen blijven om verder laden mogelijk te maken.",
+            "Karma akışlardaki videoları filtreler. Kaydırmanın sürmesi için yalnızca video içeren sayfalar kalabilir.",
+            "يصفّي الفيديو في الخلاصات المختلطة. قد تبقى صفحات الفيديو فقط للسماح باستمرار التمرير.");
         put(IMAGE_DOWNLOAD_SAVED,
             "Image saved",
             "Immagine salvata",
@@ -333,20 +365,20 @@ final class MorpheStrings {
             "يخفي الدبابيس الإعلانية في الخلاصات والتوصيات ذات الصلة.");
 
         put(SHOPPING_PINS_DESCRIPTION,
-            "Hides shopping and sponsored product recommendations.",
-            "Nasconde i suggerimenti di acquisto e i prodotti sponsorizzati.",
-            "Oculta las recomendaciones de compra y los productos patrocinados.",
-            "Masque les suggestions d’achat et les produits sponsorisés.",
-            "Blendet Einkaufsempfehlungen und gesponserte Produkte aus.",
-            "Oculta recomendações de compras e produtos patrocinados.",
-            "Скрывает рекомендации покупок и спонсируемые товары.",
-            "ショッピングのおすすめやスポンサー商品を非表示にします。",
-            "隐藏购物推荐和赞助商品。",
-            "쇼핑 추천과 스폰서 제품을 숨깁니다.",
-            "Ukrywa rekomendacje zakupowe i produkty sponsorowane.",
-            "Verbergt winkelaanbevelingen en gesponsorde producten.",
-            "Alışveriş önerilerini ve sponsorlu ürünleri gizler.",
-            "يخفي توصيات التسوق والمنتجات الممولة.");
+            "Products and shopping suggestions in feeds.",
+            "Prodotti e suggerimenti di acquisto nei feed.",
+            "Productos y sugerencias de compra en los feeds.",
+            "Produits et suggestions d’achat dans les fils.",
+            "Produkte und Einkaufsvorschläge in Feeds.",
+            "Produtos e sugestões de compra nos feeds.",
+            "Товары и рекомендации покупок в лентах.",
+            "フィード内の商品やショッピングのおすすめ。",
+            "信息流中的商品和购物推荐。",
+            "피드의 상품과 쇼핑 추천.",
+            "Produkty i sugestie zakupów w kanałach.",
+            "Producten en winkelaanbevelingen in feeds.",
+            "Akışlardaki ürünler ve alışveriş önerileri.",
+            "المنتجات واقتراحات التسوق في الخلاصات.");
         put(SETTINGS_RECOMMENDED,
             "Use recommended settings", "Usa impostazioni consigliate", "Usar ajustes recomendados",
             "Utiliser les réglages conseillés", "Empfohlene Einstellungen verwenden", "Usar configurações recomendadas",
@@ -379,20 +411,20 @@ final class MorpheStrings {
             "إظهار معلومات الصورة");
 
         put(IMAGE_INFO_DESCRIPTION,
-            "Checks the dimensions and actual format of the image selected for download.",
-            "Verifica dimensioni e formato effettivo dell’immagine scelta per il download.",
-            "Verifica las dimensiones y el formato real de la imagen seleccionada para descargar.",
-            "Vérifie les dimensions et le format réel de l’image choisie pour le téléchargement.",
-            "Prüft Abmessungen und tatsächliches Format des zum Download gewählten Bildes.",
-            "Verifica as dimensões e o formato real da imagem selecionada para baixar.",
-            "Проверяет размеры и фактический формат изображения для загрузки.",
-            "ダウンロードする画像の寸法と実際の形式を確認します。",
-            "检查所选下载图片的尺寸和实际格式。",
-            "다운로드할 이미지의 크기와 실제 형식을 확인합니다.",
-            "Sprawdza wymiary i rzeczywisty format obrazu wybranego do pobrania.",
-            "Controleert de afmetingen en het werkelijke formaat van de te downloaden afbeelding.",
-            "İndirilecek görselin boyutlarını ve gerçek biçimini kontrol eder.",
-            "يتحقق من أبعاد الصورة المحددة للتنزيل وتنسيقها الفعلي.");
+            "Dimensions, format and file size of the image selected for download.",
+            "Dimensioni, formato e peso dell’immagine scelta per il download.",
+            "Dimensiones, formato y tamaño del archivo de imagen que se descargará.",
+            "Dimensions, format et poids de l’image à télécharger.",
+            "Abmessungen, Format und Dateigröße des gewählten Download-Bildes.",
+            "Dimensões, formato e tamanho do arquivo da imagem para baixar.",
+            "Размеры, формат и объём изображения для скачивания.",
+            "ダウンロードする画像の寸法、形式、ファイルサイズ。",
+            "所选下载图片的尺寸、格式和文件大小。",
+            "다운로드할 이미지의 크기, 형식과 파일 용량.",
+            "Wymiary, format i rozmiar pliku obrazu do pobrania.",
+            "Afmetingen, formaat en bestandsgrootte van de te downloaden afbeelding.",
+            "İndirilecek görselin boyutları, biçimi ve dosya boyutu.",
+            "أبعاد الصورة المحددة للتنزيل وتنسيقها وحجم ملفها.");
 
         put(HIGH_QUALITY_TITLE,
             "Download images in highest quality",
@@ -558,13 +590,20 @@ final class MorpheStrings {
             "Advertenties uitschakelen", "Reklamları devre dışı bırak", "تعطيل الإعلانات");
 
         put(SHOPPING_PINS_TITLE,
-            "Hide sponsored products",
-            "Nascondi prodotti sponsorizzati", "Ocultar productos patrocinados",
-            "Masquer les produits sponsorisés", "Gesponserte Produkte ausblenden",
-            "Ocultar produtos patrocinados", "Скрыть спонсируемые товары",
-            "スポンサー商品を非表示", "隐藏赞助商品", "스폰서 제품 숨기기",
-            "Ukryj produkty sponsorowane", "Gesponsorde producten verbergen",
-            "Sponsorlu ürünleri gizle", "إخفاء المنتجات المموّلة");
+            "Hide product Pins",
+            "Nascondi Pin di prodotti",
+            "Ocultar Pines de productos",
+            "Masquer les Épingles de produits",
+            "Produkt-Pins ausblenden",
+            "Ocultar Pins de produtos",
+            "Скрыть товарные пины",
+            "商品ピンを非表示",
+            "隐藏商品 Pin",
+            "상품 핀 숨기기",
+            "Ukryj Piny produktów",
+            "Productpins verbergen",
+            "Ürün Pinlerini gizle",
+            "إخفاء منشورات المنتجات");
 
         put(SEARCH_MODULES_TITLE,
             "Hide board modules in search",
@@ -806,20 +845,20 @@ final class MorpheStrings {
             "يمنع التحديث التلقائي عند العودة للرئيسية. اسحب للأسفل للتحديث يدوياً.");
 
         put(HIDE_COMMENT_BUTTON_DESCRIPTION,
-            "Hides only the speech bubble below the Pin. Unavailable while all comments are hidden or image information replaces the buttons.",
-            "Nasconde solo il fumetto sotto il Pin. Non disponibile se nascondi tutti i commenti o se le informazioni immagine sostituiscono i pulsanti.",
-            "Oculta solo el globo bajo el Pin. No disponible si ocultas todos los comentarios o sustituyes los botones por información.",
-            "Masque seulement la bulle sous le Pin. Indisponible si tous les commentaires sont masqués ou remplacés par les informations.",
-            "Blendet nur die Sprechblase unter dem Pin aus. Nicht verfügbar, wenn alle Kommentare ausgeblendet oder Tasten durch Bildinfos ersetzt sind.",
-            "Oculta só o balão sob o Pin. Indisponível com todos os comentários ocultos ou informações no lugar dos botões.",
-            "Скрывает только значок под пином. Недоступно при скрытии всех комментариев или замене кнопок сведениями.",
-            "ピン下の吹き出しのみ非表示。全コメント非表示や画像情報でボタンを置換中は変更できません。",
-            "仅隐藏图钉下方的气泡。隐藏全部评论或用图片信息替换按钮时不可用。",
-            "핀 아래 말풍선만 숨깁니다. 모든 댓글 숨김 또는 이미지 정보로 버튼 대체 시 사용할 수 없습니다.",
-            "Ukrywa tylko dymek pod Pinem. Niedostępne po ukryciu wszystkich komentarzy lub zastąpieniu przycisków informacjami.",
-            "Verbergt alleen de tekstballon onder de Pin. Niet beschikbaar als alle reacties verborgen zijn of beeldinfo de knoppen vervangt.",
-            "Yalnızca Pinin altındaki balonu gizler. Tüm yorumlar gizliyken veya düğmeler bilgiyle değiştirilirken kullanılamaz.",
-            "يخفي فقاعة التعليقات فقط. غير متاح عند إخفاء كل التعليقات أو استبدال الأزرار بمعلومات الصورة.");
+            "Hides only the speech bubble, not the comments section.",
+            "Nasconde solo il fumetto, non la sezione commenti.",
+            "Oculta solo el bocadillo, no la sección de comentarios.",
+            "Masque seulement la bulle, pas la section commentaires.",
+            "Blendet nur die Sprechblase aus, nicht den Kommentarbereich.",
+            "Oculta apenas o balão, não a secção de comentários.",
+            "Скрывает только значок, но не раздел комментариев.",
+            "吹き出しのみを非表示にし、コメント欄は残します。",
+            "仅隐藏气泡按钮，不隐藏评论区。",
+            "말풍선 버튼만 숨기고 댓글 섹션은 유지합니다.",
+            "Ukrywa tylko dymek, nie sekcję komentarzy.",
+            "Verbergt alleen de tekstballon, niet de reactiesectie.",
+            "Yalnızca konuşma balonunu gizler, yorum bölümü kalır.",
+            "يخفي الفقاعة فقط، وليس قسم التعليقات.");
 
         put(HIDE_COMMENTS_TITLE,
             "Hide all comments",
@@ -831,32 +870,20 @@ final class MorpheStrings {
             "Tüm yorumları gizle", "إخفاء كل التعليقات");
 
         put(HIDE_COMMENTS_DESCRIPTION,
-            "Removes the comments section, the preview with \"view all\" and the comment button, "
-                + "so the section cannot be reached.",
-            "Toglie la sezione commenti, l'anteprima con \"visualizza tutti\" e il tasto dei "
-                + "commenti, così la sezione non è raggiungibile.",
-            "Quita la sección de comentarios, la vista previa con \"ver todos\" y el botón de "
-                + "comentarios, de modo que la sección no se pueda abrir.",
-            "Supprime la section commentaires, l'aperçu avec « tout voir » et le bouton de "
-                + "commentaire, de sorte que la section devienne inaccessible.",
-            "Entfernt den Kommentarbereich, die Vorschau mit „Alle ansehen“ und die "
-                + "Kommentarschaltfläche, sodass der Bereich nicht erreichbar ist.",
-            "Remove a secção de comentários, a pré-visualização com \"ver tudo\" e o botão de "
-                + "comentários, de modo que a secção não seja acessível.",
-            "Убирает раздел комментариев, предпросмотр с «смотреть все» и кнопку комментариев, "
-                + "так что раздел становится недоступен.",
-            "コメント欄、「すべて見る」付きのプレビュー、コメントボタンを取り除き、"
-                + "コメント欄に到達できないようにします。",
-            "移除评论区、带“查看全部”的预览以及评论按钮，使评论区无法进入。",
-            "댓글 섹션과 '모두 보기'가 있는 미리보기, 댓글 버튼을 없애 댓글 섹션에 들어갈 수 없게 합니다.",
-            "Usuwa sekcję komentarzy, podgląd z „zobacz wszystkie” oraz przycisk komentarzy, więc "
-                + "sekcja staje się niedostępna.",
-            "Verwijdert de reactiesectie, het voorbeeld met \"alles bekijken\" en de "
-                + "reactieknop, zodat de sectie onbereikbaar wordt.",
-            "Yorumlar bölümünü, \"tümünü gör\" içeren önizlemeyi ve yorum düğmesini kaldırır; "
-                + "böylece bölüme ulaşılamaz.",
-            "يزيل قسم التعليقات والمعاينة التي تحتوي على \"عرض الكل\" وزر التعليقات، فلا يعود "
-                + "بالإمكان الوصول إلى القسم.");
+            "Hides the comments section, preview and comment button.",
+            "Nasconde sezione commenti, anteprima e relativo pulsante.",
+            "Oculta la sección de comentarios, su vista previa y su botón.",
+            "Masque les commentaires, leur aperçu et leur bouton.",
+            "Blendet Kommentare, Vorschau und Kommentarschaltfläche aus.",
+            "Oculta a secção de comentários, a prévia e o botão.",
+            "Скрывает раздел комментариев, превью и кнопку.",
+            "コメント欄、プレビュー、コメントボタンを非表示にします。",
+            "隐藏评论区、预览和评论按钮。",
+            "댓글 섹션, 미리보기와 댓글 버튼을 숨깁니다.",
+            "Ukrywa sekcję komentarzy, podgląd i przycisk.",
+            "Verbergt de reactiesectie, het voorbeeld en de reactieknop.",
+            "Yorum bölümünü, önizlemeyi ve yorum düğmesini gizler.",
+            "يخفي قسم التعليقات والمعاينة وزر التعليق.");
 
         put(SEARCH_HISTORY_TITLE,
             "Hide search history",
@@ -909,27 +936,36 @@ final class MorpheStrings {
             "Uzun basmada indirme düğmesi", "زر التنزيل عند الضغط المطوّل");
 
         put(LONG_PRESS_DOWNLOAD_DESCRIPTION,
-            "Adds a download button to the long-press menu to save a pin image on your device without opening the pin.",
-            "Aggiunge un pulsante al menu della pressione prolungata per scaricare l’immagine sul dispositivo senza aprire il Pin.",
-            "Añade un botón al menú de pulsación prolongada para descargar la imagen en tu dispositivo sin abrir el Pin.",
-            "Ajoute un bouton au menu d’appui long pour télécharger l’image sur votre appareil sans ouvrir l’épingle.",
-            "Fügt dem Menü beim langen Drücken eine Schaltfläche hinzu, um das Bild auf dein Gerät herunterzuladen, ohne den Pin zu öffnen.",
-            "Adiciona um botão ao menu de pressão prolongada para transferir a imagem para o dispositivo sem abrir o Pin.",
-            "Добавляет кнопку в меню долгого нажатия, чтобы скачать изображение на устройство, не открывая пин.",
-            "長押しメニューにダウンロードボタンを追加し、ピンを開かずに画像を端末に保存できます。",
-            "在长按菜单中添加下载按钮，无需打开 Pin 即可将图片保存到设备。",
-            "길게 누르기 메뉴에 다운로드 버튼을 추가해 핀을 열지 않고 이미지를 기기에 저장합니다.",
-            "Dodaje przycisk do menu po przytrzymaniu, aby pobrać obraz na urządzenie bez otwierania pina.",
-            "Voegt een downloadknop toe aan het menu bij lang indrukken om de afbeelding op je apparaat op te slaan zonder de pin te openen.",
-            "Pini açmadan görseli cihazınıza indirmek için uzun basma menüsüne bir indirme düğmesi ekler.",
-            "يضيف زر تنزيل إلى قائمة الضغط المطوّل لحفظ الصورة على جهازك دون فتح الدبوس.");
+            "Download an image from the long-press menu without opening the Pin.",
+            "Scarica l’immagine dal menu della pressione prolungata, senza aprire il Pin.",
+            "Descarga la imagen desde el menú de pulsación larga sin abrir el Pin.",
+            "Télécharge l’image par appui long, sans ouvrir l’Épingle.",
+            "Bild über das Menü beim langen Drücken herunterladen, ohne den Pin zu öffnen.",
+            "Baixe a imagem pelo menu de toque longo, sem abrir o Pin.",
+            "Скачивает изображение через долгое нажатие, не открывая пин.",
+            "ピンを開かず、長押しメニューから画像をダウンロードします。",
+            "通过长按菜单下载图片，无需打开 Pin。",
+            "핀을 열지 않고 길게 누르기 메뉴에서 이미지를 다운로드합니다.",
+            "Pobiera obraz z menu po przytrzymaniu, bez otwierania Pina.",
+            "Download de afbeelding via lang indrukken, zonder de pin te openen.",
+            "Pini açmadan uzun basma menüsünden görseli indirir.",
+            "ينزّل الصورة من قائمة الضغط المطوّل دون فتح المنشور.");
 
         put(BOARD_DOWNLOAD_TITLE,
-            "Download whole board",
-            "Scarica tutta la bacheca", "Descargar todo el tablero", "Télécharger tout le tableau",
-            "Ganze Pinnwand herunterladen", "Baixar a pasta inteira", "Скачать всю доску",
-            "ボード全体をダウンロード", "下载整个画板", "보드 전체 다운로드", "Pobierz całą tablicę",
-            "Hele bord downloaden", "Tüm panoyu indir", "تنزيل اللوحة بالكامل");
+            "Download loaded Pins",
+            "Scarica i Pin caricati",
+            "Descargar Pines cargados",
+            "Télécharger les Épingles chargées",
+            "Geladene Pins herunterladen",
+            "Baixar Pins carregados",
+            "Скачать загруженные пины",
+            "読み込み済みピンをダウンロード",
+            "下载已加载的 Pin",
+            "불러온 핀 다운로드",
+            "Pobierz wczytane Piny",
+            "Geladen pins downloaden",
+            "Yüklenen Pinleri indir",
+            "تنزيل المنشورات المحمّلة");
 
         put(BOARD_DOWNLOAD_DESCRIPTION,
             "Saves the pins already loaded: scroll the board to the end first.",

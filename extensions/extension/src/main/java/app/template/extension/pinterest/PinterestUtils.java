@@ -301,6 +301,7 @@ public final class PinterestUtils {
     /** @return true se almeno una delle opzioni di filtro del feed è accesa. */
     private static boolean isFilteringEnabled() {
         return MorpheSettingsStore.isAdsDisabled()
+                || MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS)
                 || MorpheSettingsStore.isShoppingPinsHidden()
                 || MorpheSettingsStore.isSearchBoardModulesHidden();
     }
@@ -491,6 +492,7 @@ public final class PinterestUtils {
             return;
         }
         boolean removeAds = MorpheSettingsStore.isAdsDisabled();
+        boolean removeVideos = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS);
         boolean removeShopping = MorpheSettingsStore.isShoppingPinsHidden();
         boolean removeSearchModules = MorpheSettingsStore.isSearchBoardModulesHidden();
         try {
@@ -499,7 +501,8 @@ public final class PinterestUtils {
                 int matching = 0;
                 for (Object item : items) {
                     if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)
-                            || isSearchModule(item, removeSearchModules)) {
+                            || isSearchModule(item, removeSearchModules)
+                            || (removeVideos && AdDetector.isVideoPin(item))) {
                         matching++;
                     }
                 }
@@ -523,12 +526,14 @@ public final class PinterestUtils {
                 int ads = 0;
                 int shopping = 0;
                 int modules = 0;
+                int videos = 0;
                 java.util.Iterator<?> iterator = items.iterator();
                 while (iterator.hasNext()) {
                     Object item = iterator.next();
                     boolean ad = isAd(item, removeAds);
                     boolean module = !ad && isSearchModule(item, removeSearchModules);
-                    if (!ad && !module && !isShoppingPin(item, removeShopping)) {
+                    boolean video = !ad && !module && removeVideos && AdDetector.isVideoPin(item);
+                    if (!ad && !module && !video && !isShoppingPin(item, removeShopping)) {
                         continue;
                     }
                     try {
@@ -542,6 +547,8 @@ public final class PinterestUtils {
                         ads++;
                     } else if (module) {
                         modules++;
+                    } else if (video) {
+                        videos++;
                     } else {
                         shopping++;
                     }
@@ -555,6 +562,9 @@ public final class PinterestUtils {
                             + " product pins)");
                     MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved + " ads and "
                             + totalShoppingPinsRemoved + " product pins removed so far");
+                }
+                if (videos > 0) {
+                    MorpheLog.i(MorpheLog.ADS, "removed " + videos + " video pins out of " + total);
                 }
                 if (modules > 0) {
                     // Canale a sé: sono moduli della ricerca, non annunci, e tenerli distinti

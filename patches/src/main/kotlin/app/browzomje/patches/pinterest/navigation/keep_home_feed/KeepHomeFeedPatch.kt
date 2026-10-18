@@ -31,7 +31,7 @@ private fun MutableMethod.calls(): List<Pair<Int, MethodReference>> =
 val keepHomeFeedPatch = bytecodePatch(
     name = PATCH_NAME,
     description = "Keeps the Home feed when returning to Home instead of refreshing automatically. " +
-        "Pull-to-refresh remains available. Controlled in Morphe settings.",
+        "Pull-to-refresh remains available. Off by default and in the recommended preset; enable it in Morphe settings.",
     default = true,
 ) {
     compatibleWith(Compatibility(

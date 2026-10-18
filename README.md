@@ -11,6 +11,8 @@ This repository provides custom enhancements and modifications for Android apps,
 
 These patches allow you to remove advertisements, block tracking, and add new utility features directly to the apps.
 
+The optional **Hide video pins (experimental)** setting is off by default. It filters video Pins in mixed feeds; pages made entirely of filtered items may remain visible to preserve pagination. It is not a complete video blocker.
+
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
@@ -30,7 +32,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Disable AppsFlyer tracking](#disable-appsflyer-tracking) | Neutralises the AppsFlyer attribution SDK, so no install, event or uninstall data leaves the device. |  |
 | [Disable Google Engage](#disable-google-engage) | Stops Pinterest publishing your content to Google (Discover, Assistant, Play Store). |  |
 | [Disable Google Engage worker](#disable-google-engage-worker) | Blocks the periodic Google Engage job, the other way content reaches Google. |  |
-| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, both switchable from the Morphe settings screen. |  |
+| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, and the experimental opt-in "Hide video pins" filter, all switchable from the Morphe settings screen. |  |
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Closes the "confirm your email" modal, and similar ones, when enabled in Morphe settings. |  |
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |
@@ -46,7 +48,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section on the search screen and below the search bar. Pinterest still logs searches server-side. |  |
-| [Keep Home feed](#keep-home-feed) | Keeps the Home feed when returning to Home instead of refreshing automatically. Pull-to-refresh remains available. Controlled in Morphe settings. |  |
+| [Keep Home feed](#keep-home-feed) | Keeps the Home feed when returning to Home instead of refreshing automatically. Pull-to-refresh remains available. Off by default and in the recommended preset; enable it in Morphe settings. |  |
 | [Morphe runtime names](#morphe-runtime-names) | Resolves the class Pinterest builds its toasts with, so Morphe's messages look like the app's own. |  |
 | [Morphe settings entry](#morphe-settings-entry) | Adds the "Morphe" item to the Account Settings list to open the toggle screen. |  |
 | [Morphe settings screen (label)](#morphe-settings-screen-label) | Renames the reused string resource for the "Morphe" entry in Settings, across all languages. |  |

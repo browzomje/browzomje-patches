@@ -27,6 +27,8 @@ public class SettingsTest {
  public static void main(String[] args)throws Exception {
   android.content.SharedPreferences prefs=new android.content.SharedPreferences();
   java.lang.reflect.Field field=MorpheSettingsStore.class.getDeclaredField("cachedPrefs");field.setAccessible(true);field.set(null,prefs);
+  check(!HomeFeedRefresh.shouldKeepFeed(),"fresh install uses original refresh");
+  check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS),"videos opt in");
   String info=MorpheSettingsStore.KEY_IMAGE_INFO,replace=MorpheSettingsStore.KEY_INFO_REPLACE;
   String like=MorpheSettingsStore.KEY_HIDE_LIKE,comment=MorpheSettingsStore.KEY_HIDE_COMMENT_BUTTON;
   MorpheSettingsStore.set(MorpheSettingsStore.KEY_HIDE_COMMENTS,false);
@@ -53,6 +55,10 @@ public class SettingsTest {
   MorpheSettingsStore.set(MorpheSettingsStore.KEY_KEEP_HOME_FEED,true);
   check(HomeFeedRefresh.shouldKeepFeed(),"keep feed gate");
   MorpheSettingsStore.applyRecommended();check(MorpheSettingsStore.effective(replace)&&!MorpheSettingsStore.isToggleEnabled(like),"preset dependency");
+  check(!HomeFeedRefresh.shouldKeepFeed(),"recommended preset disables keep feed");
+  check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS),"recommended preset leaves videos visible");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_KEEP_HOME_FEED,true);
+  check(HomeFeedRefresh.shouldKeepFeed(),"explicit saved preference still honored");
   System.out.println("PASS settings combinations, writes, legacy/imported values and preset");
  }
 }'''

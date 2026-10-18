@@ -100,6 +100,11 @@ final class AdDetector {
         return matches(model, markersFor(model), "ad");
     }
 
+    /** Authoritative network flag; thumbnails, GIFs and unrelated video metadata are not enough. */
+    static boolean isVideoPin(Object model) {
+        return Boolean.TRUE.equals(fieldValueBySerializedName(model, "is_video"));
+    }
+
     /**
      * @return true se il modello è un pin di catalogo di un negozio. Vedi {@link #SHOPPING_MARKERS}
      *     per perché è tenuto distinto da {@link #isAd}.

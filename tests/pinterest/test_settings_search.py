@@ -11,6 +11,19 @@ with tempfile.TemporaryDirectory() as tmp:
 public class SearchTest {public static void main(String[] args)throws Exception {
  java.lang.reflect.Field f=MorpheStrings.class.getDeclaredField("TRANSLATIONS");f.setAccessible(true);
  java.util.Map<String,String[]> map=(java.util.Map<String,String[]>)f.get(null);
+ int entries=0;
+ for(java.lang.reflect.Field key:MorpheStrings.class.getDeclaredFields())
+  if(key.getType()==String.class && java.lang.reflect.Modifier.isStatic(key.getModifiers()))
+   if(!map.containsKey((String)key.get(null)))throw new AssertionError("missing key "+key.getName());
+ for(java.util.Map.Entry<String,String[]> entry:map.entrySet()) {
+  if(entry.getValue().length!=14)throw new AssertionError("language count "+entry.getKey());
+  for(String value:entry.getValue()) {
+   if(value==null || value.trim().isEmpty())throw new AssertionError("missing translation "+entry.getKey());
+   if(value.contains("%d")!=entry.getValue()[0].contains("%d"))throw new AssertionError("format placeholder "+entry.getKey());
+  }
+  entries++;
+ }
+ System.out.println("PASS translation coverage: "+entries+" keys x 14 languages; no blank entries; placeholders preserved");
  int checked=0;
  for(String key:map.keySet()) if(key.endsWith("_title")||key.endsWith("_description")) {
  String[] values=map.get(key);
