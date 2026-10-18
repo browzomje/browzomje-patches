@@ -966,7 +966,7 @@ public final class MorpheSettingsActivity extends Activity {
     private void exportTo(Uri uri) {
         try {
             String json = MorpheSettingsBackup.export(this);
-            OutputStream output = getContentResolver().openOutputStream(uri);
+            OutputStream output = getContentResolver().openOutputStream(uri, "wt");
             if (output == null) {
                 throw new java.io.IOException("file not writable");
             }
@@ -987,7 +987,10 @@ public final class MorpheSettingsActivity extends Activity {
 
     private void importFrom(Uri uri) {
         try {
-            String json = MorpheSettingsBackup.readAll(getContentResolver().openInputStream(uri));
+            String json;
+            try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {
+                json = MorpheSettingsBackup.readAll(input);
+            }
             int applied = MorpheSettingsBackup.apply(json);
             Toast.makeText(this,
                     MorpheStrings.get(MorpheStrings.TOAST_IMPORTED)
