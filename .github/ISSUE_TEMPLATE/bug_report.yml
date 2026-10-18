@@ -1,48 +1,91 @@
-name: 🐞 Bug report
-description: Report a bug or an issue.
-title: "bug: "
-labels: ["Bug report"]
+name: Bug report
+description: Report incorrect behavior in the patched app.
+title: 'bug: '
 body:
-  - type: markdown
-    attributes:
-      value: |
-        # Patches template bug report
-
-        Before creating a new bug report, please keep the following in mind:
-
-        - **Do not submit a duplicate bug report**: Search for existing bug reports [here](https://github.com/TEMPLATE/template-patches-template/issues?q=label%3A%22Bug+report%22).
-        - **Review the contribution guidelines**: Make sure your bug report adheres to it. You can find the guidelines [here](https://github.com/TEMPLATE/template-patches-template/blob/main/CONTRIBUTING.md).
-  - type: textarea
-    attributes:
-      label: Bug description
-      description: |
-        - Describe your bug in detail
-        - Add steps to reproduce the bug if possible (Step 1. ... Step 2. ...)
-        - Add images and videos if possible
-    validations:
+- type: markdown
+  attributes:
+    value: Search open and closed issues first. Check the supported Pinterest version and patch releases in [the
+      README](https://github.com/browzomje/browzomje-patches#readme). Copy exact version numbers, including any
+      -dev suffix; do not write “latest”. Never attach account credentials, tokens, or private content.
+- type: input
+  id: app_version
+  attributes:
+    label: App and exact version
+    description: 'For example: Pinterest 14.39.0. Find it in Android app info or the Morphe settings screen.'
+  validations:
+    required: true
+- type: input
+  id: patches_version
+  attributes:
+    label: Exact browzomje patches version
+    description: Copy the full bundle version from Morphe settings or the selected patch source, including -dev.N
+      if present.
+  validations:
+    required: true
+- type: input
+  id: device
+  attributes:
+    label: Device and Android version
+    description: Device model, Android version, and custom ROM if applicable.
+  validations:
+    required: true
+- type: input
+  id: patcher
+  attributes:
+    label: Patching tool and version
+    description: Morphe Manager / CLI version; mention other patch sources used.
+  validations:
+    required: true
+- type: textarea
+  id: settings
+  attributes:
+    label: Relevant patches and settings
+    description: List enabled patches and relevant Morphe toggles, or attach a settings export after reviewing it.
+  validations:
+    required: true
+- type: textarea
+  id: steps
+  attributes:
+    label: Steps to reproduce
+    description: 'Numbered steps from opening the app. Include where this happens: Home, search, board, Pin, etc.'
+  validations:
+    required: true
+- type: textarea
+  id: expected
+  attributes:
+    label: Expected behavior
+    description: What should happen?
+  validations:
+    required: true
+- type: textarea
+  id: actual
+  attributes:
+    label: Actual behavior
+    description: What happens instead? How often?
+  validations:
+    required: true
+- type: textarea
+  id: regression
+  attributes:
+    label: Comparison and last working version
+    description: Does the unpatched app behave the same? Last working app/patch version, if known. Write “not tested”
+      when unknown.
+  validations:
+    required: true
+- type: textarea
+  id: evidence
+  attributes:
+    label: Logs and screenshots
+    description: Attach relevant logs, screenshots or a short recording. Remove private data. Do not paste an entire
+      unrelated log.
+  validations:
+    required: false
+- type: checkboxes
+  id: checks
+  attributes:
+    label: Before submitting
+    options:
+    - label: I searched open and closed issues for duplicates.
       required: true
-  - type: textarea
-    attributes:
-      label: Error logs
-      description: Exceptions can be captured by running `logcat | grep AndroidRuntime` in a shell.
-      render: shell
-  - type: textarea
-    attributes:
-      label: Solution
-      description: If applicable, add a possible solution to the bug.
-  - type: textarea
-    attributes:
-      label: Additional context
-      description: Add additional context here.
-  - type: checkboxes
-    id: acknowledgements
-    attributes:
-      label: Acknowledgements
-      description: Your bug report will be closed if you don't follow the checklist below.
-      options:
-        - label: I have checked all open and closed bug reports and this is not a duplicate.
-          required: true
-        - label: I have chosen an appropriate title.
-          required: true
-        - label: All requested information has been provided properly.
-          required: true
+    - label: I provided exact versions and removed private information from attachments.
+      required: true

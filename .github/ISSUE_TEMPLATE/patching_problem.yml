@@ -1,0 +1,89 @@
+name: Patching or installation problem
+description: Report a build, APK parsing, signing or installation failure.
+title: 'bug: '
+body:
+- type: markdown
+  attributes:
+    value: Search open and closed issues first. Check the supported Pinterest version and patch releases in [the
+      README](https://github.com/browzomje/browzomje-patches#readme). Copy exact version numbers, including any
+      -dev suffix; do not write “latest”. Never attach account credentials, tokens, or private content.
+- type: input
+  id: app_version
+  attributes:
+    label: App and exact version
+    description: 'For example: Pinterest 14.39.0. Find it in Android app info or the Morphe settings screen.'
+  validations:
+    required: true
+- type: input
+  id: patches_version
+  attributes:
+    label: Exact browzomje patches version
+    description: Copy the full bundle version from Morphe settings or the selected patch source, including -dev.N
+      if present.
+  validations:
+    required: true
+- type: input
+  id: patcher
+  attributes:
+    label: Patching tool and exact version
+    description: Morphe Manager / CLI version and patcher version if shown.
+  validations:
+    required: true
+- type: input
+  id: device
+  attributes:
+    label: Device and Android version
+    description: Device model, Android version; for CLI also provide desktop OS and Java version.
+  validations:
+    required: true
+- type: textarea
+  id: apk
+  attributes:
+    label: Original APK source and format
+    description: Source page, APK/APKM/XAPK/splits, original or already patched, and file size. Include SHA-256
+      if available. Do not upload copyrighted APKs here.
+  validations:
+    required: true
+- type: textarea
+  id: selection
+  attributes:
+    label: Selected patches and sources
+    description: List the selected patches, options and all patch sources used.
+  validations:
+    required: true
+- type: dropdown
+  id: stage
+  attributes:
+    label: Failure stage
+    description: Choose the step that fails.
+    options:
+    - Opening / reading the original APK
+    - Applying patches
+    - Building / signing the patched APK
+    - Installing / updating the app
+  validations:
+    required: true
+- type: textarea
+  id: steps
+  attributes:
+    label: Steps and exact error
+    description: Explain how to reproduce the failure and paste the full error text.
+  validations:
+    required: true
+- type: textarea
+  id: log
+  attributes:
+    label: Patching or installation log
+    description: Attach the exported Manager log or CLI output. Remove tokens and personal information. If unavailable,
+      explain why.
+  validations:
+    required: true
+- type: checkboxes
+  id: checks
+  attributes:
+    label: Before submitting
+    options:
+    - label: I searched open and closed issues for duplicates.
+      required: true
+    - label: I provided exact versions and removed private information from attachments.
+      required: true
