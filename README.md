@@ -24,7 +24,7 @@ Android's share chooser is the fallback when neither supported app is available.
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.14.1-dev.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.14.1-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;39 patches total
+> **[v1.14.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.14.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;39 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;34 patches</summary>
 <br>
