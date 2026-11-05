@@ -34,7 +34,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.15.0-dev.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.15.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;39 patches total
+> **[v1.15.0-dev.2](https://github.com/browzomje/browzomje-patches/releases/tag/v1.15.0-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;39 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;34 patches</summary>
 <br>

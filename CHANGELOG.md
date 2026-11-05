@@ -1,3 +1,9 @@
+## [1.15.0-dev.2](https://github.com/browzomje/browzomje-patches/compare/v1.15.0-dev.1...v1.15.0-dev.2) (2026-11-05)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** download the visible carousel slide ([c6d152f](https://github.com/browzomje/browzomje-patches/commit/c6d152f064c0eed1900aa95a8234a174321899dd))
+
 ## [1.15.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.14.1...v1.15.0-dev.1) (2026-11-05)
 
 ### 🐛 Bug Fixes
