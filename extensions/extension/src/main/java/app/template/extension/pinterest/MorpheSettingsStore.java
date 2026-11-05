@@ -198,7 +198,6 @@ public final class MorpheSettingsStore {
      */
     static boolean defaultOf(String key) {
         return !KEY_KEEP_HOME_FEED.equals(key) && !KEY_HIDE_VIDEO_PINS.equals(key)
-                && !KEY_HIDE_AI_PINS.equals(key)
                 && !KEY_HIDE_SEARCH_BUTTON.equals(key) && !KEY_HIDE_SEARCH_HISTORY.equals(key)
                 && java.util.Arrays.asList(KEYS).contains(key);
     }

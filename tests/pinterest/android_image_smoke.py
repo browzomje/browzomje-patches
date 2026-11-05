@@ -38,20 +38,24 @@ def bounds_for(selector):
         root = ET.fromstring(output[start:end + len(b"</hierarchy>")])
     except ET.ParseError:
         return None
-    matches = set()
+    attributes = ("resource-id", "text", "content-desc")
+    matches = {attribute: set() for attribute in attributes}
     for node in root.iter("node"):
         if node.get("package") != PACKAGE:
             continue
-        if selector not in (node.get("resource-id"), node.get("text"), node.get("content-desc")):
+        matched = next((attribute for attribute in attributes if node.get(attribute) == selector), None)
+        if matched is None:
             continue
         coords = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
         if coords:
             left, top, right, bottom = map(int, coords.groups())
             if right > left and bottom > top:
-                matches.add(((left + right) // 2, (top + bottom) // 2))
-    if len(matches) > 1:
+                matches[matched].add(((left + right) // 2, (top + bottom) // 2))
+    # An accessible row may repeat its child label as a content description.
+    best = next((matches[attribute] for attribute in attributes if matches[attribute]), set())
+    if len(best) > 1:
         raise RuntimeError("selector matched multiple controls")
-    return next(iter(matches), None)
+    return next(iter(best), None)
 
 
 def tap(point):
@@ -93,20 +97,11 @@ def verify_installed_apk(apk):
         raise RuntimeError("installed Pinterest does not match the candidate APK")
 
 
-def run(args):
-    verify_installed_apk(args.apk)
+def download_image(args, expected=None):
     before = files_for(args.pin_id)
-    adb("shell", "am", "start", "-W", "-a", "android.intent.action.VIEW",
-        "-d", f"https://www.pinterest.com/pin/{args.pin_id}/", "-p", PACKAGE)
     menu = wait_for(lambda: bounds_for(args.menu), 30)
     if menu is None:
         raise RuntimeError("Pin menu did not appear")
-    if args.swipe:
-        adb("shell", "input", "swipe", *map(str, args.swipe), "400")
-        time.sleep(1)
-        menu = wait_for(lambda: bounds_for(args.menu), 15)
-        if menu is None:
-            raise RuntimeError("Pin menu did not appear after swipe")
     tap(menu)
     download = wait_for(lambda: bounds_for(args.download), 20)
     if download is None:
@@ -117,13 +112,44 @@ def run(args):
     def downloaded():
         for name in sorted(files_for(args.pin_id) - before):
             data = adb("exec-out", "cat " + shlex.quote(f"{DOWNLOAD_DIR}/{name}"))
-            if is_image(data) and (not args.sha256 or hashlib.sha256(data).hexdigest() == args.sha256):
-                return True
-        return False
+            if is_image(data):
+                digest = hashlib.sha256(data).hexdigest()
+                if expected is None or digest == expected:
+                    return digest
+        return None
 
-    if not wait_for(downloaded, args.timeout):
+    digest = wait_for(downloaded, args.timeout)
+    if digest is None:
         raise RuntimeError("no complete matching download before timeout")
     print(f"PASS image download in {time.monotonic() - start:.1f}s")
+    return digest
+
+
+def swipe(coordinates):
+    adb("shell", "input", "swipe", *map(str, coordinates), "400")
+    time.sleep(1)
+
+
+def run(args):
+    verify_installed_apk(args.apk)
+    adb("shell", "am", "start", "-W", "-a", "android.intent.action.VIEW",
+        "-d", f"https://www.pinterest.com/pin/{args.pin_id}/", "-p", PACKAGE)
+    if args.carousel:
+        first = download_image(args)
+        swipe(args.swipe)
+        second = download_image(args, args.sha256)
+        if first == second:
+            raise RuntimeError("second page downloaded the first page's image")
+        x1, y1, x2, y2 = args.swipe
+        swipe((x2, y2, x1, y1))
+        download_image(args, first)
+        print("PASS carousel first, second, first")
+    else:
+        if args.swipe:
+            if wait_for(lambda: bounds_for(args.menu), 30) is None:
+                raise RuntimeError("Pin menu did not appear")
+            swipe(args.swipe)
+        download_image(args, args.sha256)
 
 
 def main():
@@ -133,6 +159,7 @@ def main():
     parser.add_argument("--menu", required=True, help="exact resource ID, text or accessibility label")
     parser.add_argument("--download", required=True, help="exact resource ID, text or accessibility label")
     parser.add_argument("--swipe", nargs=4, type=int, metavar=("X1", "Y1", "X2", "Y2"))
+    parser.add_argument("--carousel", action="store_true", help="check first, second, then first page")
     parser.add_argument("--sha256", help="expected image hash for the current download quality setting")
     parser.add_argument("--timeout", type=int, default=60, help="seconds allowed after tapping Download")
     args = parser.parse_args()
@@ -140,7 +167,9 @@ def main():
         parser.error("Pin ID must contain only digits")
     if args.sha256 and not re.fullmatch(r"[0-9a-f]{64}", args.sha256):
         parser.error("expected SHA-256 must use 64 lowercase hexadecimal characters")
-    if args.swipe and not args.sha256:
+    if args.carousel and not args.swipe:
+        parser.error("--carousel requires the forward --swipe coordinates")
+    if args.swipe and not args.carousel and not args.sha256:
         parser.error("a carousel swipe requires the selected page's expected SHA-256")
     if args.timeout <= 0:
         parser.error("timeout must be positive")

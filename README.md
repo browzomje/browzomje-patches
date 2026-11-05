@@ -13,7 +13,7 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 
 The optional **Hide video pins** setting is off by default. It filters video Pins in feeds and search, including Story Pins identified by their video duration. Pages containing only videos may become empty; search suggestions and their thumbnails remain visible. Pinterest has several feed formats, so broader device coverage is still needed.
 
-**Hide AI-labeled Pins** is an optional feed setting. It filters Pins that carry a Pinterest AI disclosure.
+**Hide AI-labeled Pins** is enabled by default and in the recommended preset. It filters Pins that carry a Pinterest AI disclosure.
 
 The **Choose startup tab** patch (Pinterest 14.39.0 and 14.43.0) adds Home, Search and Saved
 choices in Morphe settings, with native icons. Home is the default. The choice
@@ -29,11 +29,11 @@ unchanged. The list stays on the device and is excluded from settings exports.
 
 **Image download history** shows queued and recent completed or failed image
 downloads started by Morphe. Select a saved image to copy or share the file, or a failed
-image to retry. The history starts when this version is installed.
+image to retry. On Android 10 and later, the five most recent saved images can show a thumbnail.
 
-**Repair Firebase registration** is an optional patch for re-signed Pinterest
-14.39.0 and 14.43.0. It restores the certificate fingerprint used by Firebase
-Installations. End-to-end push delivery is still under investigation.
+**Repair Firebase registration** is enabled by default for re-signed Pinterest
+14.39.0 and 14.43.0. Push delivery was confirmed on a patched 14.43.0 build.
+The patch can be excluded from the patch selection in Morphe Manager.
 
 ### Pinterest device testing
 

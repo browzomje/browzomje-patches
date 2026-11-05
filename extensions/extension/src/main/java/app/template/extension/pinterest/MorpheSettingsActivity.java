@@ -625,58 +625,149 @@ public final class MorpheSettingsActivity extends Activity {
         }
     }
 
-    private void showImageDownloadHistory() {
-        java.util.List<PinDownloadQueue.HistoryEntry> entries = PinDownloadQueue.history(this);
-        String[] labels = new String[entries.size()];
-        for (int i = 0; i < entries.size(); i++) {
-            PinDownloadQueue.HistoryEntry entry = entries.get(i);
-            String status = entry.pending() ? MorpheStrings.get("image_download_queued")
-                    : entry.saved() ? MorpheStrings.get("image_download_saved")
-                    : MorpheStrings.get("download_failed");
-            labels[i] = entry.title() + "\n" + status;
-        }
-        android.app.AlertDialog.Builder dialog = new android.app.AlertDialog.Builder(this)
-                .setTitle(MorpheStrings.get("image_download_history"))
-                .setNegativeButton(android.R.string.cancel, null);
-        if (entries.isEmpty()) dialog.setMessage(MorpheStrings.get("image_download_empty"));
-        else dialog.setItems(labels, (window, index) -> {
-            PinDownloadQueue.HistoryEntry entry = entries.get(index);
-            if (entry.pending()) return;
-            if (entry.saved()) showDownloadedImageActions(entry);
-            else new android.app.AlertDialog.Builder(this)
-                    .setTitle(entry.title())
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(MorpheStrings.get("image_download_retry"), (confirm, which) -> {
-                        try {
-                            PinDownloadQueue.retry(this, entry);
-                            showImageDownloadHistory();
-                        } catch (Exception failure) {
-                            android.widget.Toast.makeText(this, MorpheStrings.get("download_failed"),
-                                    android.widget.Toast.LENGTH_SHORT).show();
-                        }
-                    }).show();
-        });
-        dialog.show();
+    private LinearLayout newSettingsSheet(android.app.Dialog dialog, String title) {
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(24), dp(20), dp(24), dp(24));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xFF1A1A1A);
+        background.setCornerRadii(new float[]{dp(24), dp(24), dp(24), dp(24), 0, 0, 0, 0});
+        card.setBackground(background);
+        card.addView(menuText(title, 22, TEXT_PRIMARY, true));
+        return card;
     }
 
-    private void showDownloadedImageActions(PinDownloadQueue.HistoryEntry entry) {
-        android.app.DownloadManager manager = getSystemService(android.app.DownloadManager.class);
-        android.net.Uri uri = manager == null ? null : manager.getUriForDownloadedFile(entry.managerId());
-        if (uri == null) {
-            android.widget.Toast.makeText(this, MorpheStrings.get("image_download_unavailable"),
-                    android.widget.Toast.LENGTH_SHORT).show();
-            return;
+    private void showSettingsSheet(android.app.Dialog dialog, LinearLayout card) {
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(card);
+        dialog.setContentView(scroll);
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setGravity(Gravity.BOTTOM);
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(entry.title())
-                .setNegativeButton(android.R.string.cancel, null)
-                .setNeutralButton(android.R.string.copy, (dialog, which) -> {
-                    android.content.ClipboardManager clipboard = getSystemService(android.content.ClipboardManager.class);
-                    if (clipboard != null) clipboard.setPrimaryClip(ClipData.newUri(getContentResolver(), entry.title(), uri));
-                })
-                .setPositiveButton(MorpheStrings.get("image_download_share"),
-                        (dialog, which) -> shareDownloadedImage(uri, manager.getMimeTypeForDownloadedFile(entry.managerId())))
-                .show();
+        dialog.show();
+        if (window != null) window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void addSheetAction(LinearLayout card, String label, Runnable action) {
+        Button button = newButton(label);
+        button.setOnClickListener(view -> action.run());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = dp(8);
+        card.addView(button, params);
+    }
+
+    private void showImageDownloadHistory() {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        LinearLayout card = newSettingsSheet(dialog, MorpheStrings.get("image_download_history"));
+        java.util.List<PinDownloadQueue.HistoryEntry> entries = PinDownloadQueue.history(this);
+        java.util.List<PinDownloadQueue.HistoryEntry> previews = new java.util.ArrayList<>();
+        java.util.List<ImageView> thumbnails = new java.util.ArrayList<>();
+        if (entries.isEmpty()) addNote(card, MorpheStrings.get("image_download_empty"));
+        for (PinDownloadQueue.HistoryEntry entry : entries) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(10), 0, dp(10));
+            if (entry.saved() && previews.size() < 5 && android.os.Build.VERSION.SDK_INT >= 29) {
+                ImageView thumbnail = new ImageView(this);
+                thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                thumbnail.setVisibility(View.GONE);
+                thumbnail.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(dp(48), dp(48));
+                size.setMarginEnd(dp(12));
+                row.addView(thumbnail, size);
+                previews.add(entry);
+                thumbnails.add(thumbnail);
+            }
+            LinearLayout labels = new LinearLayout(this);
+            labels.setOrientation(LinearLayout.VERTICAL);
+            labels.addView(menuText(entry.title(), 16, TEXT_PRIMARY, false));
+            String status = entry.pending() ? MorpheStrings.get("image_download_queued")
+                    : entry.saved() ? MorpheStrings.get("image_download_saved") : MorpheStrings.get("download_failed");
+            labels.addView(menuText(status, 13, TEXT_SECONDARY, false));
+            row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            if (!entry.pending()) {
+                row.setFocusable(true);
+                row.setBackground(new android.graphics.drawable.RippleDrawable(
+                        android.content.res.ColorStateList.valueOf(DIVIDER), null, null));
+                row.addView(menuText("›", 24, TEXT_SECONDARY, false));
+                row.setOnClickListener(view -> showHistoryActions(dialog, entry));
+            }
+            card.addView(row);
+        }
+        addSheetAction(card, MorpheStrings.get(MorpheStrings.BUTTON_CANCEL), dialog::dismiss);
+        showSettingsSheet(dialog, card);
+        if (android.os.Build.VERSION.SDK_INT >= 29 && !previews.isEmpty()) {
+            loadHistoryThumbnails(dialog, previews, thumbnails);
+        }
+    }
+
+    @android.annotation.TargetApi(29)
+    private void loadHistoryThumbnails(android.app.Dialog dialog,
+                                       java.util.List<PinDownloadQueue.HistoryEntry> entries,
+                                       java.util.List<ImageView> views) {
+        android.os.CancellationSignal cancellation = new android.os.CancellationSignal();
+        dialog.setOnDismissListener(ignored -> cancellation.cancel());
+        android.app.DownloadManager manager = getSystemService(android.app.DownloadManager.class);
+        if (manager == null) return;
+        int size = dp(48);
+        new Thread(() -> {
+            for (int i = 0; i < entries.size() && !cancellation.isCanceled(); i++) {
+                ImageView thumbnail = views.get(i);
+                try {
+                    Uri uri = manager.getUriForDownloadedFile(entries.get(i).managerId());
+                    if (uri == null) continue;
+                    android.graphics.Bitmap bitmap = getContentResolver().loadThumbnail(
+                            uri, new android.util.Size(size, size), cancellation);
+                    runOnUiThread(() -> {
+                        if (!dialog.isShowing()) return;
+                        thumbnail.setImageBitmap(bitmap);
+                        thumbnail.setVisibility(View.VISIBLE);
+                    });
+                } catch (java.io.IOException | RuntimeException ignored) {
+                    // A deleted file or unavailable thumbnail leaves the text row usable.
+                }
+            }
+        }, "morphe-download-previews").start();
+    }
+
+    private void showHistoryActions(android.app.Dialog history, PinDownloadQueue.HistoryEntry entry) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        LinearLayout card = newSettingsSheet(dialog, entry.title());
+        if (entry.saved()) {
+            android.app.DownloadManager manager = getSystemService(android.app.DownloadManager.class);
+            Uri uri = manager == null ? null : manager.getUriForDownloadedFile(entry.managerId());
+            if (uri == null) {
+                Toast.makeText(this, MorpheStrings.get("image_download_unavailable"), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addSheetAction(card, getString(android.R.string.copy), () -> {
+                ClipboardManager clipboard = getSystemService(ClipboardManager.class);
+                if (clipboard != null) clipboard.setPrimaryClip(ClipData.newUri(getContentResolver(), entry.title(), uri));
+                dialog.dismiss();
+            });
+            addSheetAction(card, MorpheStrings.get("image_download_share"), () -> {
+                dialog.dismiss();
+                shareDownloadedImage(uri, manager.getMimeTypeForDownloadedFile(entry.managerId()));
+            });
+        } else {
+            addSheetAction(card, MorpheStrings.get("image_download_retry"), () -> {
+                try {
+                    PinDownloadQueue.retry(this, entry);
+                    dialog.dismiss();
+                    history.dismiss();
+                    showImageDownloadHistory();
+                } catch (Exception failure) {
+                    Toast.makeText(this, MorpheStrings.get("download_failed"), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        addSheetAction(card, MorpheStrings.get(MorpheStrings.BUTTON_CANCEL), dialog::dismiss);
+        showSettingsSheet(dialog, card);
     }
 
     private void shareDownloadedImage(android.net.Uri uri, String mime) {
@@ -696,13 +787,28 @@ public final class MorpheSettingsActivity extends Activity {
         input.setMinLines(4);
         input.setText(MorpheSettingsStore.mutedPinWords());
         input.setHint(MorpheStrings.get(MorpheStrings.MUTED_PIN_WORDS_HINT));
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(MorpheStrings.get(MorpheStrings.MUTED_PIN_WORDS_TITLE))
-                .setView(input)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(MorpheStrings.get(MorpheStrings.BUTTON_SAVE),
-                        (dialog, which) -> MorpheSettingsStore.setMutedPinWords(input.getText().toString()))
-                .show();
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        LinearLayout card = newSettingsSheet(dialog, MorpheStrings.get(MorpheStrings.MUTED_PIN_WORDS_TITLE));
+        addNote(card, MorpheStrings.get(MorpheStrings.MUTED_PIN_WORDS_HINT));
+        input.setTextColor(TEXT_PRIMARY);
+        input.setHintTextColor(TEXT_SECONDARY);
+        input.setTypeface(fontRegular != null ? fontRegular : Typeface.DEFAULT);
+        input.setGravity(Gravity.TOP | Gravity.START);
+        input.setPadding(dp(16), dp(12), dp(16), dp(12));
+        input.setMaxLines(7);
+        GradientDrawable field = new GradientDrawable();
+        field.setColor(BUTTON_BACKGROUND);
+        field.setCornerRadius(dp(16));
+        input.setBackground(field);
+        card.addView(input);
+        addSheetAction(card, MorpheStrings.get(MorpheStrings.BUTTON_SAVE), () -> {
+            MorpheSettingsStore.setMutedPinWords(input.getText().toString());
+            dialog.dismiss();
+        });
+        addSheetAction(card, MorpheStrings.get(MorpheStrings.BUTTON_CANCEL), dialog::dismiss);
+        card.setFocusableInTouchMode(true);
+        card.requestFocus();
+        showSettingsSheet(dialog, card);
     }
 
     private void addMenuFilterRow(LinearLayout parent) {
@@ -722,10 +828,11 @@ public final class MorpheSettingsActivity extends Activity {
         TextView title = menuText(titleText, 16,
                 TEXT_PRIMARY, false);
         labels.addView(title);
-        TextView description = menuText(detail, 12,
-                TEXT_SECONDARY, false);
-        description.setPaddingRelative(0, dp(4), dp(12), 0);
-        labels.addView(description);
+        if (detail != null) {
+            TextView description = menuText(detail, 12, TEXT_SECONDARY, false);
+            description.setPaddingRelative(0, dp(4), dp(12), 0);
+            labels.addView(description);
+        }
         row.addView(labels, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView arrow = menuText("›", 26, TEXT_SECONDARY, false);

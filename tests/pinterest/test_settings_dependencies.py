@@ -29,7 +29,7 @@ public class SettingsTest {
   java.lang.reflect.Field field=MorpheSettingsStore.class.getDeclaredField("cachedPrefs");field.setAccessible(true);field.set(null,prefs);
   check(!HomeFeedRefresh.shouldKeepFeed(),"fresh install uses original refresh");
   check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS),"videos opt in");
-  check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS),"AI labels opt in");
+  check(MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS),"AI labels hidden by default");
   check("HOME".equals(MorpheSettingsStore.startupTab()),"default startup Home");
   MorpheSettingsStore.setStartupTab("PROFILE");check("PROFILE".equals(MorpheSettingsStore.startupTab()),"saved startup selection");
   try {MorpheSettingsStore.setStartupTab("bad");throw new AssertionError("bad startup accepted");}catch(IllegalArgumentException expected){}
@@ -59,7 +59,10 @@ public class SettingsTest {
   check(!HomeFeedRefresh.shouldKeepFeed(),"original refresh selectable");
   MorpheSettingsStore.set(MorpheSettingsStore.KEY_KEEP_HOME_FEED,true);
   check(HomeFeedRefresh.shouldKeepFeed(),"keep feed gate");
-  MorpheSettingsStore.applyRecommended();check(MorpheSettingsStore.effective(replace)&&!MorpheSettingsStore.isToggleEnabled(like),"preset dependency");
+  MorpheSettingsStore.set(MorpheSettingsStore.KEY_HIDE_AI_PINS, false);
+  MorpheSettingsStore.applyRecommended();
+  check(MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS),"recommended preset hides AI labels");
+  check(MorpheSettingsStore.effective(replace)&&!MorpheSettingsStore.isToggleEnabled(like),"preset dependency");
   check(!HomeFeedRefresh.shouldKeepFeed(),"recommended preset disables keep feed");
   check("HOME".equals(MorpheSettingsStore.startupTab()),"recommended startup Home");
   check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS),"recommended preset leaves videos visible");

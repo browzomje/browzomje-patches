@@ -45,7 +45,7 @@ private object InstallationsHeaders : Fingerprint(
 val firebaseRegistrationPatch = bytecodePatch(
     name = PATCH_NAME,
     description = "Uses the original Pinterest certificate fingerprint in Firebase Installations requests to help a re-signed app register for push notifications.",
-    default = false,
+    default = true,
 ) {
     compatibleWith(Compatibility(
         name = "Pinterest",

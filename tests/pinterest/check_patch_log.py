@@ -57,11 +57,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("log", type=Path)
     parser.add_argument("--firebase-registration", action="store_true", help="expect the optional Firebase repair")
+    parser.add_argument("--version", choices=("14.39.0", "14.43.0"), help="require this Pinterest version in the log")
     args = parser.parse_args()
     log = args.log.read_text()
     targets = re.findall(r"Filtering patches for com\.pinterest v(\S+)\.\.\.", log)
     if len(targets) != 1 or targets[0] not in {"14.39.0", "14.43.0"}:
         parser.exit(1, "FAIL expected a single 14.39.0 or 14.43.0 patch run\n")
+
+    if args.version is not None and targets[0] != args.version:
+        parser.exit(1, f"FAIL log version {targets[0]} differs from requested {args.version}\n")
 
     applied = Counter(re.findall(r"^INFO: Applied: (.+?)\s*$", log, re.MULTILINE))
     expected = Counter(PATCHES)
