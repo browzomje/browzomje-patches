@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.15.0",
+  "version": "1.16.0-dev.1",
   "patches": [
     {
       "name": "Choose startup tab",
@@ -390,7 +390,7 @@
     },
     {
       "name": "Disable third-party trackers",
-      "description": "Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working.",
+      "description": "Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. This patch leaves Firebase Messaging enabled.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [
@@ -1646,6 +1646,37 @@
           "targets": [
             {
               "version": "5.70.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Repair Firebase registration",
+      "description": "Uses the original Pinterest certificate fingerprint in Firebase Installations requests to help a re-signed app register for push notifications.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pinterest",
+          "name": "Pinterest",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": null,
+          "signatures": null,
+          "targets": [
+            {
+              "version": "14.39.0",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "14.43.0",
               "isExperimental": false,
               "minSdk": null,
               "description": null
