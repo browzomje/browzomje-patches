@@ -46,7 +46,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.16.0-dev.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.16.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;40 patches total
+> **[v1.16.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.16.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;40 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;35 patches</summary>
 <br>
@@ -63,7 +63,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 | [Disable AppsFlyer tracking](#disable-appsflyer-tracking) | Neutralises the AppsFlyer attribution SDK, so no install, event or uninstall data leaves the device. |  |
 | [Disable Google Engage](#disable-google-engage) | Stops Pinterest publishing your content to Google (Discover, Assistant, Play Store). |  |
 | [Disable Google Engage worker](#disable-google-engage-worker) | Blocks the periodic Google Engage job, the other way content reaches Google. |  |
-| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, and the opt-in "Hide video pins" and "Hide AI-labeled Pins" filters, all switchable from the Morphe settings screen. |  |
+| [Disable ads](#disable-ads) | Removes sponsored pins from the home, search, related and board feeds. Also carries the "Hide product pins" and "Hide board modules in search" filters, and the opt-in "Hide video pins" filter and the default-on "Hide AI-labeled Pins" filter, all switchable from the Morphe settings screen. |  |
 | [Disable email confirmation dialog](#disable-email-confirmation-dialog) | Closes the "confirm your email" modal, and similar ones, when enabled in Morphe settings. |  |
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. This patch leaves Firebase Messaging enabled. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |

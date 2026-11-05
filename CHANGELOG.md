@@ -1,3 +1,13 @@
+## [1.16.0](https://github.com/browzomje/browzomje-patches/compare/v1.15.0...v1.16.0) (2026-11-05)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** polish settings and enable Firebase registration repair ([939157f](https://github.com/browzomje/browzomje-patches/commit/939157f624bcfba4994cf4c01960a233d5a862ac))
+
+### ✨ New Features
+
+* **Pinterest:** add image history, muted words, and Firebase repair ([ebc923c](https://github.com/browzomje/browzomje-patches/commit/ebc923cb1e279bf78a1b67f429cbe81b054f363e))
+
 ## [1.16.0-dev.1](https://github.com/browzomje/browzomje-patches/compare/v1.15.0...v1.16.0-dev.1) (2026-11-05)
 
 ### ✨ New Features
