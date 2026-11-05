@@ -24,6 +24,10 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/pinterest-tests"
           "$RUNNER_TEMP/pinterest-tests/bin/python" -m pip install Pillow
+          export PINTEREST_JSON_JAR="$RUNNER_TEMP/pinterest-tests/json.jar"
+          curl --fail --silent --show-error --location \
+            https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar \
+            --output "$PINTEREST_JSON_JAR"
           for test in tests/pinterest/test_*.py; do
             "$RUNNER_TEMP/pinterest-tests/bin/python" "$test"
           done

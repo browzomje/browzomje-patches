@@ -1,5 +1,5 @@
 """Production store + JSON backup: string enum roundtrip, legacy import, atomic validation."""
-import ast,re,subprocess,tempfile
+import ast,os,re,subprocess,tempfile
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 source=root/'extensions/extension/src/main/java/app/template/extension/pinterest'
@@ -66,7 +66,8 @@ public class BackupTest {
  try {MorpheSettingsBackup.apply("{\\"settings\\":{\\"disable_ads\\":true}}");throw new AssertionError();}catch(java.io.IOException expected){}
  System.out.println("PASS all settings roundtrip, legacy preservation, strict types, one commit and persistence errors");
  }}'''
-jars=list((Path.home()/'.gradle/caches/modules-2/files-2.1/org.json/json').glob('**/*.jar'))
+explicit_jar=os.environ.get('PINTEREST_JSON_JAR')
+jars=[Path(explicit_jar)] if explicit_jar else list((Path.home()/'.gradle/caches/modules-2/files-2.1/org.json/json').glob('**/*.jar'))
 assert jars,'org.json runtime JAR needed for backup test'
 with tempfile.TemporaryDirectory() as tmp:
  paths=[]
