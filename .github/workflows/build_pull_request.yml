@@ -18,7 +18,13 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
+
+      - name: Pinterest JVM regressions
+        run: |
+          for test in tests/pinterest/test_*.py; do
+            python3 "$test"
+          done
 
       - name: Cache Gradle
         uses: burrunan/gradle-cache-action@v3

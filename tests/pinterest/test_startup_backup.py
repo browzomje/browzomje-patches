@@ -42,7 +42,7 @@ public class BackupTest {
   org.json.JSONObject expected=new org.json.JSONObject(snapshot).getJSONObject("settings");
   check(expected.length()==MorpheSettingsStore.KEYS.length+2);
   prefs.values.clear();int before=prefs.commits;
-  check(MorpheSettingsBackup.apply(snapshot)==26);check(prefs.commits==before+1);
+  check(MorpheSettingsBackup.apply(snapshot)==expected.length());check(prefs.commits==before+1);
   org.json.JSONObject actual=new org.json.JSONObject(MorpheSettingsBackup.export(new android.content.Context())).getJSONObject("settings");
   for(java.util.Iterator<String> keys=expected.keys();keys.hasNext();) {String key=keys.next();check(expected.get(key).equals(actual.get(key)));}
  }
@@ -64,7 +64,7 @@ public class BackupTest {
  try {MorpheSettingsBackup.apply(MorpheSettingsBackup.export(new android.content.Context()));throw new AssertionError();}catch(java.io.IOException expected){}
  prefs.fail=false;f.set(null,null);
  try {MorpheSettingsBackup.apply("{\\"settings\\":{\\"disable_ads\\":true}}");throw new AssertionError();}catch(java.io.IOException expected){}
- System.out.println("PASS all 26 settings roundtrip, legacy preservation, strict types, one commit and persistence errors");
+ System.out.println("PASS all settings roundtrip, legacy preservation, strict types, one commit and persistence errors");
  }}'''
 jars=list((Path.home()/'.gradle/caches/modules-2/files-2.1/org.json/json').glob('**/*.jar'))
 assert jars,'org.json runtime JAR needed for backup test'

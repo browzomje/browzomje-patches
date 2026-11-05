@@ -8,12 +8,14 @@ public final class VideoFeedFilter {
     private VideoFeedFilter() {}
 
     public static List<?> filter(List<?> items) {
-        if (items == null || !MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS)) return items;
+        boolean hideVideos = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS);
+        boolean hideAi = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS);
+        if (items == null || (!hideVideos && !hideAi)) return items;
         ArrayList<Object> copy = null;
         int removed = 0;
         for (int i = 0; i < items.size(); i++) {
             Object item = items.get(i);
-            if (AdDetector.isVideoPin(item)) {
+            if ((hideVideos && AdDetector.isVideoPin(item)) || (hideAi && AdDetector.isAiLabeledPin(item))) {
                 if (copy == null) {
                     copy = new ArrayList<>(items.size());
                     copy.addAll(items.subList(0, i));
@@ -22,7 +24,7 @@ public final class VideoFeedFilter {
             } else if (copy != null) copy.add(item);
         }
         if (copy == null) return items;
-        MorpheLog.i("video-filter", "grid input: removed " + removed + " video pins out of " + items.size());
+        MorpheLog.i("feed-filter", "grid input: removed " + removed + " matching Pins out of " + items.size());
         return copy;
     }
 }

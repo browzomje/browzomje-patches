@@ -1,0 +1,18 @@
+case dynamic-append
+patch Disable ads
+role Append a page to the dynamic grid
+old Ltu1/g0;->A(Ljava/util/List;Z)V
+new Lsw1/l0;->z(Ljava/util/List;Z)V
+evidence Enqueues the append operation using the incoming list and boolean.
+case raw-append
+patch Disable ads
+role Append GraphQL grid data before adapter diff
+old Ltu1/p;->b(Ljava/util/List;)V
+new Lsw1/r;->b(Ljava/util/List;)V
+evidence Copies the current list, appends the new page and schedules the diff.
+case parsed-response
+patch Disable ads
+role Hold raw grid list and pagination metadata
+old Ltu1/k;-><init>(Ljava/lang/String;Ljava/util/List;Z)V
+new Lsw1/m;-><init>(Ljava/lang/String;Ljava/util/List;Z)V
+evidence Data class retains ParsedResponse(responseItems= in its toString.

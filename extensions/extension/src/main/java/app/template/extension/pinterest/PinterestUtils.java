@@ -145,10 +145,6 @@ public final class PinterestUtils {
         // Kept as a binary compatibility entry point; image info now lives in the closeup.
     }
 
-    public static void upgradePinImageDownload(final Object menu) {
-        whenMenuIsReady(menu, () -> PinImageMenu.upgradeDownload(menu));
-    }
-
     public static void addDownloadVideoOption(final Object menuContainer) {
         MorpheLog.hookFired(MorpheLog.VIDEO,
                 "menu " + (menuContainer == null ? "null" : menuContainer.getClass().getName()));
@@ -272,7 +268,7 @@ public final class PinterestUtils {
             showNativeToast(context, getString("direct_link_copied"));
         } catch (Throwable t) {
             Log.e(TAG, "could not copy to the clipboard", t);
-            showNativeToast(context, getString("failed"));
+            showNativeToast(context, getString("toast_copy_failed").trim());
         }
     }
 
@@ -298,10 +294,17 @@ public final class PinterestUtils {
     /** Come {@link #totalAdsRemoved}, per i pin di prodotto: sono due opzioni distinte. */
     private static volatile int totalShoppingPinsRemoved;
 
+    /** Limit the consent override to the Meta ad SDK; all other vendors use native consent. */
+    public static boolean denyMetaAdsConsent(Object vendor) {
+        return vendor instanceof Enum<?> && ((Enum<?>) vendor).name().equals("META_AUDIENCE_NETWORK")
+                && MorpheSettingsStore.isAdsDisabled();
+    }
+
     /** @return true se almeno una delle opzioni di filtro del feed è accesa. */
     private static boolean isFilteringEnabled() {
         return MorpheSettingsStore.isAdsDisabled()
                 || MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS)
+                || MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS)
                 || MorpheSettingsStore.isShoppingPinsHidden()
                 || MorpheSettingsStore.isSearchBoardModulesHidden();
     }
@@ -493,18 +496,20 @@ public final class PinterestUtils {
         }
         boolean removeAds = MorpheSettingsStore.isAdsDisabled();
         boolean removeVideos = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS);
+        boolean removeAi = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS);
         boolean removeShopping = MorpheSettingsStore.isShoppingPinsHidden();
         boolean removeSearchModules = MorpheSettingsStore.isSearchBoardModulesHidden();
         try {
             synchronized (items) {
                 int total = items.size();
                 int matching = 0;
-                int videoMatches = 0;
+                int contentMatches = 0;
                 for (Object item : items) {
-                    if (removeVideos && AdDetector.isVideoPin(item)) videoMatches++;
-                    if (isAd(item, removeAds) || isShoppingPin(item, removeShopping)
-                            || isSearchModule(item, removeSearchModules)
-                            || (removeVideos && AdDetector.isVideoPin(item))) {
+                    boolean content = (removeVideos && AdDetector.isVideoPin(item))
+                            || (removeAi && AdDetector.isAiLabeledPin(item));
+                    if (content) contentMatches++;
+                    if (content || isAd(item, removeAds) || isShoppingPin(item, removeShopping)
+                            || isSearchModule(item, removeSearchModules)) {
                         matching++;
                     }
                 }
@@ -519,7 +524,7 @@ public final class PinterestUtils {
                     }
                     return;
                 }
-                if (matching >= total && videoMatches == 0) {
+                if (matching >= total && contentMatches == 0) {
                     MorpheLog.w(MorpheLog.ADS, "page made only of items to remove (" + total
                             + "): leaving it alone, or the app would think the feed is over");
                     return;
@@ -529,13 +534,15 @@ public final class PinterestUtils {
                 int shopping = 0;
                 int modules = 0;
                 int videos = 0;
+                int aiPins = 0;
                 java.util.Iterator<?> iterator = items.iterator();
                 while (iterator.hasNext()) {
                     Object item = iterator.next();
                     boolean ad = isAd(item, removeAds);
                     boolean module = !ad && isSearchModule(item, removeSearchModules);
                     boolean video = !ad && !module && removeVideos && AdDetector.isVideoPin(item);
-                    if (!ad && !module && !video && !isShoppingPin(item, removeShopping)) {
+                    boolean ai = !ad && !module && !video && removeAi && AdDetector.isAiLabeledPin(item);
+                    if (!ad && !module && !video && !ai && !isShoppingPin(item, removeShopping)) {
                         continue;
                     }
                     try {
@@ -551,6 +558,8 @@ public final class PinterestUtils {
                         modules++;
                     } else if (video) {
                         videos++;
+                    } else if (ai) {
+                        aiPins++;
                     } else {
                         shopping++;
                     }
@@ -564,6 +573,9 @@ public final class PinterestUtils {
                             + " product pins)");
                     MorpheLog.setStatus(MorpheLog.ADS, "ok — " + totalAdsRemoved + " ads and "
                             + totalShoppingPinsRemoved + " product pins removed so far");
+                }
+                if (aiPins > 0) {
+                    MorpheLog.i("feed-filter", "removed " + aiPins + " AI-labeled Pins out of " + total);
                 }
                 if (videos > 0) {
                     MorpheLog.i("video-filter", "removed " + videos + " video pins out of " + total);
@@ -1778,725 +1790,12 @@ public final class PinterestUtils {
         return null;
     }
 
-    // Localization maps
     static String getString(String key) {
-        // La lingua dell'app, non quella di sistema: vedi MorpheStrings.language().
-        String lang = MorpheStrings.language();
-        boolean isIt = "it".equals(lang);
-        boolean isEs = "es".equals(lang);
-        boolean isFr = "fr".equals(lang);
-        boolean isDe = "de".equals(lang);
-        boolean isPt = "pt".equals(lang);
-        boolean isRu = "ru".equals(lang);
-        boolean isJa = "ja".equals(lang);
-        boolean isZh = "zh".equals(lang);
-        boolean isKo = "ko".equals(lang);
-        boolean isPl = "pl".equals(lang);
-        boolean isNl = "nl".equals(lang);
-        boolean isTr = "tr".equals(lang);
-        boolean isAr = "ar".equals(lang);
-        boolean isHi = "hi".equals(lang);
-        boolean isIn = "in".equals(lang) || "id".equals(lang);
-        boolean isMs = "ms".equals(lang);
-        boolean isVi = "vi".equals(lang);
-        boolean isUk = "uk".equals(lang);
-        boolean isSv = "sv".equals(lang);
-        boolean isNb = "nb".equals(lang) || "no".equals(lang);
-        boolean isDa = "da".equals(lang);
-        boolean isFi = "fi".equals(lang);
-        boolean isFil = "fil".equals(lang) || "tl".equals(lang);
-        boolean isEl = "el".equals(lang);
-        boolean isCs = "cs".equals(lang);
-        boolean isSk = "sk".equals(lang);
-        boolean isHu = "hu".equals(lang);
-        boolean isRo = "ro".equals(lang);
-        boolean isIw = "iw".equals(lang) || "he".equals(lang);
-        boolean isHr = "hr".equals(lang);
-
-        if ("copy_link_label".equals(key)) {
-            if (isIt) return "Copia link diretto";
-            if (isEs) return "Copiar enlace directo";
-            if (isFr) return "Copier le lien direct";
-            if (isDe) return "Direkten Link kopieren";
-            if (isPt) return "Copiar link direto";
-            if (isRu) return "Копировать прямую ссылку";
-            if (isJa) return "直接リンクをコピー";
-            if (isZh) return "复制直链";
-            if (isKo) return "직접 링크 복사";
-            if (isPl) return "Kopiuj bezpośredni link";
-            if (isNl) return "Directe link kopiëren";
-            if (isTr) return "Doğrudan bağlantıyı kopyala";
-            if (isAr) return "نسخ الرابط المباشر";
-            return "Copy direct link";
-        }
-        if ("download_image_label".equals(key)) {
-            if (isIt) return "Scarica";
-            if (isEs) return "Descargar";
-            if (isFr) return "Télécharger";
-            if (isDe) return "Herunterladen";
-            if (isPt) return "Baixar";
-            if (isRu) return "Скачать";
-            if (isJa) return "ダウンロード";
-            if (isZh) return "下载";
-            if (isKo) return "다운로드";
-            if (isPl) return "Pobierz";
-            if (isNl) return "Downloaden";
-            if (isTr) return "İndir";
-            if (isAr) return "تنزيل";
-            return "Download";
-        }
-        if ("download_image_started".equals(key)) {
-            if (isIt) return "Immagine in download…";
-            if (isEs) return "Descargando la imagen…";
-            if (isFr) return "Téléchargement de l'image…";
-            if (isDe) return "Bild wird heruntergeladen…";
-            if (isPt) return "A baixar a imagem…";
-            if (isRu) return "Изображение загружается…";
-            if (isJa) return "画像をダウンロード中…";
-            if (isZh) return "正在下载图片…";
-            if (isKo) return "이미지 다운로드 중…";
-            if (isPl) return "Pobieranie obrazu…";
-            if (isNl) return "Afbeelding downloaden…";
-            if (isTr) return "Görsel indiriliyor…";
-            if (isAr) return "جارٍ تنزيل الصورة…";
-            return "Downloading image…";
-        }
-        if ("download_video_label".equals(key)) {
-            if (isIt) return "Scarica video";
-            if (isEs) return "Descargar vídeo";
-            if (isFr) return "Télécharger la vidéo";
-            if (isDe) return "Video herunterladen";
-            if (isPt) return "Baixar vídeo";
-            if (isRu) return "Скачать видео";
-            if (isJa) return "動画をダウンロード";
-            if (isZh) return "下载视频";
-            if (isKo) return "동영상 다운로드";
-            if (isPl) return "Pobierz wideo";
-            if (isNl) return "Video downloaden";
-            if (isTr) return "Videoyu indir";
-            if (isAr) return "تنزيل الفيديو";
-            return "Download video";
-        }
-        if ("download_video_external_label".equals(key)) {
-            if (isIt) return "Scarica con app esterna (yt-dlp)";
-            if (isEs) return "Descargar con app externa (yt-dlp)";
-            if (isFr) return "Télécharger avec app externe (yt-dlp)";
-            if (isDe) return "Mit externer App herunterladen (yt-dlp)";
-            if (isPt) return "Baixar com app externo (yt-dlp)";
-            if (isRu) return "Скачать через внешнее приложение (yt-dlp)";
-            if (isJa) return "外部アプリでダウンロード (yt-dlp)";
-            if (isZh) return "使用外部应用下载 (yt-dlp)";
-            if (isKo) return "외부 앱으로 다운로드 (yt-dlp)";
-            if (isPl) return "Pobierz za pomocą zewnętrznej aplikacji (yt-dlp)";
-            if (isNl) return "Downloaden met externe app (yt-dlp)";
-            if (isTr) return "Harici uygulama ile indir (yt-dlp)";
-            if (isAr) return "(yt-dlp) التنزيل باستخدام تطبيق خارجي";
-            return "Download with external app (yt-dlp)";
-        }
-        if ("video_download_started".equals(key)) {
-            if (isIt) return "Download del video avviato…";
-            if (isEs) return "Descarga del vídeo iniciada…";
-            if (isFr) return "Téléchargement de la vidéo lancé…";
-            if (isDe) return "Video-Download gestartet…";
-            if (isPt) return "Download do vídeo iniciado…";
-            if (isRu) return "Загрузка видео начата…";
-            if (isJa) return "動画のダウンロードを開始しました…";
-            if (isZh) return "已开始下载视频…";
-            if (isKo) return "동영상 다운로드를 시작했습니다…";
-            if (isPl) return "Rozpoczęto pobieranie wideo…";
-            if (isNl) return "Video downloaden gestart…";
-            if (isTr) return "Video indirme başladı…";
-            if (isAr) return "بدأ تنزيل الفيديو…";
-            return "Video download started…";
-        }
-        if ("board_download_label".equals(key)) {
-            if (isIt) return "Scarica tutta la bacheca";
-            if (isEs) return "Descargar todo el tablero";
-            if (isFr) return "Télécharger tout le tableau";
-            if (isDe) return "Ganze Pinnwand herunterladen";
-            if (isPt) return "Baixar a pasta inteira";
-            if (isRu) return "Скачать всю доску";
-            if (isJa) return "ボード全体をダウンロード";
-            if (isZh) return "下载整个画板";
-            if (isKo) return "보드 전체 다운로드";
-            if (isPl) return "Pobierz całą tablicę";
-            if (isNl) return "Hele bord downloaden";
-            if (isTr) return "Tüm panoyu indir";
-            if (isAr) return "تنزيل اللوحة بالكامل";
-            return "Download whole board";
-        }
-        if ("board_no_pins".equals(key)) {
-            if (isIt) return "Nessun Pin caricato: scorri la bacheca e riprova";
-            if (isEs) return "No hay pines en memoria: desplázate por el tablero e inténtalo de nuevo";
-            if (isFr) return "Aucun pin en mémoire : faites défiler le tableau et réessayez";
-            if (isDe) return "Keine Pins im Speicher: scrolle die Pinnwand und versuche es erneut";
-            if (isPt) return "Nenhum pin na memória: role a pasta e tente de novo";
-            if (isRu) return "Нет пинов в памяти: прокрутите доску и повторите";
-            if (isJa) return "メモリにピンがありません。ボードをスクロールしてからもう一度お試しください";
-            if (isZh) return "内存中没有 Pin：请先滚动画板后重试";
-            if (isKo) return "메모리에 핀이 없습니다. 보드를 스크롤한 후 다시 시도하세요";
-            if (isPl) return "Brak wczytanych pinów: przewiń tablicę i spróbuj ponownie";
-            if (isNl) return "Geen pins in geheugen: scroll door het bord en probeer opnieuw";
-            if (isTr) return "Bellekte pin yok: panoyu kaydırıp tekrar deneyin";
-            if (isAr) return "لا توجد دبابيس في الذاكرة: مرّر اللوحة وأعد المحاولة";
-            return "No pins loaded: scroll the board and try again";
-        }
-        if ("board_download_started".equals(key)) {
-            if (isIt) return "Download di %d pin avviato…";
-            if (isEs) return "Descarga de %d pines iniciada…";
-            if (isFr) return "Téléchargement de %d pins lancé…";
-            if (isDe) return "Download von %d Pins gestartet…";
-            if (isPt) return "Download de %d pins iniciado…";
-            if (isRu) return "Загрузка %d пинов начата…";
-            if (isJa) return "%d 件のピンのダウンロードを開始しました…";
-            if (isZh) return "已开始下载 %d 个 Pin…";
-            if (isKo) return "%d개 핀 다운로드를 시작했습니다…";
-            if (isPl) return "Rozpoczęto pobieranie %d pinów…";
-            if (isNl) return "Downloaden van %d pins gestart…";
-            if (isTr) return "%d pin indirme başladı…";
-            if (isAr) return "بدأ تنزيل %d دبوس…";
-            return "Started downloading %d pins…";
-        }
-        if ("board_download_done".equals(key)) {
-            if (isIt) return "Accodate %1 immagini e %2 video.";
-            if (isEs) return "%1 imágenes y %2 vídeos en cola.";
-            if (isFr) return "%1 images et %2 vidéos mises en file d’attente.";
-            if (isDe) return "%1 Bilder und %2 Videos in der Warteschlange.";
-            if (isPt) return "%1 imagens e %2 vídeos na fila.";
-            if (isRu) return "В очереди %1 изображений и %2 видео.";
-            if (isJa) return "画像 %1 件、動画 %2 件をキューに追加しました。";
-            if (isZh) return "已加入队列：%1 张图片和 %2 个视频。";
-            if (isKo) return "이미지 %1개, 동영상 %2개를 대기열에 추가했습니다.";
-            if (isPl) return "%1 obrazów i %2 filmów w kolejce.";
-            if (isNl) return "%1 afbeeldingen en %2 video's in de wachtrij.";
-            if (isTr) return "%1 resim ve %2 video sıraya alındı.";
-            if (isAr) return "أُضيفت %1 صورة و%2 فيديو إلى قائمة الانتظار.";
-            return "Queued %1 images and %2 videos.";
-        }
-        if ("board_download_already".equals(key)) {
-            if (isIt) return "%d già presenti, saltati.";
-            if (isEs) return "%d ya presentes, omitidos.";
-            if (isFr) return "%d déjà présents, ignorés.";
-            if (isDe) return "%d bereits vorhanden, übersprungen.";
-            if (isPt) return "%d já presentes, ignorados.";
-            if (isRu) return "%d уже есть, пропущено.";
-            if (isJa) return "%d 件は既にあるためスキップしました。";
-            if (isZh) return "%d 个已存在，已跳过。";
-            if (isKo) return "%d개는 이미 있어 건너뛰었습니다.";
-            if (isPl) return "Pominięto %d istniejących plików.";
-            if (isNl) return "%d al aanwezig, overgeslagen.";
-            if (isTr) return "%d zaten var, atlandı.";
-            if (isAr) return "%d موجودة بالفعل، تم تخطيها.";
-            return "%d already there, skipped.";
-        }
-        if ("board_download_skipped".equals(key)) {
-            if (isIt) return "%d video saltati: richiedono un'app esterna (yt-dlp).";
-            if (isEs) return "%d vídeos omitidos: requieren una app externa (yt-dlp).";
-            if (isFr) return "%d vidéos ignorées : elles nécessitent une app externe (yt-dlp).";
-            if (isDe) return "%d Videos übersprungen: benötigen eine externe App (yt-dlp).";
-            if (isPt) return "%d vídeos ignorados: exigem um app externo (yt-dlp).";
-            if (isRu) return "%d видео пропущено: нужно внешнее приложение (yt-dlp).";
-            if (isJa) return "%d 件の動画をスキップしました: 外部アプリ (yt-dlp) が必要です。";
-            if (isZh) return "已跳过 %d 个视频：需要外部应用 (yt-dlp)。";
-            if (isKo) return "동영상 %d개 건너뜀: 외부 앱(yt-dlp)이 필요합니다.";
-            if (isPl) return "Pominięto %d filmów: wymagają zewnętrznej aplikacji (yt-dlp).";
-            if (isNl) return "%d video's overgeslagen: vereisen een externe app (yt-dlp).";
-            if (isTr) return "%d video atlandı: harici uygulama (yt-dlp) gerekiyor.";
-            if (isAr) return "تم تخطي %d فيديو: تتطلب تطبيقًا خارجيًا (yt-dlp).";
-            return "%d videos skipped: they need an external app (yt-dlp).";
-        }
-        if ("board_download_failed".equals(key)) {
-            if (isIt) return "%d falliti.";
-            if (isEs) return "%d fallidos.";
-            if (isFr) return "%d échecs.";
-            if (isDe) return "%d fehlgeschlagen.";
-            if (isPt) return "%d falharam.";
-            if (isRu) return "%d не удалось.";
-            if (isJa) return "%d 件失敗しました。";
-            if (isZh) return "%d 个失败。";
-            if (isKo) return "%d개 실패.";
-            if (isPl) return "Nie udało się pobrać %d plików.";
-            if (isNl) return "%d mislukt.";
-            if (isTr) return "%d başarısız.";
-            if (isAr) return "%d فشل.";
-            return "%d failed.";
-        }
-        if ("no_video".equals(key)) {
-            if (isIt) return "Nessun video disponibile per questo pin";
-            if (isEs) return "No hay vídeo disponible para este pin";
-            if (isFr) return "Aucune vidéo disponible pour ce pin";
-            if (isDe) return "Kein Video für diesen Pin verfügbar";
-            return "No video available for this pin";
-        }
-        if ("downloading".equals(key)) {
-            if (isIt) return "Scaricamento dell'immagine…";
-            if (isEs) return "Descargando imagen…";
-            if (isFr) return "Téléchargement de l'image…";
-            if (isDe) return "Bild wird heruntergeladen…";
-            if (isPt) return "Baixando imagem…";
-            if (isRu) return "Скачивание изображения…";
-            if (isJa) return "画像をダウンロード中…";
-            if (isZh) return "正在下载图片…";
-            if (isKo) return "이미지 다운로드 중…";
-            if (isPl) return "Pobieranie obrazu…";
-            if (isNl) return "Afbeelding downloaden…";
-            if (isTr) return "Resim indiriliyor…";
-            if (isAr) return "جاري تنزيل الصورة…";
-            if (isHi) return "छви डाउनलोड हो रही है…";
-            if (isIn) return "Mengunduh gambar…";
-            if (isMs) return "Memuat turun imej…";
-            if (isVi) return "Đang tải hình ảnh xuống…";
-            if (isUk) return "Завантаження зображення…";
-            if (isSv) return "Laddar ner bild…";
-            if (isNb) return "Laster ned bilde…";
-            if (isDa) return "Downloader billede…";
-            if (isFi) return "Ladataan kuvaa…";
-            if (isFil) return "Dina-download ang larawan…";
-            if (isEl) return "Λήψη εικόνας…";
-            if (isCs) return "Stahování obrázku…";
-            if (isSk) return "Sťahovanie obrázka…";
-            if (isHu) return "Kép letöltése…";
-            if (isRo) return "Se descarcă imaginea…";
-            if (isIw) return "מוריד תמונה…";
-            if (isHr) return "Preuzimanje slike…";
-            return "Downloading image…";
-        }
-        if ("success".equals(key)) {
-            if (isIt) return "Sfondo impostato.";
-            if (isEs) return "Fondo de pantalla establecido.";
-            if (isFr) return "Fond d'écran défini.";
-            if (isDe) return "Hintergrundbild festgelegt.";
-            if (isPt) return "Papel de parede definido.";
-            if (isRu) return "Обои установлены.";
-            if (isJa) return "壁紙を設定しました。";
-            if (isZh) return "壁纸设置成功。";
-            if (isKo) return "배경화면 설정 완료.";
-            if (isPl) return "Tapeta została ustawiona.";
-            if (isNl) return "Achtergrond ingesteld.";
-            if (isTr) return "Duvar kağıdı ayarlandı.";
-            if (isAr) return "تم تعيين الخلفية.";
-            if (isHi) return "वॉलपेपर सेट हो गया.";
-            if (isIn || isMs) return "Wallpaper diatur.";
-            if (isVi) return "Đã đặt hình nền.";
-            if (isUk) return "Шпалери встановлено.";
-            if (isSv) return "Bakgrundsbild ändrad.";
-            if (isNb) return "Bakgrunnsbilde satt.";
-            if (isDa) return "Baggrund indstillet.";
-            if (isFi) return "Taustakuva asetettu.";
-            if (isFil) return "Naitakda ang wallpaper.";
-            if (isEl) return "Η ταπετσαρία ορίστηκε.";
-            if (isCs || isSk) return "Tapeta nastavena.";
-            if (isHu) return "Háttérkép beállítva.";
-            if (isRo) return "Fundal setat.";
-            if (isIw) return "הרקע הוגדר.";
-            if (isHr) return "Pozadina postavljena.";
-            return "Wallpaper set.";
-        }
-        if ("failed".equals(key)) {
-            if (isIt) return "Impossibile impostare lo sfondo";
-            if (isEs) return "Error al establecer el fondo de pantalla";
-            if (isFr) return "Impossible de définir le fond d'écran";
-            if (isDe) return "Hintergrundbild konnte nicht festgelegt werden";
-            if (isPt) return "Não foi possibile definir o papel de parede";
-            if (isRu) return "Не удалось установить обои";
-            if (isJa) return "壁紙の設定に失敗しました";
-            if (isZh) return "设置壁纸失败";
-            if (isKo) return "배경화면 설정 실패";
-            if (isPl) return "Nie udało się ustawić tapety";
-            if (isNl) return "Instellen van achtergrond mislukt";
-            if (isTr) return "Duvar kağıdı ayarlanamadı";
-            if (isAr) return "فشل تعيين الخلفية";
-            if (isHi) return "वॉलपेपर सेट करने में विफल";
-            if (isIn || isMs) return "Gagal mengatur wallpaper";
-            if (isVi) return "Không thể đặt hình nền";
-            if (isUk) return "Не вдалося встановити шпалери";
-            if (isSv) return "Misslyckades att ändra bakgrundsbild";
-            if (isNb) return "Kunne ikke sette bakgrunnsbilde";
-            if (isDa) return "Kunne ikke indstille baggrund";
-            if (isFi) return "Taustakuvan asettaminen epäonnistui";
-            if (isFil) return "Bigo sa pagtatakda ng wallpaper";
-            if (isEl) return "Αποτυχία ορισμού ταπετσαρίας";
-            if (isCs || isSk) return "Nepodařilo se nastavit tapetu";
-            if (isHu) return "Háttérkép beállítása sikertelen";
-            if (isRo) return "Eroare la setarea fundalului";
-            if (isIw) return "הגדרת הרקע נכשله";
-            if (isHr) return "Postavljanje pozadine nije uspjelo";
-            return "Failed to set wallpaper";
-        }
-        if ("dialog_title".equals(key)) {
-            if (isIt) return "Imposta sfondo";
-            if (isEs) return "Establecer fondo de pantalla";
-            if (isFr) return "Définir comme fond d'écran";
-            if (isDe) return "Hintergrundbild festlegen";
-            if (isPt) return "Definir papel de parede";
-            if (isRu) return "Установить обои";
-            if (isJa) return "壁紙を設定";
-            if (isZh) return "设置壁纸";
-            if (isKo) return "배경화면 설정";
-            if (isPl) return "Ustaw tapetę";
-            if (isNl) return "Achtergrond instellen";
-            if (isTr) return "Duvar kağıdını ayarla";
-            if (isAr) return "تعيين الخلفية";
-            if (isHi) return "वॉलपेपर सेट करें";
-            if (isIn || isMs) return "Atur wallpaper";
-            if (isVi) return "Đặt hình nền";
-            if (isUk) return "Встановити шпалери";
-            if (isSv) return "Ange bakgrundsbild";
-            if (isNb) return "Sett bakgrunnsbilde";
-            if (isDa) return "Indstil baggrund";
-            if (isFi) return "Aseta taustakuva";
-            if (isFil) return "Itakda ang wallpaper";
-            if (isEl) return "Ορισμός ταπετσαρίας";
-            if (isCs || isSk) return "Nastavit tapetu";
-            if (isHu) return "Háttérkép beállítása";
-            if (isRo) return "Setează fundalul";
-            if (isIw) return "הגדר רקע";
-            if (isHr) return "Postavi pozadinu";
-            return "Set wallpaper";
-        }
-        if ("option_home".equals(key)) {
-            if (isIt) return "Schermata Home";
-            if (isEs) return "Pantalla de inicio";
-            if (isFr) return "Écran d'accueil";
-            if (isDe) return "Startbildschirm";
-            if (isPt) return "Tela inicial";
-            if (isRu) return "Экран \"Домой\"";
-            if (isJa) return "ホーム画面";
-            if (isZh) return "主屏幕";
-            if (isKo) return "홈 화면";
-            if (isPl) return "Ekran startowy";
-            if (isNl) return "Beginscherm";
-            if (isTr) return "Ana ekran";
-            if (isAr) return "الشاشة الرئيسية";
-            if (isHi) return "होम स्क्रीन";
-            if (isIn || isMs) return "Layar Utama";
-            if (isVi) return "Màn hình chính";
-            if (isUk) return "Домашній екран";
-            if (isSv) return "Hemskärm";
-            if (isNb) return "Hjem-skjerm";
-            if (isDa) return "Startskærm";
-            if (isFi) return "Alkunäyttö";
-            if (isFil) return "Home screen";
-            if (isEl) return "Αρχική οθόνη";
-            if (isCs || isSk) return "Domovská obrazovka";
-            if (isHu) return "Kezdőképernyő";
-            if (isRo) return "Ecran de pornire";
-            if (isIw) return "מסך הבית";
-            if (isHr) return "Početni zaslon";
-            return "Home screen";
-        }
-        if ("option_lock".equals(key)) {
-            if (isIt) return "Schermata di blocco";
-            if (isEs) return "Pantalla de bloqueo";
-            if (isFr) return "Écran de verrouillage";
-            if (isDe) return "Sperrbildschirm";
-            if (isPt) return "Tela de bloqueio";
-            if (isRu) return "Экран блокировки";
-            if (isJa) return "ロック画面";
-            if (isZh) return "锁定屏幕";
-            if (isKo) return "잠금 화면";
-            if (isPl) return "Ekran blokady";
-            if (isNl) return "Vergrendelscherm";
-            if (isTr) return "Kilit ekranı";
-            if (isAr) return "شاشة القفل";
-            if (isHi) return "लॉक स्क्रीन";
-            if (isIn) return "Layar kunci";
-            if (isMs) return "Skrin kunci";
-            if (isVi) return "Màn hình khóa";
-            if (isUk) return "Екран блокування";
-            if (isSv) return "Låsskärm";
-            if (isNb) return "Låseskjerm";
-            if (isDa) return "Låseskærm";
-            if (isFi) return "Lukitusnäyttö";
-            if (isFil) return "Lock screen";
-            if (isEl) return "Οθόνη κλειδώματος";
-            if (isCs) return "Uzamykací obrazovka";
-            if (isSk) return "Uzamknutá obrazovka";
-            if (isHu) return "Képernyőzár";
-            if (isRo) return "Ecran de blocare";
-            if (isIw) return "מסך הנעילה";
-            if (isHr) return "Zaslon zaključavanja";
-            return "Lock screen";
-        }
-        if ("option_both".equals(key)) {
-            if (isIt) return "Entrambe";
-            if (isEs) return "Ambas";
-            if (isFr) return "Les deux";
-            if (isDe) return "Beide";
-            if (isPt) return "Ambos";
-            if (isRu) return "Оба экрана";
-            if (isJa) return "両方";
-            if (isZh) return "两者";
-            if (isKo) return "둘 다";
-            if (isPl) return "Oba";
-            if (isNl) return "Beide";
-            if (isTr) return "Her ikisi";
-            if (isAr) return "كلاهما";
-            if (isHi) return "दोनों";
-            if (isIn) return "Keduanya";
-            if (isMs) return "Kedua-duanya";
-            if (isVi) return "Cả hai";
-            if (isUk) return "Обидва";
-            if (isSv) return "Båda";
-            if (isNb) return "Begge";
-            if (isDa) return "Begge";
-            if (isFi) return "Molemmat";
-            if (isFil) return "Pareho";
-            if (isEl) return "Και τα δύο";
-            if (isCs || isSk) return "Obe";
-            if (isHu) return "Mindkettő";
-            if (isRo) return "Ambele";
-            if (isIw) return "שניהם";
-            if (isHr) return "Oba";
-            return "Both";
-        }
-        if ("invalid_image".equals(key)) {
-            if (isIt) return "Immagine non valida";
-            if (isEs) return "Imagen no válida";
-            if (isFr) return "Image non valide";
-            if (isDe) return "Ungültiges Bild";
-            if (isPt) return "Imagem inválida";
-            if (isRu) return "Неверное изображение";
-            if (isJa) return "無効な画像";
-            if (isZh) return "无效图片";
-            if (isKo) return "유효하지 않은 이미지";
-            if (isPl) return "Nieprawidłowy obraz";
-            if (isNl) return "Ongeldige afbeelding";
-            if (isTr) return "Geçersiz resim";
-            if (isAr) return "صورة غير صالحة";
-            if (isHi) return "अमान्य छवि";
-            if (isIn || isMs) return "Gambar tidak valid";
-            if (isVi) return "Hình ảnh không hợp lệ";
-            if (isUk) return "Неприпустиме зображення";
-            if (isSv) return "Ogiltig bild";
-            if (isNb) return "Ugyldig bilde";
-            if (isDa) return "Ugyldigt billede";
-            if (isFi) return "Virheellinen kuva";
-            if (isFil) return "Hindi wastong larawan";
-            if (isEl) return "Μη έγκυρη εικόνα";
-            if (isCs || isSk) return "Neplatný obrázek";
-            if (isHu) return "Érvénytelen kép";
-            if (isRo) return "Imagine invalidă";
-            if (isIw) return "תמונה לא תקינה";
-            if (isHr) return "Nevaljana slika";
-            return "Invalid image";
-        }
-        if ("label".equals(key)) {
-            if (isIt) return "Imposta come sfondo";
-            if (isEs) return "Establecer como fondo";
-            if (isFr) return "Définir comme fond d'écran";
-            if (isDe) return "Als Hintergrundbild festlegen";
-            if (isPt) return "Definir como fundo";
-            if (isRu) return "Установить как обои";
-            if (isJa) return "壁紙として設定";
-            if (isZh) return "设为壁纸";
-            if (isKo) return "배경화면으로 설정";
-            if (isPl) return "Ustaw jako tapetę";
-            if (isNl) return "Als achtergrond instellen";
-            if (isTr) return "Duvar kağıdı yap";
-            if (isAr) return "تعيين كخلفية";
-            return "Set as wallpaper";
-        }
-        if ("no_link".equals(key)) {
-            if (isIt) return "Nessun indirizzo immagine trovato";
-            if (isEs) return "No se encontró enlace de imagen";
-            if (isFr) return "Aucun lien d'image trouvé";
-            if (isDe) return "Kein Bildlink gefunden";
-            if (isPt) return "Nenhum link de imagem encontrado";
-            if (isRu) return "Ссылка на изображение не найдена";
-            if (isJa) return "画像リンクが見つかりません";
-            if (isZh) return "未找到图片链接";
-            if (isKo) return "이미지 링크를 찾을 수 없습니다";
-            if (isPl) return "Nie znaleziono linku do obrazu";
-            if (isNl) return "Geen afbeeldingslink gevonden";
-            if (isTr) return "Resim bağlantısı bulunamadı";
-            if (isAr) return "لم يتم العثور على رابط الصورة";
-            return "No image link found";
-        }
-        if ("direct_link_copied".equals(key)) {
-            if (isIt) return "Link diretto copiato!";
-            if (isEs) return "¡Enlace directo copiado!";
-            if (isFr) return "Lien direct copié !";
-            if (isDe) return "Direkter Link kopiert!";
-            if (isPt) return "Link direto copiado!";
-            if (isRu) return "Прямая ссылка скопирована!";
-            if (isJa) return "直接リンクをコピーしました！";
-            if (isZh) return "直链已复制！";
-            if (isKo) return "직접 링크가 복사되었습니다!";
-            if (isPl) return "Bezpośredni link skopiowany!";
-            if (isNl) return "Directe link gekopieerd!";
-            if (isTr) return "Doğrudan bağlantı kopyalandı!";
-            if (isAr) return "تم نسخ الرابط المباشr!";
-            return "Direct link copied!";
-        }
-        if ("no_image".equals(key)) {
-            if (isIt) return "Nessuna immagine disponibile per questo pin";
-            if (isEs) return "No hay imagen disponible para este pin";
-            if (isFr) return "Aucune image disponible pour ce pin";
-            if (isDe) return "Kein Bild für diesen Pin verfügbar";
-            return "No image available for this pin";
-        }
-        return "";
+        String value = MorpheStrings.find(key);
+        return value == null ? "" : value;
     }
 
     static String getLocalizedError(String key) {
-        // La lingua dell'app, non quella di sistema: vedi MorpheStrings.language().
-        String lang = MorpheStrings.language();
-        boolean isIt = "it".equals(lang);
-        boolean isEs = "es".equals(lang);
-        boolean isFr = "fr".equals(lang);
-        boolean isDe = "de".equals(lang);
-        boolean isPt = "pt".equals(lang);
-        boolean isRu = "ru".equals(lang);
-        boolean isJa = "ja".equals(lang);
-        boolean isZh = "zh".equals(lang);
-        boolean isKo = "ko".equals(lang);
-        boolean isPl = "pl".equals(lang);
-        boolean isNl = "nl".equals(lang);
-        boolean isTr = "tr".equals(lang);
-        boolean isAr = "ar".equals(lang);
-        boolean isHi = "hi".equals(lang);
-        boolean isIn = "in".equals(lang) || "id".equals(lang);
-        boolean isMs = "ms".equals(lang);
-        boolean isVi = "vi".equals(lang);
-        boolean isUk = "uk".equals(lang);
-        boolean isSv = "sv".equals(lang);
-        boolean isNb = "nb".equals(lang) || "no".equals(lang);
-        boolean isDa = "da".equals(lang);
-        boolean isFi = "fi".equals(lang);
-        boolean isFil = "fil".equals(lang) || "tl".equals(lang);
-        boolean isEl = "el".equals(lang);
-        boolean isCs = "cs".equals(lang);
-        boolean isSk = "sk".equals(lang);
-        boolean isHu = "hu".equals(lang);
-        boolean isRo = "ro".equals(lang);
-        boolean isIw = "iw".equals(lang) || "he".equals(lang);
-        boolean isHr = "hr".equals(lang);
-
-        if ("video_err_hls".equals(key)) {
-            if (isIt) return "Errore: formato streaming (HLS/DASH) non supportato direttamente";
-            if (isEs) return "Error: formato de streaming (HLS/DASH) no admitido directamente";
-            if (isFr) return "Erreur : format de streaming (HLS/DASH) non pris en charge directement";
-            if (isDe) return "Fehler: Streaming-Format (HLS/DASH) wird nicht direkt unterstützt";
-            if (isPt) return "Erro: formato de streaming (HLS/DASH) não suportado direttamente";
-            if (isRu) return "Ошибка: потоковый формат (HLS/DASH) не поддерживается напрямую";
-            if (isJa) return "エラー: ストリーミング形式 (HLS/DASH) は直接サポートされていません";
-            if (isZh) return "错误：暂不支持直接下载流媒体格式 (HLS/DASH)";
-            if (isKo) return "오류: 스트리밍 형식(HLS/DASH)은 직접 지원되지 않습니다";
-            if (isPl) return "Błąd: format strumieniowy (HLS/DASH) nie jest bezpośrednio obsługiwany";
-            if (isNl) return "Fout: streamingformaat (HLS/DASH) wordt niet direct ondersteund";
-            if (isTr) return "Hata: akış formatı (HLS/DASH) doğrudan desteklenmiyor";
-            if (isAr) return "خطأ: تنسيق البث (HLS/DASH) غير مدعوم مباشرة";
-            if (isHi) return "त्रुटि: स्ट्रीमिंग प्रारूप (HLS/DASH) सीधे समर्थित नहीं है";
-            if (isIn || isMs) return "Kesalahan: format streaming (HLS/DASH) tidak didukung secara langsung";
-            if (isVi) return "Lỗi: định dạng phát trực tuyến (HLS/DASH) không được hỗ trợ trực tiếp";
-            if (isUk) return "Помилка: потоковий формат (HLS/DASH) не підтримується напряму";
-            if (isSv) return "Fel: strömmande format (HLS/DASH) stöds inte direkt";
-            if (isNb) return "Feil: strømmeformat (HLS/DASH) støttes ikke direkte";
-            if (isDa) return "Fejl: streamingformat (HLS/DASH) understøttes ikke direkte";
-            if (isFi) return "Virhe: suoratoistomuotoa (HLS/DASH) ei tueta suoraan";
-            if (isFil) return "Error: hindi direktang suportado ang streaming format (HLS/DASH)";
-            if (isEl) return "Σφάλμα: η μορφή ροής (HLS/DASH) δεν υποστηρίζεται απευθείας";
-            if (isCs) return "Chyba: formát streamování (HLS/DASH) není přímo podporován";
-            if (isHu) return "Hiba: a streaming formátum (HLS/DASH) közvetlenül nem támogatott";
-            if (isRo) return "Eroare: formatul de streaming (HLS/DASH) nu este acceptat direct";
-            if (isIw) return "שגיאה: פורמט הזרמה (HLS/DASH) אינו נתמך ישירות";
-            if (isHr) return "Greška: streaming format (HLS/DASH) nije izravno podržan";
-            return "Error: streaming format (HLS/DASH) is not directly supported";
-        }
-        if ("video_err_no_mp4".equals(key)) {
-            if (isIt) return "Errore: impossibile estrarre un link scaricabile (MP4/HLS/DASH) dai metadati";
-            if (isEs) return "Error: no se pudo extraer un enlace descargable (MP4/HLS/DASH) de los metadatos";
-            if (isFr) return "Erreur : impossible d'extraire un lien téléchargeable (MP4/HLS/DASH) des métadonnées";
-            if (isDe) return "Fehler: kein herunterladbarer Link (MP4/HLS/DASH) aus den Metadaten extrahierbar";
-            if (isPt) return "Erro: não foi possível extrair um link para download (MP4/HLS/DASH) dos metadados";
-            if (isRu) return "Ошибка: не удалось извлечь ссылку для скачивания (MP4/HLS/DASH) из метаданных";
-            if (isJa) return "エラー: メタデータからダウンロード可能なリンク (MP4/HLS/DASH) を抽出できませんでした";
-            if (isZh) return "错误：无法从元数据中提取可下载链接 (MP4/HLS/DASH)";
-            if (isKo) return "오류: 메타데이터에서 다운로드 가능한 링크(MP4/HLS/DASH)를 추출할 수 없습니다";
-            if (isPl) return "Błąd: nie udało się wyodrębnić linku do pobrania (MP4/HLS/DASH) z metadanych";
-            if (isNl) return "Fout: kan geen downloadbare link (MP4/HLS/DASH) uit metadata halen";
-            if (isTr) return "Hata: meta verilerden indirilebilir bağlantı (MP4/HLS/DASH) ayıklanamadı";
-            if (isAr) return "خطأ: تعذّر استخراج رابط قابل للتنزيل (MP4/HLS/DASH) من البيانات التعريفية";
-            if (isHi) return "त्रुटि: मेटाडेटा से डाउनलोड करने योग्य लिंक (MP4/HLS/DASH) निकालने में विफल";
-            if (isIn || isMs) return "Kesalahan: gagal mengekstrak tautan yang dapat diunduh (MP4/HLS/DASH) dari metadata";
-            if (isVi) return "Lỗi: không thể trích xuất liên kết tải xuống (MP4/HLS/DASH) từ siêu dữ liệu";
-            if (isUk) return "Помилка: не вдалося витягти посилання для завантаження (MP4/HLS/DASH) з метаданих";
-            if (isSv) return "Fel: kunde inte extrahera en nedladdningsbar länk (MP4/HLS/DASH) från metadata";
-            if (isNb) return "Feil: kunne ikke hente ut en nedlastbar lenke (MP4/HLS/DASH) fra metadata";
-            if (isDa) return "Fejl: kunne ikke hente et downloadbart link (MP4/HLS/DASH) fra metadata";
-            if (isFi) return "Virhe: ladattavaa linkkiä (MP4/HLS/DASH) ei voitu hakea metatiedoista";
-            if (isFil) return "Error: bigong i-extract ang nada-download na link (MP4/HLS/DASH) mula sa metadata";
-            if (isEl) return "Σφάλμα: αποτυχία εξαγωγής συνδέσμου λήψης (MP4/HLS/DASH) από τα μεταδεδομένα";
-            if (isCs) return "Chyba: z metadat se nepodařilo extrahovat odkaz ke stažení (MP4/HLS/DASH)";
-            if (isHu) return "Hiba: nem sikerült letölthető hivatkozást (MP4/HLS/DASH) kinyerni a metaadatokból";
-            if (isRo) return "Eroare: nu s-a putut extrage un link descărcabil (MP4/HLS/DASH) din metadate";
-            if (isIw) return "שגיאה: כשל בחילוץ קישור להורדה (MP4/HLS/DASH) מהמטא-דאטה";
-            if (isHr) return "Greška: nije moguće izdvojiti poveznicu za preuzimanje (MP4/HLS/DASH) iz metapodataka";
-            return "Error: failed to extract a downloadable link (MP4/HLS/DASH) from metadata";
-        }
-        if ("video_err_no_tracking".equals(key)) {
-            if (isIt) return "Errore: nessun tracciamento video in memoria";
-            if (isEs) return "Error: no hay seguimiento de video en memoria";
-            if (isFr) return "Erreur : aucun suivi vidéo en mémoire";
-            if (isDe) return "Fehler: keine Videoverfolgung im Speicher";
-            if (isPt) return "Erro: sem rastreamento de vídeo na memória";
-            if (isRu) return "Ошибка: в памяти нет отслеживаемого видео";
-            if (isJa) return "エラー: メモリ内に追跡された動画がありません";
-            if (isZh) return "错误：内存中没有缓存视频信息";
-            if (isKo) return "오류: 메모리에 추적된 동영상이 없습니다";
-            if (isPl) return "Błąd: brak śledzenia wideo w pamięci";
-            if (isNl) return "Fout: geen videotracking in geheugen";
-            if (isTr) return "Hata: bellekte izlenen video yok";
-            if (isAr) return "خطأ: لا يوجد تتبع للفيديو في الذاكرة";
-            if (isHi) return "त्रुटि: मेमोरी में कोई ट्रैक किया गया वीडियो नहीं है";
-            if (isIn || isMs) return "Kesalahan: tidak ada pelacakan video di memori";
-            if (isVi) return "Lỗi: không có theo dõi video trong bộ nhớ";
-            if (isUk) return "Помилка: немає відстежуваного відео в пам'яті";
-            if (isSv) return "Fel: ingen videospårning i minnet";
-            if (isNb) return "Feil: ingen videosporing i minnet";
-            if (isDa) return "Fejl: ingen videosporing i hukommelsen";
-            if (isFi) return "Virhe: videoseurantaa ei ole muistissa";
-            if (isFil) return "Error: walang natunton na video sa memorya";
-            if (isEl) return "Σφάλμα: δεν υπάρχει παρακολούθηση βίντεο στη μνήμη";
-            if (isCs) return "Chyba: v paměti není sledováno žádné video";
-            if (isHu) return "Hiba: nincs videó nyomon követése a memóriában";
-            if (isRo) return "Eroare: nu există urmărire video în memorie";
-            if (isIw) return "שגיאה: אין מעקב וידאו בזיכרון";
-            if (isHr) return "Greška: nema praćenja videozapisa u memoriji";
-            return "Error: no video tracking in memory";
-        }
-        if ("video_err_image_post".equals(key)) {
-            if (isIt) return "Errore: questo post è un'immagine statica";
-            if (isEs) return "Error: esta publicación es una imagen estática";
-            if (isFr) return "Erreur : cette publication est une image statique";
-            if (isDe) return "Fehler: Dieser Beitrag ist ein statisches Bild";
-            if (isPt) return "Erro: esta publicação é uma imagem estática";
-            if (isRu) return "Ошибка: эта публикация является статичным изображением";
-            if (isJa) return "エラー: この投稿は静止画です";
-            if (isZh) return "错误：此帖子是一张静态图片";
-            if (isKo) return "오류: 이 게시물은 정적 이미지입니다";
-            if (isPl) return "Błąd: ten post to statyczny obraz";
-            if (isNl) return "Fout: dit bericht is een statische afbeelding";
-            if (isTr) return "Hata: bu gönderi statik bir resim";
-            if (isAr) return "خطأ: هذا المنشور عبارة عن صورة ثابتة";
-            if (isHi) return "त्रुटि: यह पोस्ट एक स्थिर छवि है";
-            if (isIn || isMs) return "Kesalahan: postingan ini adalah gambar statis";
-            if (isVi) return "Lỗi: bài đăng này là một hình ảnh tĩnh";
-            if (isUk) return "Помилка: ця публікація є статичним зображенням";
-            if (isSv) return "Fel: det här inlägget är en statisk bild";
-            if (isNb) return "Feil: dette innlegget er et statisk bilde";
-            if (isDa) return "Fejl: dette opslag er et statisk billede";
-            if (isFi) return "Virhe: tämä julkaisu on staattinen kuva";
-            if (isFil) return "Error: ang post na ito ay isang statikong larawan";
-            if (isEl) return "Σφάλμα: αυτή η ανάρτηση είναι μια στατική εικόνα";
-            if (isCs) return "Chyba: tento příspěvek je statický obrázek";
-            if (isHu) return "Hiba: ez a bejegyzés egy statikus kép";
-            if (isRo) return "Eroare: această postare este o imagine statică";
-            if (isIw) return "שגיאה: פוست זה הוא תמונה סטטית";
-            if (isHr) return "Greška: ova objava je statična slika";
-            return "Error: this post is a static image";
-        }
-        return "";
+        return getString(key);
     }
 }

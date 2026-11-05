@@ -142,7 +142,6 @@ public final class MorpheLog {
         if (t == null) {
             return "null";
         }
-        String message = t.getMessage();
-        return t.getClass().getSimpleName() + (message == null ? "" : ": " + message);
+        return t.getClass().getSimpleName();
     }
 }

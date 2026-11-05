@@ -38,7 +38,7 @@ val keepHomeFeedPatch = bytecodePatch(
         name = "Pinterest",
         packageName = "com.pinterest",
         apkFileType = COMPATIBILITY_PINTEREST.apkFileType,
-        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version == "14.39.0" },
+        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.39.0", "14.43.0") },
     ))
     extendWith("extensions/extension.mpe")
     execute {

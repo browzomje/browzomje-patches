@@ -122,6 +122,20 @@ final class AdDetector {
         return false;
     }
 
+    /** Use Pinterest's media disclosure fields to identify labeled Pins. */
+    static boolean isAiLabeledPin(Object model) {
+        Object type = fieldValueBySerializedName(model, "digital_media_source_type");
+        if (type instanceof Enum<?>) {
+            String name = ((Enum<?>) type).name();
+            if (name.endsWith("TRAINED_ALGORITHMIC_MEDIA") || name.equals("SYNTHETIC_PERFORMER")) return true;
+        }
+        Object label = fieldValueBySerializedName(model, "digital_media_source_type_label");
+        if (label instanceof String && !((String) label).trim().isEmpty()) return true;
+        Object disclosures = fieldValueBySerializedName(model, "ai_disclosures");
+        return disclosures instanceof List<?>
+                && (((List<?>) disclosures).contains(1) || ((List<?>) disclosures).contains(2));
+    }
+
     private static boolean hasVideoTracks(Object video) {
         Object tracks = fieldValueBySerializedName(video, "video_list");
         return tracks instanceof Map && !((Map<?, ?>) tracks).isEmpty();

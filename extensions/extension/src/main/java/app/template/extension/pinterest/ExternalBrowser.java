@@ -129,7 +129,7 @@ public final class ExternalBrowser {
 
         lastRedirectedUrl = url;
         lastRedirectAtMs = System.currentTimeMillis();
-        MorpheLog.ok(MorpheLog.EXTERNAL_BROWSER, "opened in the default browser: " + finalUrl);
+        MorpheLog.ok(MorpheLog.EXTERNAL_BROWSER, "opened in the default browser");
 
         // Il browser interno è già stato aperto quando arriviamo qui, quindi va richiuso, o
         // l'utente se lo ritrova sotto tornando indietro dal browser di sistema.
@@ -202,7 +202,7 @@ public final class ExternalBrowser {
 
         lastRedirectedUrl = url;
         lastRedirectAtMs = System.currentTimeMillis();
-        MorpheLog.ok(MorpheLog.EXTERNAL_BROWSER, "redirected CCT link to external browser: " + finalUrl);
+        MorpheLog.ok(MorpheLog.EXTERNAL_BROWSER, "redirected CCT link to external browser");
         return true;
     }
 

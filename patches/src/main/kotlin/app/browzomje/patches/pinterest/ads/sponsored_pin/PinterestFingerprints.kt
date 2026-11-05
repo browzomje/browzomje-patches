@@ -1,6 +1,8 @@
 package app.browzomje.patches.pinterest
 
 import app.morphe.patcher.Fingerprint
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 // Le tre risposte di rete che portano pin nel feed — e, come si è scoperto per l'issue #30, anche
 // i moduli della schermata di ricerca, che viaggiano sulla stessa ModelListWithBookmark.
@@ -103,27 +105,54 @@ object LegacyFeedItemsFingerprint : Fingerprint(
     parameters = listOf("Ljava/util/List;"),
 )
 
-// 14.39.0 dynamic grid: filter input before queued operations capture lists and indices.
+// Filter input before queued operations capture lists and indices. These obfuscated
+// entry points are verified separately on 14.39.0 and 14.43.0.
 object DynamicGridAppendFingerprint : Fingerprint(
-    definingClass = "Ltu1/g0;", name = "A", returnType = "V",
+    returnType = "V",
     parameters = listOf("Ljava/util/List;", "Z"),
+    custom = { method, owner ->
+        (owner.type == "Ltu1/g0;" && method.name == "A") ||
+            (owner.type == "Lsw1/l0;" && method.name == "z")
+    },
 )
 object DynamicGridReplaceFingerprint : Fingerprint(
-    definingClass = "Ltu1/g0;", name = "j0", returnType = "V",
+    name = "j0", returnType = "V",
     parameters = listOf("Ljava/util/List;", "Z"),
+    custom = { _, owner -> owner.type == "Ltu1/g0;" || owner.type == "Lsw1/l0;" },
 )
 object DynamicGridInsertFingerprint : Fingerprint(
-    definingClass = "Ltu1/g0;", name = "Y", returnType = "V",
+    returnType = "V",
     parameters = listOf("I", "Ljava/util/List;"),
+    custom = { method, owner ->
+        (owner.type == "Ltu1/g0;" && method.name == "Y") ||
+            (owner.type == "Lsw1/l0;" && method.name == "X")
+    },
 )
 
 object RawGridAppendFingerprint : Fingerprint(
-    definingClass = "Ltu1/p;", name = "b", returnType = "V",
+    name = "b", returnType = "V",
     parameters = listOf("Ljava/util/List;"),
+    custom = { _, owner -> owner.type == "Ltu1/p;" || owner.type == "Lsw1/r;" },
 )
 
-// GraphQL ParsedResponse consumed by kc1.a: filter before pagination test and diff callback capture.
+private object RawGridResponseClassFingerprint : Fingerprint(
+    name = "toString", returnType = "Ljava/lang/String;",
+    strings = listOf("ParsedResponse(responseItems="),
+)
+
+// GraphQL ParsedResponse: filter before pagination test and diff callback capture.
 object RawGridResponseFingerprint : Fingerprint(
-    definingClass = "Ltu1/k;", name = "<init>", returnType = "V",
+    name = "<init>", returnType = "V",
     parameters = listOf("Ljava/lang/String;", "Ljava/util/List;", "Z"),
+    classFingerprint = RawGridResponseClassFingerprint,
+)
+
+internal object ThirdPartyAdConfigFingerprint : Fingerprint(
+    strings = listOf("android_ads_3p_config_consent"),
+    custom = { method, _ ->
+        method.implementation?.instructions?.any { instruction ->
+            val field = (instruction as? ReferenceInstruction)?.reference as? FieldReference
+            field?.name == "META_AUDIENCE_NETWORK" && field.type == field.definingClass
+        } == true
+    },
 )

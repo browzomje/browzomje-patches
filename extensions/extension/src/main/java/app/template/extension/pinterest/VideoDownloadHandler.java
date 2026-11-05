@@ -260,7 +260,7 @@ class VideoDownloadHandler {
             android.app.DownloadManager dm =
                 (android.app.DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
             if (dm == null) {
-                PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+                PinterestUtils.showNativeToast(context, PinterestUtils.getString("download_failed"));
                 return;
             }
             String fileName = "pinterest_" + System.currentTimeMillis() + ".mp4";
@@ -283,7 +283,7 @@ class VideoDownloadHandler {
             PinterestUtils.showNativeToast(context, PinterestUtils.getString("video_download_started"));
         } catch (Throwable t) {
             Log.e(TAG, "video download failed", t);
-            PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+            PinterestUtils.showNativeToast(context, PinterestUtils.getString("download_failed"));
         }
     }
 
@@ -293,7 +293,7 @@ class VideoDownloadHandler {
             ExternalVideoDownloader.open(context, url);
         } catch (Throwable t) {
             Log.e(TAG, "could not open the external downloader", t);
-            PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+            PinterestUtils.showNativeToast(context, PinterestUtils.getString("download_failed"));
         }
     }
 

@@ -3,6 +3,7 @@ import java.util.*;
 import com.android.tools.smali.dexlib2.*;
 import com.android.tools.smali.dexlib2.iface.*;
 import com.android.tools.smali.dexlib2.iface.instruction.*;
+import com.android.tools.smali.dexlib2.iface.reference.StringReference;
 class CheckStartupTabDex {
  static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}
  static Map<String,ClassDef> load(String path)throws Exception {
@@ -32,9 +33,28 @@ class CheckStartupTabDex {
   if(prefix==1){launcherHooks++;check(ref(b.get(0)).contains(source.getName().equals("onCreate")?"->onLauncherCreate(":"->cancelLauncher("),"launcher lifecycle gate");}
  }
  check(launcherHooks==2,"launcher create/new-intent tracked");
- Method transitionBefore=null,transitionAfter=null;
- for(Method m:before.get("Lr82/c;").getMethods())if(m.getName().equals("g")&&m.getParameterTypes().size()==2)transitionBefore=m;
- for(Method m:after.get("Lr82/c;").getMethods())if(transitionBefore!=null&&m.toString().equals(transitionBefore.toString()))transitionAfter=m;
+ var anchors=Set.of("com.pinterest.EXTRA_PENDING_TAB","com.pinterest.EXTRA_PENDING_TAB_EXTRAS","com.pinterest.EXTRA_IS_DEEPLINK");
+ var transitions=new ArrayList<Method>();
+ for(ClassDef owner:before.values()) {
+  boolean factory=false;
+  var candidates=new ArrayList<Method>();
+  for(Method m:owner.getMethods()) {
+   if(m.getImplementation()==null)continue;
+   if(m.getReturnType().equals("Landroid/content/Intent;")) {
+    var strings=new HashSet<String>();
+    for(Instruction i:m.getImplementation().getInstructions())
+     if(i instanceof ReferenceInstruction r&&r.getReference() instanceof StringReference str)strings.add(str.getString());
+    factory|=strings.containsAll(anchors);
+   }
+   if(m.getReturnType().equals("V")&&m.getParameterTypes().toString().equals("[Landroid/app/Activity;, Z]"))
+    candidates.add(m);
+  }
+  if(factory)transitions.addAll(candidates);
+ }
+ check(transitions.size()==1,"one original authenticated transition");
+ Method transitionBefore=transitions.get(0),transitionAfter=null;
+ for(Method m:after.get(transitionBefore.getDefiningClass()).getMethods())
+  if(m.toString().equals(transitionBefore.toString()))transitionAfter=m;
  check(transitionAfter!=null,"native authenticated transition retained");var ta=code(transitionBefore);var tb=code(transitionAfter);
  check(tb.size()==ta.size()+1&&ref(tb.get(0)).contains("->prepareAuthenticated("),"authenticated handoff gate");
  for(int i=0;i<ta.size();i++)check(ta.get(i).getOpcode()==tb.get(i+1).getOpcode()&&ref(ta.get(i)).equals(ref(tb.get(i+1))),"native extras forwarding retained");

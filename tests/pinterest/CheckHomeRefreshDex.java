@@ -8,12 +8,13 @@ import com.android.tools.smali.dexlib2.iface.reference.*;
 /** Run with the Morphe CLI JAR on the classpath and original/patched APK arguments. */
 class CheckHomeRefreshDex {
  static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
- static Map<String,ClassDef> classes(String file) throws Exception {
+ static Map<String,ClassDef> classes(String file, Map<String,Integer> counts) throws Exception {
   Map<String,ClassDef> result=new HashMap<>();
   var container=DexFileFactory.loadDexContainer(new File(file),Opcodes.getDefault());
   for(String entry:container.getDexEntryNames())
    for(ClassDef type:container.getEntry(entry).getDexFile().getClasses()) {
-    check(result.put(type.getType(),type)==null,"duplicate class "+type.getType());
+    counts.merge(type.getType(),1,Integer::sum);
+    result.putIfAbsent(type.getType(),type);
    }
   return result;
  }
@@ -30,7 +31,12 @@ class CheckHomeRefreshDex {
   throw new AssertionError("missing method "+ref);
  }
  public static void main(String[] args) throws Exception {
-  var original=classes(args[0]);var patched=classes(args[1]);
+  var originalCounts=new HashMap<String,Integer>();
+  var patchedCounts=new HashMap<String,Integer>();
+  var original=classes(args[0],originalCounts);var patched=classes(args[1],patchedCounts);
+  for(var entry:patchedCounts.entrySet())
+   if(entry.getValue()>1)
+    check(entry.getValue()<=originalCounts.getOrDefault(entry.getKey(),0),"new duplicate class "+entry.getKey());
   String nav="Lcom/pinterest/navigation/view/FloatingBottomNavBar;";
   Method selection=null;
   for(Method m:original.get(nav).getMethods())if(m.getImplementation()!=null && m.getParameterTypes().size()==2)

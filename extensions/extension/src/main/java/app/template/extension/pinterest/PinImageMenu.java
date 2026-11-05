@@ -1,44 +1,11 @@
 package app.browzomje.extension.pinterest;
 
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 import java.util.Locale;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 
-/** Menu actions bound to the Pin contained in this menu, never a global last-viewed image. */
+/** Helpers for image variants on a Pin model. */
 final class PinImageMenu {
     private PinImageMenu() {}
-
-    static void upgradeDownload(Object menu) {
-        if (!(menu instanceof ViewGroup)) return;
-        ViewGroup container = (ViewGroup) menu;
-        final Object pin = CurrentPin.findPinIn(menu);
-        if (bestImage(pin) == null) return; // Preserve the native action when no model is available.
-        Set<String> labels = new HashSet<>();
-        for (String action : new String[] { "download_image", "save_to_device" }) {
-            String label = PinMenuFilter.label(container.getContext(), action);
-            if (label != null) labels.add(label);
-        }
-        upgradeRows(container, pin, labels);
-    }
-
-    private static void upgradeRows(ViewGroup container, Object pin, Set<String> labels) {
-        for (int i = 0; i < container.getChildCount(); i++) {
-            View row = container.getChildAt(i);
-            if (PinMenuFilter.isCustom(row)) continue;
-            TextView text = PinterestUtils.findTextView(row);
-            if (row.isClickable() && text != null && labels.contains(text.getText().toString())) {
-                row.setOnClickListener(v -> {
-                    PinterestUtils.dismissMenu(v.getContext());
-                    BoardDownloadHandler.downloadSinglePin(v.getContext(), pin);
-                });
-                MorpheLog.i(MorpheLog.BOARD, "native image download checks original quality with app-variant fallback");
-            } else if (row instanceof ViewGroup) upgradeRows((ViewGroup) row, pin, labels);
-        }
-    }
 
     static Object bestImage(Object pin) {
         if (pin == null) return null;

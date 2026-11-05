@@ -2,7 +2,7 @@
 
 A collection of patches for Android applications, designed for the [Morphe](https://morphe.software) patcher.
 
-[Pinterest 14.39.0 — checklist completa delle verifiche](docs/pinterest/VERIFICATION_14.39.0.md) (collaudo dispositivo ancora aperto).
+[Pinterest 14.39.0 verification checklist](docs/pinterest/VERIFICATION_14.39.0.md)
 
 ## ❓ About
 
@@ -13,13 +13,20 @@ These patches allow you to remove advertisements, block tracking, and add new ut
 
 The optional **Hide video pins** setting is off by default. It filters video Pins in feeds and search, including Story Pins identified by their video duration. Pages containing only videos may become empty; search suggestions and their thumbnails remain visible. Pinterest has several feed formats, so broader device coverage is still needed.
 
-The **Choose startup tab** patch (Pinterest 14.39.0) adds Home, Search and Saved
+**Hide AI-labeled Pins** is an optional feed setting. It filters Pins that carry a Pinterest AI disclosure.
+
+The **Choose startup tab** patch (Pinterest 14.39.0 and 14.43.0) adds Home, Search and Saved
 choices in Morphe settings, with native icons. Home is the default. The choice
 applies to fresh launches from the app icon; links and restored sessions keep
 their destination. Hidden Search falls back to Home.
 
 External video downloads open YTDLnis directly when installed, then Seal.
 Android's share chooser is the fallback when neither supported app is available.
+
+### Pinterest prerelease testing
+
+The 14.43.0 candidate has passed startup and single-image download on Android.
+A carousel download can still save the first image after another slide is selected.
 
 ## 🩹 Patches list
 

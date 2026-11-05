@@ -34,8 +34,13 @@ public class ActionsTest {
   MorpheSettingsStore.selection="";android.widget.TextView shown=new android.widget.TextView(c,"Segui Ada");android.view.ViewGroup cleared=new android.view.ViewGroup(c);cleared.addView(shown);PinMenuFilter.apply(cleared);check(shown.visibility==0,"show all preserves follow");System.out.println("PASS production dynamic Follow/Unfollow filtering");
   java.util.Map<String,Object> image=new java.util.HashMap<>();image.put("url","https://i.pinimg.com/736x/test.jpg");image.put("width",736);image.put("height",805);
   java.util.Map<String,Object> pin=new java.util.HashMap<>();pin.put("id","123");pin.put("image",image);NativeImageDownload.remember(pin);
-  Object handler=new Object();NativeImageDownload.capture(handler,"123","unused");Completion completion=new Completion();check(NativeImageDownload.intercept(handler,c,null,completion),"native image intercepted");check(PinImageDownloader.id.equals("123") && completion.calls==1,"exact Pin and completion");
-  Object other=new Object();NativeImageDownload.capture(other,"456","unused");check(!NativeImageDownload.intercept(other,c,null,completion),"no last-seen Pin fallback");pin.put("is_video",true);check(!NativeImageDownload.intercept(handler,c,null,completion),"videos preserved");android.os.Build.VERSION.SDK_INT=28;pin.put("is_video",false);check(!NativeImageDownload.intercept(handler,c,null,completion),"legacy native path preserved");System.out.println("PASS production native download bridge");
+  Object handler=new Object();NativeImageDownload.capture(handler,"123",null);Completion completion=new Completion();check(NativeImageDownload.intercept(handler,c,null,completion),"native image intercepted");check(PinImageDownloader.id.equals("123") && completion.calls==1 && PinImageDownloader.url.equals(image.get("url")),"exact Pin and completion");
+  String slideUrl="https://i.pinimg.com/736x/second.jpg";
+  Object slide=new Object();NativeImageDownload.capture(slide,"123",slideUrl);
+  check(NativeImageDownload.intercept(slide,c,null,completion) && PinImageDownloader.url.equals(slideUrl),"explicit carousel page wins over primary Pin image");
+  NativeImageDownload.capture(slide,"123","https://example.org/image.jpg");
+  check(!NativeImageDownload.intercept(slide,c,null,completion),"unsupported explicit URL preserves native path");
+  Object other=new Object();NativeImageDownload.capture(other,"456",null);check(!NativeImageDownload.intercept(other,c,null,completion),"no last-seen Pin fallback");pin.put("is_video",true);check(!NativeImageDownload.intercept(handler,c,null,completion),"videos preserved");android.os.Build.VERSION.SDK_INT=28;pin.put("is_video",false);check(!NativeImageDownload.intercept(handler,c,null,completion),"legacy native path preserved");System.out.println("PASS production native download bridge");
  }
 }'''
 }

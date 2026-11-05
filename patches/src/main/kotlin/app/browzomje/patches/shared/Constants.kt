@@ -25,6 +25,9 @@ object Constants {
             ),
             AppTarget(
                 version = "14.39.0"
+            ),
+            AppTarget(
+                version = "14.43.0"
             )
         )
     )

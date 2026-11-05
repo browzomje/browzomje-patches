@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+changed=$(git diff --cached --name-only -- \
+    extensions/extension/src/main/l10n \
+    extensions/extension/src/main/java/app/template/extension/pinterest \
+    scripts/pinterest_l10n.py)
+if [ -n "$changed" ]; then
+    exec python3 scripts/pinterest_l10n.py --index
+fi

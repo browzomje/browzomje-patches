@@ -44,7 +44,7 @@ public final class PinImageDownloader {
                     PinterestUtils.getString("download_image_started"));
         } catch(Exception failure) {
             MorpheLog.w(MorpheLog.BOARD,"could not queue image download",failure);
-            PinterestUtils.showNativeToast(context,PinterestUtils.getString("failed"));
+            PinterestUtils.showNativeToast(context,PinterestUtils.getString("download_failed"));
         }
     }
 }

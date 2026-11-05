@@ -1,6 +1,5 @@
 package app.browzomje.patches.pinterest.pin_menu.image_tools
 
-import app.browzomje.patches.pinterest.OverflowMenuBuilderFingerprint
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addInstructionsAfterSuperConstructor
@@ -10,8 +9,6 @@ import app.browzomje.patches.shared.returnVoidWhen
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-
-private const val EXTENSION = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 
 @Suppress("unused")
 val pinImageInfoPatch = bytecodePatch(
@@ -41,11 +38,6 @@ val highestQualityImagePatch = bytecodePatch(
     dependsOn(pinImageInfoPatch)
     extendWith("extensions/extension.mpe")
     execute {
-        val method = OverflowMenuBuilderFingerprint.method
-        method.addInstructionsAfterSuperConstructor(
-            "invoke-static/range { p0 .. p0 }, $EXTENSION->upgradePinImageDownload(Ljava/lang/Object;)V",
-        )
-        PatchLog.hooked("Download images in highest available quality", method, "native image action")
         val native = NativeImageDownloadFingerprint.method
         NativeImageDownloadConstructorFingerprint.method.addInstructionsAfterSuperConstructor(
             "invoke-static/range { p0 .. p2 }, " +

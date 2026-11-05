@@ -194,7 +194,7 @@ public final class SystemShareSheet {
 
         lastSharedUrl = url;
         lastShareAtMs = System.currentTimeMillis();
-        MorpheLog.ok(MorpheLog.SHARE_SHEET, "system share sheet opened for " + text);
+        MorpheLog.ok(MorpheLog.SHARE_SHEET, "system share sheet opened");
     }
 
     private static void dismissInAppShareSheet(View list) {

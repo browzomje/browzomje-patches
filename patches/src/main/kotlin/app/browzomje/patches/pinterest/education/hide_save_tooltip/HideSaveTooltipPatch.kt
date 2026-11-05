@@ -18,7 +18,7 @@ val hideSaveTooltipPatch = bytecodePatch(
         name = "Pinterest",
         packageName = "com.pinterest",
         apkFileType = ApkFileType.APK,
-        targets = listOf(AppTarget(version = "14.39.0")),
+        targets = listOf(AppTarget(version = "14.39.0"), AppTarget(version = "14.43.0")),
     ))
     extendWith("extensions/extension.mpe")
     execute {

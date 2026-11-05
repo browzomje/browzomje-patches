@@ -395,7 +395,7 @@ final class BoardDownloadHandler {
         // bacheca all'altra può non essere quella che si ha davanti. Scrivendola, se la deduzione
         // sbaglia lo si vede subito invece di scoprirlo dai file scaricati.
         PinterestUtils.showNativeToast(context, folder + " — "
-                + PinterestUtils.getString("board_download_started").replace("%d", String.valueOf(pins.size())));
+                + PinterestUtils.getString("board_download_started").replace("%d", MorpheStrings.number(pins.size())));
 
         // Persist the entire image batch before starting any network work.
         if (android.os.Build.VERSION.SDK_INT >= 29) {
@@ -406,7 +406,7 @@ final class BoardDownloadHandler {
                     MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIGH_QUALITY_IMAGES)); }
             catch (Exception failure) {
                 MorpheLog.w(MorpheLog.BOARD, "could not persist board image downloads", failure);
-                PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+                PinterestUtils.showNativeToast(context, PinterestUtils.getString("download_failed"));
                 return;
             }
         }
@@ -509,12 +509,12 @@ final class BoardDownloadHandler {
                 return;
             }
             enqueue(manager, url, "Pins", name);
-            MorpheLog.ok(MorpheLog.BOARD, "single pin download queued: " + name);
+            MorpheLog.ok(MorpheLog.BOARD, "single Pin download queued");
             PinterestUtils.showNativeToast(context,
                     PinterestUtils.getString("download_image_started"));
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.BOARD, "could not download the pin", t);
-            PinterestUtils.showNativeToast(context, PinterestUtils.getString("failed"));
+            PinterestUtils.showNativeToast(context, PinterestUtils.getString("download_failed"));
         }
     }
 
@@ -580,19 +580,19 @@ final class BoardDownloadHandler {
             int images, int videos, int streamingSkipped, int alreadyThere, int failed) {
         StringBuilder sb = new StringBuilder();
         sb.append(PinterestUtils.getString("board_download_done")
-                .replace("%1", String.valueOf(images))
-                .replace("%2", String.valueOf(videos)));
+                .replace("%1", MorpheStrings.number(images))
+                .replace("%2", MorpheStrings.number(videos)));
         if (alreadyThere > 0) {
             sb.append(' ').append(PinterestUtils.getString("board_download_already")
-                    .replace("%d", String.valueOf(alreadyThere)));
+                    .replace("%d", MorpheStrings.number(alreadyThere)));
         }
         if (streamingSkipped > 0) {
             sb.append(' ').append(PinterestUtils.getString("board_download_skipped")
-                    .replace("%d", String.valueOf(streamingSkipped)));
+                    .replace("%d", MorpheStrings.number(streamingSkipped)));
         }
         if (failed > 0) {
             sb.append(' ').append(PinterestUtils.getString("board_download_failed")
-                    .replace("%d", String.valueOf(failed)));
+                    .replace("%d", MorpheStrings.number(failed)));
         }
         return sb.toString();
     }

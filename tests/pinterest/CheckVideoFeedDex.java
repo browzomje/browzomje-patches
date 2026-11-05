@@ -20,24 +20,32 @@ class CheckVideoFeedDex {
   var call=(RegisterRangeInstruction)b.get(0);check(call.getRegisterCount()==1&&call.getStartRegister()==target.getImplementation().getRegisterCount()-1,"list argument");
   check(b.get(1).getOpcode()==Opcode.MOVE_RESULT_OBJECT&&((OneRegisterInstruction)b.get(1)).getRegisterA()==call.getStartRegister(),"filtered list becomes setter input");}
  }
- for(String grid : List.of("Ltu1/g0;", "Ltu1/k;", "Ltu1/p;")) {
+ String version=args.length>2?args[2]:"14.39.0";
+ check(List.of("14.39.0","14.43.0").contains(version),"supported test version");
+ boolean current=version.equals("14.43.0");
+ String dynamic=current?"Lsw1/l0;":"Ltu1/g0;";
+ String response=current?"Lsw1/m;":"Ltu1/k;";
+ String append=current?"Lsw1/r;":"Ltu1/p;";
+ String insertMethod=current?"X":"Y";
+ var dynamicMethods=List.of(current?"z":"A","j0",insertMethod);
+ for(String grid : List.of(dynamic,response,append)) {
   var before=load(args[0],grid);var after=load(args[1],grid);int changed=0;
   for(Method source:before.getMethods()) {
    if(source.getImplementation()==null)continue;
    Method target=null;for(Method m:after.getMethods())if(m.toString().equals(source.toString()))target=m;
    check(target!=null,"grid method retained");var a=code(source);var b=code(target);
-   boolean hook=grid.equals("Ltu1/k;")?source.getName().equals("<init>"):
-       grid.equals("Ltu1/p;")?source.getName().equals("b"):
-       List.of("A","j0","Y").contains(source.getName());
+   boolean hook=grid.equals(response)?source.getName().equals("<init>"):
+       grid.equals(append)?source.getName().equals("b"):
+       dynamicMethods.contains(source.getName());
    int added=hook?2:0;check(b.size()==a.size()+added,"only grid input changed: "+source);
    for(int i=0;i<a.size();i++)check(a.get(i).getOpcode()==b.get(i+added).getOpcode()&&ref(a.get(i)).equals(ref(b.get(i+added))),"native diff/events/paging retained: "+source);
    if(hook){changed++;check(ref(b.get(0)).contains("VideoFeedFilter;->filter("),"filter before capture");
-    int param=(grid.equals("Ltu1/k;")||source.getName().equals("Y"))?2:1;
+    int param=(grid.equals(response)||grid.equals(dynamic)&&source.getName().equals(insertMethod))?2:1;
     int start=target.getImplementation().getRegisterCount()-source.getParameterTypes().size()-1+param;
     check(((RegisterRangeInstruction)b.get(0)).getStartRegister()==start&&((OneRegisterInstruction)b.get(1)).getRegisterA()==start,"correct input parameter: "+source);
    }
   }
-  check(changed==(grid.equals("Ltu1/g0;")?3:1),"expected grid hooks");
+  check(changed==(grid.equals(dynamic)?3:1),"expected grid hooks");
  }
  check(hooks==1,"one legacy list install hook");System.out.println("PASS legacy/GraphQL/dynamic grid video DEX: copy-filter before list/index update; getters, paging metadata and other native methods retained");
  }

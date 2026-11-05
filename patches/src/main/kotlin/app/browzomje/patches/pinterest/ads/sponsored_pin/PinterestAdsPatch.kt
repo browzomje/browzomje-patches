@@ -6,8 +6,12 @@ import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addInstructionsBeforeEveryReturn
+import app.browzomje.patches.shared.returnFalseWhen
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
 private const val PATCH_NAME = "Disable ads"
@@ -15,14 +19,34 @@ private const val PATCH_NAME = "Disable ads"
 @Suppress("unused")
 val pinterestAdsPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Removes sponsored pins from the home, search, related and board feeds. Also carries the \"Hide product pins\" and \"Hide board modules in search\" filters, and the opt-in \"Hide video pins\" filter, all switchable from the Morphe settings screen.",
+    description = "Removes sponsored pins from the home, search, related and board feeds. Also carries the \"Hide product pins\" and \"Hide board modules in search\" filters, and the opt-in \"Hide video pins\" and \"Hide AI-labeled Pins\" filters, all switchable from the Morphe settings screen.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
     extendWith("extensions/extension.mpe")
 
     execute {
-        if (packageMetadata.versionName == "14.39.0") for ((fingerprint, parameter) in listOf(
+        if (packageMetadata.versionName == "14.43.0") {
+            // Resolve the vendor check from the SDK configuration path. Other enums also
+            // define META_AUDIENCE_NETWORK, so the field name alone is insufficient.
+            val references = ThirdPartyAdConfigFingerprint.originalMethod.implementation!!.instructions
+                .mapNotNull { (it as? ReferenceInstruction)?.reference }
+            val vendor = references.filterIsInstance<FieldReference>()
+                .first { it.name == "META_AUDIENCE_NETWORK" }.type
+            val consent = references.filterIsInstance<MethodReference>()
+                .filter { it.returnType == "Z" && it.parameterTypes.map(CharSequence::toString) == listOf(vendor) }
+                .distinct()
+                .single()
+            val method = mutableClassDefBy(consent.definingClass).methods.single { candidate ->
+                candidate.name == consent.name && candidate.returnType == consent.returnType &&
+                    candidate.parameterTypes.map(CharSequence::toString) == listOf(vendor)
+            }
+            check(method.returnFalseWhen(
+                "invoke-static/range { p1 .. p1 }, $EXTENSION_CLASS->denyMetaAdsConsent(Ljava/lang/Object;)Z",
+            )) { "Meta ads consent check has no free local register" }
+            PatchLog.hooked(PATCH_NAME, method, "gate Meta Audience Network consent")
+        }
+        if (packageMetadata.versionName in setOf("14.39.0", "14.43.0")) for ((fingerprint, parameter) in listOf(
             RawGridResponseFingerprint to "p2",
             RawGridAppendFingerprint to "p1",
             DynamicGridAppendFingerprint to "p1",

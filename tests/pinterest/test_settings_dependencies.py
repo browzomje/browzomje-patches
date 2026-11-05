@@ -29,6 +29,7 @@ public class SettingsTest {
   java.lang.reflect.Field field=MorpheSettingsStore.class.getDeclaredField("cachedPrefs");field.setAccessible(true);field.set(null,prefs);
   check(!HomeFeedRefresh.shouldKeepFeed(),"fresh install uses original refresh");
   check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS),"videos opt in");
+  check(!MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS),"AI labels opt in");
   check("HOME".equals(MorpheSettingsStore.startupTab()),"default startup Home");
   MorpheSettingsStore.setStartupTab("PROFILE");check("PROFILE".equals(MorpheSettingsStore.startupTab()),"saved startup selection");
   try {MorpheSettingsStore.setStartupTab("bad");throw new AssertionError("bad startup accepted");}catch(IllegalArgumentException expected){}

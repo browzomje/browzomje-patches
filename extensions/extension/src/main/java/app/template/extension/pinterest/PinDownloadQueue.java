@@ -12,7 +12,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import org.json.JSONObject;
-import java.io.FileInputStream;
+import android.os.Build;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,8 +30,8 @@ final class PinDownloadQueue {
                 .put("hq",hq).put("attempt",0).put("manager",0);
         if(!prefs(context).edit().putString(key,task.toString()).commit()) throw new java.io.IOException("cannot persist download");
         if(completion!=null) CALLBACKS.put(key,completion);
-        schedule(context);
-        MorpheLog.i(MorpheLog.BOARD,"durable image request queued for Pin "+task.getString("id"));
+        schedule(context, "Pins".equals(folder));
+        MorpheLog.i(MorpheLog.BOARD,"durable image request queued");
     }
     static void addBoard(Context context,java.util.List<String[]> images,String folder,boolean hq) throws Exception {
         SharedPreferences.Editor edit=prefs(context).edit();
@@ -47,15 +47,28 @@ final class PinDownloadQueue {
     static void resume(Context context) {
         if(!prefs(context).getAll().isEmpty()) schedule(context);
     }
-    static void schedule(Context context) {
-        JobScheduler scheduler=(JobScheduler)context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if(scheduler==null) throw new IllegalStateException("JobScheduler unavailable");
-        // Avoid replacing a running job when a board queues more images.
-        for(JobInfo job:scheduler.getAllPendingJobs()) if(job.getId()==JOB_ID) return;
-        JobInfo job=new JobInfo.Builder(JOB_ID,new ComponentName(context,PinDownloadJob.class))
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setMinimumLatency(1)
-                .setPersisted(true).setBackoffCriteria(30000,JobInfo.BACKOFF_POLICY_EXPONENTIAL).build();
-        if(scheduler.schedule(job)!=JobScheduler.RESULT_SUCCESS) throw new IllegalStateException("cannot schedule downloads");
+    private static void schedule(Context context) {
+        schedule(context, false);
+    }
+
+    private static synchronized void schedule(Context context, boolean immediate) {
+        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (scheduler == null) throw new IllegalStateException("JobScheduler unavailable");
+        // Keep an existing job and its retry state while it owns the queue.
+        for (JobInfo pending : scheduler.getAllPendingJobs()) {
+            if (pending.getId() == JOB_ID) return;
+        }
+        JobInfo.Builder job = new JobInfo.Builder(JOB_ID, new ComponentName(context, PinDownloadJob.class))
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setPersisted(true)
+                .setBackoffCriteria(30000, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
+        if (immediate && Build.VERSION.SDK_INT >= 31) {
+            if (scheduler.schedule(job.setExpedited(true).build()) == JobScheduler.RESULT_SUCCESS) return;
+            job.setExpedited(false);
+        }
+        if (scheduler.schedule(job.build()) != JobScheduler.RESULT_SUCCESS) {
+            throw new IllegalStateException("cannot schedule downloads");
+        }
     }
     static boolean drain(Context context,Active active) {
         boolean retry=false;
@@ -103,7 +116,7 @@ final class PinDownloadQueue {
                     retry=true;
                 } else {
                     prefs(context).edit().remove(entry.getKey()).commit();CALLBACKS.remove(entry.getKey());
-                    toast(context,PinterestUtils.getString("failed"));
+                    toast(context,PinterestUtils.getString("download_failed"));
                 }
                 MorpheLog.w(MorpheLog.BOARD,"image queue resolution failed (attempt "+failures+")",error);
             }
@@ -121,6 +134,8 @@ final class PinDownloadQueue {
         } catch(Exception failure) { MorpheLog.w(MorpheLog.BOARD,"download completion reconciliation failed",failure); }
     }
     private static synchronized void check(Context context,String key,JSONObject task) throws Exception {
+        String current = prefs(context).getString(key, null);
+        if (current == null || new JSONObject(current).optLong("manager") != task.getLong("manager")) return;
         DownloadManager manager=(DownloadManager)context.getSystemService(Context.DOWNLOAD_SERVICE);
         if(manager==null) return;
         long id=task.getLong("manager");
@@ -146,7 +161,7 @@ final class PinDownloadQueue {
         } catch(Exception invalid) { valid=false; }
         if(valid) {
             prefs(context).edit().remove(key).commit();
-            MorpheLog.i(MorpheLog.BOARD,"system image saved "+task.getString("id")+" "+selected.getInt("width")+"x"+selected.getInt("height")+" "+selected.getString("ext"));
+            MorpheLog.i(MorpheLog.BOARD,"system image saved "+selected.getInt("width")+"x"+selected.getInt("height")+" "+selected.getString("ext"));
             Runnable callback=CALLBACKS.remove(key);
             if(callback!=null) new android.os.Handler(android.os.Looper.getMainLooper()).post(callback);
             return;
@@ -160,7 +175,7 @@ final class PinDownloadQueue {
             schedule(context);
         } else {
             prefs(context).edit().remove(key).commit();CALLBACKS.remove(key);
-            toast(context,PinterestUtils.getString("failed"));
+            toast(context,PinterestUtils.getString("download_failed"));
         }
     }
     private static boolean reserved(Context context,String folder,String filename) {

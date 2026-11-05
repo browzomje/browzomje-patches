@@ -125,6 +125,10 @@ public final class MorpheSettingsActivity extends Activity {
                 MorpheStrings.get(MorpheStrings.HIDE_VIDEO_PINS_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_VIDEO_PINS,
                 MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS));
+        addToggleRow(root, MorpheStrings.get(MorpheStrings.HIDE_AI_PINS_TITLE),
+                MorpheStrings.get(MorpheStrings.HIDE_AI_PINS_DESCRIPTION),
+                MorpheSettingsStore.KEY_HIDE_AI_PINS,
+                MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS));
         addToggleRow(root, MorpheStrings.get(MorpheStrings.SEARCH_MODULES_TITLE),
                 MorpheStrings.get(MorpheStrings.SEARCH_MODULES_DESCRIPTION),
                 MorpheSettingsStore.KEY_HIDE_SEARCH_BOARD_MODULES,
@@ -264,7 +268,7 @@ public final class MorpheSettingsActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(12), dp(12), dp(20), dp(12));
+        bar.setPaddingRelative(dp(12), dp(12), dp(20), dp(12));
 
         int touch = dp(10);
         View back = backControl();
@@ -288,7 +292,7 @@ public final class MorpheSettingsActivity extends Activity {
         title.setTypeface(fontBold != null ? fontBold : Typeface.DEFAULT_BOLD);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleParams.leftMargin = dp(4);
+        titleParams.setMarginStart(dp(4));
         bar.addView(title, titleParams);
 
         return bar;
@@ -304,12 +308,14 @@ public final class MorpheSettingsActivity extends Activity {
         Drawable arrow = pinterestIcon("ic_vr_arrow_left_gestalt");
         if (arrow != null) {
             ImageView icon = new ImageView(this);
+            arrow = arrow.mutate();
+            arrow.setAutoMirrored(true);
             icon.setImageDrawable(arrow);
             icon.setColorFilter(TEXT_PRIMARY);
             return icon;
         }
         TextView chevron = new TextView(this);
-        chevron.setText("←");
+        chevron.setText(getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL ? "→" : "←");
         chevron.setTextSize(22);
         chevron.setTextColor(TEXT_PRIMARY);
         chevron.setGravity(Gravity.CENTER);
@@ -496,7 +502,7 @@ public final class MorpheSettingsActivity extends Activity {
             iconView.setImageDrawable(icon);
             iconView.setColorFilter(ACCENT);
             LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(16), dp(16));
-            iconParams.rightMargin = dp(8);
+            iconParams.setMarginEnd(dp(8));
             row.addView(iconView, iconParams);
         }
 
@@ -546,7 +552,7 @@ public final class MorpheSettingsActivity extends Activity {
         TextView title = menuText(MorpheStrings.get(MorpheStrings.STARTUP_TAB_TITLE), 16, TEXT_PRIMARY, false);
         labels.addView(title);
         TextView description = menuText(MorpheStrings.get(MorpheStrings.STARTUP_TAB_DESCRIPTION), 12, TEXT_SECONDARY, false);
-        description.setPadding(0, dp(4), dp(12), 0);
+        description.setPaddingRelative(0, dp(4), dp(12), 0);
         labels.addView(description);
         row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView value = menuText(startupTabLabel(MorpheSettingsStore.startupTab()), 14, ACCENT, false);
@@ -629,7 +635,7 @@ public final class MorpheSettingsActivity extends Activity {
         labels.addView(title);
         TextView description = menuText(MorpheStrings.get(MorpheStrings.MENU_FILTER_HINT), 12,
                 TEXT_SECONDARY, false);
-        description.setPadding(0, dp(4), dp(12), 0);
+        description.setPaddingRelative(0, dp(4), dp(12), 0);
         labels.addView(description);
         row.addView(labels, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -812,7 +818,7 @@ public final class MorpheSettingsActivity extends Activity {
             iconView.setImageDrawable(icon);
             iconView.setColorFilter(TEXT_PRIMARY);
             LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(20), dp(20));
-            iconParams.rightMargin = dp(12);
+            iconParams.setMarginEnd(dp(12));
             row.addView(iconView, iconParams);
         }
 
@@ -833,7 +839,7 @@ public final class MorpheSettingsActivity extends Activity {
             descriptionView.setTextSize(12);
             descriptionView.setTypeface(fontRegular != null ? fontRegular : Typeface.DEFAULT);
             descriptionView.setLineSpacing(dp(2), 1f);
-            descriptionView.setPadding(0, dp(4), dp(12), 0);
+            descriptionView.setPaddingRelative(0, dp(4), dp(12), 0);
             labels.addView(descriptionView);
         }
 
@@ -915,7 +921,7 @@ public final class MorpheSettingsActivity extends Activity {
         });
         LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        importParams.leftMargin = dp(10);
+        importParams.setMarginStart(dp(10));
         buttons.addView(importButton, importParams);
 
         parent.addView(buttons);
@@ -975,12 +981,12 @@ public final class MorpheSettingsActivity extends Activity {
             } finally {
                 output.close();
             }
-            MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "settings exported to " + uri);
+            MorpheLog.ok(MorpheLog.SETTINGS_ENTRY, "settings exported");
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_EXPORTED),
                     Toast.LENGTH_LONG).show();
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "export failed", t);
-            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_EXPORT_FAILED) + t,
+            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_EXPORT_FAILED),
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -994,7 +1000,7 @@ public final class MorpheSettingsActivity extends Activity {
             int applied = MorpheSettingsBackup.apply(json);
             Toast.makeText(this,
                     MorpheStrings.get(MorpheStrings.TOAST_IMPORTED)
-                            .replace("%d", String.valueOf(applied)),
+                            .replace("%d", MorpheStrings.number(applied)),
                     Toast.LENGTH_LONG).show();
             // Gli interruttori a schermo sono stati costruiti coi valori di prima: senza
             // ricostruire la schermata mostrerebbero il contrario di ciò che è appena stato
@@ -1002,7 +1008,7 @@ public final class MorpheSettingsActivity extends Activity {
             recreate();
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.SETTINGS_ENTRY, "import failed", t);
-            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_IMPORT_FAILED) + t,
+            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_IMPORT_FAILED),
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -1051,7 +1057,7 @@ public final class MorpheSettingsActivity extends Activity {
         });
         LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        copyParams.leftMargin = dp(10);
+        copyParams.setMarginStart(dp(10));
         buttons.addView(copy, copyParams);
 
         parent.addView(buttons);
@@ -1072,7 +1078,7 @@ public final class MorpheSettingsActivity extends Activity {
             Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_COPIED),
                     Toast.LENGTH_LONG).show();
         } catch (Throwable t) {
-            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_COPY_FAILED) + t,
+            Toast.makeText(this, MorpheStrings.get(MorpheStrings.TOAST_COPY_FAILED),
                     Toast.LENGTH_LONG).show();
         }
     }
