@@ -26,7 +26,10 @@ Android's share chooser is the fallback when neither supported app is available.
 ### Pinterest prerelease testing
 
 The 14.43.0 candidate has passed startup and single-image download on Android.
-A carousel download can still save the first image after another slide is selected.
+The carousel regression test passed on Android by downloading the first image,
+the second image, and the first image again.
+
+See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validation and Android regression tests.
 
 ## 🩹 Patches list
 

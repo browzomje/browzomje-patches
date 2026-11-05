@@ -36,19 +36,25 @@ public final class NativeImageDownload {
         }
         if (Boolean.TRUE.equals(AdDetector.fieldValueBySerializedName(pin, "is_video"))) return false;
 
-        // Pinterest passes the displayed image here, including the selected carousel page.
-        // Only use the Pin's primary image when the caller did not specify an image.
+        Object image = PinImageMenu.bestImage(pin);
+        String primary = (String) AdDetector.fieldValueBySerializedName(image, "url");
         String url = request[1];
         int width = 0;
         int height = 0;
-        if (url == null || url.isEmpty()) {
-            Object image = PinImageMenu.bestImage(pin);
-            if (image == null) return false;
-            url = (String) AdDetector.fieldValueBySerializedName(image, "url");
-            Object imageWidth = AdDetector.fieldValueBySerializedName(image, "width");
-            Object imageHeight = AdDetector.fieldValueBySerializedName(image, "height");
-            if (imageWidth instanceof Number) width = ((Number) imageWidth).intValue();
-            if (imageHeight instanceof Number) height = ((Number) imageHeight).intValue();
+        // Some overflow paths omit the page URL or pass the cover image. Preserve a
+        // distinct explicit URL, for example from visual search on a different slide.
+        if (url == null || url.isEmpty() || sameImage(url, primary)) {
+            String selected = VisibleCarousel.selectedImage((Context) context, request[0]);
+            if (selected != null) {
+                url = selected;
+                MorpheLog.d(MorpheLog.BOARD, "download uses the visible carousel page");
+            } else if (url == null || url.isEmpty()) {
+                url = primary;
+                Object imageWidth = AdDetector.fieldValueBySerializedName(image, "width");
+                Object imageHeight = AdDetector.fieldValueBySerializedName(image, "height");
+                if (imageWidth instanceof Number) width = ((Number) imageWidth).intValue();
+                if (imageHeight instanceof Number) height = ((Number) imageHeight).intValue();
+            }
         }
         if (url == null || !url.startsWith("https://i.pinimg.com/")) return false;
         PinImageDownloader.download((Context) context, request[0], url, width, height, () -> {
@@ -64,4 +70,13 @@ public final class NativeImageDownload {
         MorpheLog.i(MorpheLog.BOARD, "native image request handled");
         return true;
     }
+
+    private static boolean sameImage(String first, String second) {
+        if (second == null || !first.startsWith("https://i.pinimg.com/")
+                || !second.startsWith("https://i.pinimg.com/")) return false;
+        String firstPath = android.net.Uri.parse(first).getLastPathSegment();
+        String secondPath = android.net.Uri.parse(second).getLastPathSegment();
+        return firstPath != null && firstPath.equals(secondPath);
+    }
+
 }
