@@ -30,8 +30,10 @@ jobs:
 
       - name: Pinterest JVM regressions
         run: |
+          python3 -m venv "$RUNNER_TEMP/pinterest-tests"
+          "$RUNNER_TEMP/pinterest-tests/bin/python" -m pip install Pillow
           for test in tests/pinterest/test_*.py; do
-            python3 "$test"
+            "$RUNNER_TEMP/pinterest-tests/bin/python" "$test"
           done
 
       - name: Cache Gradle
