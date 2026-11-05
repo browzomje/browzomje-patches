@@ -23,7 +23,19 @@ their destination. Hidden Search falls back to Home.
 External video downloads open YTDLnis directly when installed, then Seal.
 Android's share chooser is the fallback when neither supported app is available.
 
-### Pinterest prerelease testing
+**Muted words** hides Pins whose title or description contains a listed word or
+phrase. Add one entry per line in Morphe settings. An empty list leaves the feed
+unchanged. The list stays on the device and is excluded from settings exports.
+
+**Image download history** shows queued and recent completed or failed image
+downloads started by Morphe. Select a saved image to copy or share the file, or a failed
+image to retry. The history starts when this version is installed.
+
+**Repair Firebase registration** is an optional patch for re-signed Pinterest
+14.39.0 and 14.43.0. It restores the certificate fingerprint used by Firebase
+Installations. End-to-end push delivery is still under investigation.
+
+### Pinterest device testing
 
 The 14.43.0 candidate has passed startup and single-image download on Android.
 The carousel regression test passed on Android by downloading the first image,

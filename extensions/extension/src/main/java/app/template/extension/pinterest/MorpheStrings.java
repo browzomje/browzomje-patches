@@ -24,6 +24,8 @@ final class MorpheStrings {
     static final String SHOPPING_PINS_DESCRIPTION = "shopping_pins_description";
     static final String HIDE_AI_PINS_TITLE = "hide_ai_pins_title";
     static final String HIDE_AI_PINS_DESCRIPTION = "hide_ai_pins_description";
+    static final String MUTED_PIN_WORDS_TITLE = "muted_pin_words_title";
+    static final String MUTED_PIN_WORDS_HINT = "muted_pin_words_hint";
     static final String HIDE_VIDEO_PINS_TITLE = "hide_video_pins_title";
     static final String HIDE_VIDEO_PINS_DESCRIPTION = "hide_video_pins_description";
     static final String ADS_TITLE = "ads_title";

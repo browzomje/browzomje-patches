@@ -10,12 +10,13 @@ public final class VideoFeedFilter {
     public static List<?> filter(List<?> items) {
         boolean hideVideos = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS);
         boolean hideAi = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS);
-        if (items == null || (!hideVideos && !hideAi)) return items;
+        MutedPinWords words = MutedPinWords.forInput(MorpheSettingsStore.mutedPinWords());
+        if (items == null || (!hideVideos && !hideAi && words.isEmpty())) return items;
         ArrayList<Object> copy = null;
         int removed = 0;
         for (int i = 0; i < items.size(); i++) {
             Object item = items.get(i);
-            if ((hideVideos && AdDetector.isVideoPin(item)) || (hideAi && AdDetector.isAiLabeledPin(item))) {
+            if ((hideVideos && AdDetector.isVideoPin(item)) || (hideAi && AdDetector.isAiLabeledPin(item)) || words.matches(item)) {
                 if (copy == null) {
                     copy = new ArrayList<>(items.size());
                     copy.addAll(items.subList(0, i));

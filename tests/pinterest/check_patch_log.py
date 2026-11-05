@@ -56,6 +56,7 @@ HOOKS = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("log", type=Path)
+    parser.add_argument("--firebase-registration", action="store_true", help="expect the optional Firebase repair")
     args = parser.parse_args()
     log = args.log.read_text()
     targets = re.findall(r"Filtering patches for com\.pinterest v(\S+)\.\.\.", log)
@@ -64,10 +65,13 @@ def main():
 
     applied = Counter(re.findall(r"^INFO: Applied: (.+?)\s*$", log, re.MULTILINE))
     expected = Counter(PATCHES)
+    if args.firebase_registration:
+        expected["Repair Firebase registration"] = 1
     errors = [f"missing patch: {name}" for name in expected - applied]
     errors.extend(f"unexpected or repeated patch: {name}" for name in applied - expected)
     hooks = [line for line in log.splitlines() if "[morphe]" in line and ": hooked to " in line]
-    for marker, count in HOOKS.items():
+    expected_hooks = {**HOOKS, "restore the Firebase Installations certificate header": int(args.firebase_registration)}
+    for marker, count in expected_hooks.items():
         actual = sum(marker in line for line in hooks)
         if actual != count:
             errors.append(f"{marker}: expected {count}, found {actual}")
@@ -78,7 +82,7 @@ def main():
         errors.append("CLI did not report one saved APK")
     if errors:
         parser.exit(1, "FAIL " + "\nFAIL ".join(errors) + "\n")
-    print(f"PASS {targets[0]}: {len(PATCHES)} patches and {sum(HOOKS.values()) + expected_meta} critical hooks")
+    print(f"PASS {targets[0]}: {sum(expected.values())} patches and {sum(expected_hooks.values()) + expected_meta} critical hooks")
 
 
 if __name__ == "__main__":

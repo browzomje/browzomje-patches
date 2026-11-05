@@ -303,6 +303,7 @@ public final class PinterestUtils {
     /** @return true se almeno una delle opzioni di filtro del feed è accesa. */
     private static boolean isFilteringEnabled() {
         return MorpheSettingsStore.isAdsDisabled()
+                || !MutedPinWords.forInput(MorpheSettingsStore.mutedPinWords()).isEmpty()
                 || MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS)
                 || MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS)
                 || MorpheSettingsStore.isShoppingPinsHidden()
@@ -497,6 +498,7 @@ public final class PinterestUtils {
         boolean removeAds = MorpheSettingsStore.isAdsDisabled();
         boolean removeVideos = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_VIDEO_PINS);
         boolean removeAi = MorpheSettingsStore.effective(MorpheSettingsStore.KEY_HIDE_AI_PINS);
+        MutedPinWords words = MutedPinWords.forInput(MorpheSettingsStore.mutedPinWords());
         boolean removeShopping = MorpheSettingsStore.isShoppingPinsHidden();
         boolean removeSearchModules = MorpheSettingsStore.isSearchBoardModulesHidden();
         try {
@@ -506,7 +508,7 @@ public final class PinterestUtils {
                 int contentMatches = 0;
                 for (Object item : items) {
                     boolean content = (removeVideos && AdDetector.isVideoPin(item))
-                            || (removeAi && AdDetector.isAiLabeledPin(item));
+                            || (removeAi && AdDetector.isAiLabeledPin(item)) || words.matches(item);
                     if (content) contentMatches++;
                     if (content || isAd(item, removeAds) || isShoppingPin(item, removeShopping)
                             || isSearchModule(item, removeSearchModules)) {
@@ -542,7 +544,8 @@ public final class PinterestUtils {
                     boolean module = !ad && isSearchModule(item, removeSearchModules);
                     boolean video = !ad && !module && removeVideos && AdDetector.isVideoPin(item);
                     boolean ai = !ad && !module && !video && removeAi && AdDetector.isAiLabeledPin(item);
-                    if (!ad && !module && !video && !ai && !isShoppingPin(item, removeShopping)) {
+                    boolean shoppingPin = !ad && !module && !video && !ai && isShoppingPin(item, removeShopping);
+                    if (!ad && !module && !video && !ai && !shoppingPin && !words.matches(item)) {
                         continue;
                     }
                     try {
@@ -560,7 +563,7 @@ public final class PinterestUtils {
                         videos++;
                     } else if (ai) {
                         aiPins++;
-                    } else {
+                    } else if (shoppingPin) {
                         shopping++;
                     }
                 }

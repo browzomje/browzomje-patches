@@ -87,7 +87,7 @@ private val ANALYTICS_CONSENT_FLAGS = setOf(
 @Suppress("unused")
 val trackingManifestPatch = resourcePatch(
     name = PATCH_NAME,
-    description = "Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. Push notifications keep working.",
+    description = "Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. This patch leaves Firebase Messaging enabled.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)

@@ -19,7 +19,8 @@ static void d(String a,String b){} static void i(String a,String b){} static voi
 static void w(String a,String b,Throwable t){}static void e(String a,String b,Throwable t){}
 static void setStatus(String a,String b){}}''',
 'MorpheSettingsStore.java': '''package app.browzomje.extension.pinterest;
-class MorpheSettingsStore {static String KEY_HIDE_VIDEO_PINS="video",KEY_HIDE_AI_PINS="ai";static boolean video,ai,ads,shopping;
+class MorpheSettingsStore {static String KEY_HIDE_VIDEO_PINS="video",KEY_HIDE_AI_PINS="ai";static boolean video,ai,ads,shopping;static String words="";
+static String mutedPinWords(){return words;}
 static boolean effective(String k){return k.equals(KEY_HIDE_VIDEO_PINS)?video:ai;} static boolean isAdsDisabled(){return ads;}
 static boolean isShoppingPinsHidden(){return shopping;}static boolean isSearchBoardModulesHidden(){return false;}}''',
 'SearchModuleDetector.java': '''package app.browzomje.extension.pinterest;
@@ -92,6 +93,17 @@ public static void main(String[] args){
  check(VideoFeedFilter.filter(aiItems).equals(List.of(unknown,image)),"AI grid and search honor disclosed labels only");
  List<Object> aiFeed=new ArrayList<>(aiItems);FilterHarness.filter(aiFeed);
  check(aiFeed.equals(List.of(unknown,image)),"AI feed path agrees with grid filter");
+ MorpheSettingsStore.words="café\\niced tea";
+ Object accent=Map.of("images",Map.of(),"title","A CAFE\\u0301 recipe");
+ Object phrase=Map.of("grid_title","Iced tea.");
+ Object substring=Map.of("grid_title","Caféine and spiced tea");
+ Object noTitle=Map.of("images",Map.of());
+ List<Object> words=List.of(accent,phrase,substring,noTitle);
+ check(VideoFeedFilter.filter(words).equals(List.of(substring,noTitle)),"muted words normalize accents and match whole phrases");
+ List<Object> mutableWords=new ArrayList<>(words);FilterHarness.filter(mutableWords);
+ check(mutableWords.equals(List.of(substring,noTitle)),"muted words apply to existing feed lists");
+ MorpheSettingsStore.words="";
+ check(VideoFeedFilter.filter(words)==words,"empty muted words retain original list");
  System.out.println("PASS video and AI classification, OFF/ON, mixed/second/all-video/immutable pages, ad composition");
 }}
 '''
@@ -100,5 +112,5 @@ with tempfile.TemporaryDirectory(prefix='pinterest-video-test-') as tmp:
     paths=[]
     for name, body in files.items():
         p=Path(tmp)/name;p.write_text(body);paths.append(str(p))
-    subprocess.run(['javac','-d',tmp,*paths,str(src/'AdDetector.java'),str(src/'VideoFeedFilter.java')],check=True)
+    subprocess.run(['javac','-d',tmp,*paths,str(src/'AdDetector.java'),str(src/'VideoFeedFilter.java'),str(src/'MutedPinWords.java')],check=True)
     subprocess.run(['java','-cp',tmp,'app.browzomje.extension.pinterest.VideoTest'],check=True)

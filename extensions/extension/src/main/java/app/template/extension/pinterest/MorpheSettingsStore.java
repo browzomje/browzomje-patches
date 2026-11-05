@@ -103,6 +103,19 @@ public final class MorpheSettingsStore {
         if (sp != null) sp.edit().putString(KEY_MENU_FILTER, value).apply();
     }
 
+    // Keep the user-entered text local, outside the settings backup.
+    private static final String KEY_MUTED_PIN_WORDS = "muted_pin_words";
+
+    static String mutedPinWords() {
+        SharedPreferences sp = prefs();
+        return sp == null ? "" : sp.getString(KEY_MUTED_PIN_WORDS, "");
+    }
+
+    static void setMutedPinWords(String value) {
+        SharedPreferences sp = prefs();
+        if (sp != null) sp.edit().putString(KEY_MUTED_PIN_WORDS, value).apply();
+    }
+
     private MorpheSettingsStore() {}
 
     /**

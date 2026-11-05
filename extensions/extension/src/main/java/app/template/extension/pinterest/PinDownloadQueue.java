@@ -45,7 +45,12 @@ final class PinDownloadQueue {
         if(!images.isEmpty()) schedule(context);
     }
     static void resume(Context context) {
-        if(!prefs(context).getAll().isEmpty()) schedule(context);
+        for (String key : prefs(context).getAll().keySet()) {
+            if (key.startsWith("task_")) {
+                schedule(context);
+                return;
+            }
+        }
     }
     private static void schedule(Context context) {
         schedule(context, false);
@@ -115,20 +120,23 @@ final class PinDownloadQueue {
                     catch(Exception ignored) {}
                     retry=true;
                 } else {
-                    prefs(context).edit().remove(entry.getKey()).commit();CALLBACKS.remove(entry.getKey());
+                    finish(context, entry.getKey(), task, false);
+                    CALLBACKS.remove(entry.getKey());
                     toast(context,PinterestUtils.getString("download_failed"));
                 }
                 MorpheLog.w(MorpheLog.BOARD,"image queue resolution failed (attempt "+failures+")",error);
             }
         }
         // New entries may have been added while a snapshot was being drained.
-        for(Object raw:prefs(context).getAll().values()) try {
-            if(new JSONObject((String)raw).optLong("manager",0)==0) retry=true;
+        for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) try {
+            if (entry.getKey().startsWith("task_")
+                    && new JSONObject((String)entry.getValue()).optLong("manager",0)==0) retry=true;
         } catch(Exception ignored) {}
         return retry;
     }
     static void completed(Context context,long id) {
         for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) try {
+            if (!entry.getKey().startsWith("task_")) continue;
             JSONObject task=new JSONObject((String)entry.getValue());
             if(task.optLong("manager",0)==id) { check(context,entry.getKey(),task);break; }
         } catch(Exception failure) { MorpheLog.w(MorpheLog.BOARD,"download completion reconciliation failed",failure); }
@@ -141,7 +149,7 @@ final class PinDownloadQueue {
         long id=task.getLong("manager");
         int status;
         try(Cursor cursor=manager.query(new DownloadManager.Query().setFilterById(id))) {
-            if(cursor==null || !cursor.moveToFirst()) { prefs(context).edit().remove(key).commit();CALLBACKS.remove(key);return; }
+            if(cursor==null || !cursor.moveToFirst()) { finish(context, key, task, false);CALLBACKS.remove(key);return; }
             status=cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
         }
         if(status!=DownloadManager.STATUS_FAILED && status!=DownloadManager.STATUS_SUCCESSFUL) return;
@@ -160,7 +168,7 @@ final class PinDownloadQueue {
             }
         } catch(Exception invalid) { valid=false; }
         if(valid) {
-            prefs(context).edit().remove(key).commit();
+            finish(context, key, task, true);
             MorpheLog.i(MorpheLog.BOARD,"system image saved "+selected.getInt("width")+"x"+selected.getInt("height")+" "+selected.getString("ext"));
             Runnable callback=CALLBACKS.remove(key);
             if(callback!=null) new android.os.Handler(android.os.Looper.getMainLooper()).post(callback);
@@ -174,13 +182,85 @@ final class PinDownloadQueue {
             toast(context,MorpheStrings.get(MorpheStrings.IMAGE_DOWNLOAD_FALLBACK));
             schedule(context);
         } else {
-            prefs(context).edit().remove(key).commit();CALLBACKS.remove(key);
+            finish(context, key, task, false);
+            CALLBACKS.remove(key);
             toast(context,PinterestUtils.getString("download_failed"));
         }
     }
+    static final class HistoryEntry {
+        final String key;
+        final JSONObject task;
+        HistoryEntry(String key, JSONObject task) {
+            this.key = key;
+            this.task = task;
+        }
+        boolean pending() { return key.startsWith("task_"); }
+        boolean saved() { return task.optBoolean("saved"); }
+        long managerId() { return task.optLong("manager"); }
+        long sortTime() { return pending() ? Long.MAX_VALUE : task.optLong("finished"); }
+        String title() { return task.optString("filename", task.optString("id")); }
+    }
+
+    static java.util.List<HistoryEntry> history(Context context) {
+        return history(context, true);
+    }
+
+    private static java.util.List<HistoryEntry> history(Context context, boolean includePending) {
+        java.util.ArrayList<HistoryEntry> entries = new java.util.ArrayList<>();
+        for (Map.Entry<String, ?> entry : prefs(context).getAll().entrySet()) {
+            String key = entry.getKey();
+            if (!key.startsWith("history_") && !(includePending && key.startsWith("task_"))) continue;
+            try {
+                entries.add(new HistoryEntry(key, new JSONObject((String) entry.getValue())));
+            } catch (Exception ignored) {
+                // Ignore malformed records from previous runs.
+            }
+        }
+        java.util.Collections.sort(entries, (first, second) ->
+                Long.compare(second.sortTime(), first.sortTime()));
+        return entries;
+    }
+
+    static synchronized void retry(Context context, HistoryEntry entry) throws Exception {
+        SharedPreferences store = prefs(context);
+        String raw = store.getString(entry.key, null);
+        if (entry.pending() || entry.saved() || raw == null) return;
+        JSONObject task = new JSONObject(raw);
+        task.remove("finished");
+        task.remove("saved");
+        task.remove("selected");
+        task.remove("filename");
+        task.put("attempt", 0).put("failures", 0).put("manager", 0);
+        String key = "task_" + entry.key.substring("history_".length());
+        if (!store.edit().remove(entry.key).putString(key, task.toString()).commit()) {
+            throw new java.io.IOException("cannot persist download retry");
+        }
+        schedule(context, "Pins".equals(task.getString("folder")));
+    }
+
+    private static synchronized void finish(Context context, String key, JSONObject task, boolean saved) {
+        SharedPreferences.Editor edit = prefs(context).edit().remove(key);
+        if (task != null) {
+            try {
+                int retained = 0;
+                for (HistoryEntry entry : history(context, false)) {
+                    if (++retained >= 100) edit.remove(entry.key);
+                }
+                task.put("finished", System.currentTimeMillis()).put("saved", saved);
+                task.remove("selected");
+                if (saved) task.remove("source");
+                edit.putString("history_" + key.substring("task_".length()), task.toString());
+            } catch (org.json.JSONException invalid) {
+                MorpheLog.w(MorpheLog.BOARD, "could not record download status", invalid);
+            }
+        }
+        edit.commit();
+    }
+
     private static boolean reserved(Context context,String folder,String filename) {
-        for(Object raw:prefs(context).getAll().values()) try {
-            JSONObject task=new JSONObject((String)raw);
+        for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) try {
+            if (!entry.getKey().startsWith("task_")) continue;
+            JSONObject task=new JSONObject((String)entry.getValue());
             if(folder.equals(task.optString("folder")) && filename.equals(task.optString("filename"))) return true;
         } catch(Exception ignored) {}
         return false;

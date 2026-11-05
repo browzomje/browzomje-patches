@@ -7,7 +7,7 @@ source=root/'extensions/extension/src/main/java/app/template/extension/pinterest
 store=(source/'MorpheSettingsStore.java').read_text()
 keys=set(re.findall(r'(?:public )?static final String (KEY_\w+) =',store))
 array=store.split('public static final String[] KEYS = {',1)[1].split('};',1)[0]
-covered=set(re.findall(r'KEY_\w+',array))|{'KEY_STARTUP_TAB','KEY_MENU_FILTER','KEY_HIDE_PROFILE_BUTTON'}
+covered=set(re.findall(r'KEY_\w+',array))|{'KEY_STARTUP_TAB','KEY_MENU_FILTER','KEY_HIDE_PROFILE_BUTTON','KEY_MUTED_PIN_WORDS'}
 assert keys==covered,(keys-covered,covered-keys)
 tree=ast.parse((Path(__file__).with_name('test_settings_dependencies.py')).read_text())
 stubs=ast.literal_eval(next(n.value for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='STUBS' for t in n.targets)))
@@ -22,7 +22,9 @@ public class BackupTest {
  static void check(boolean ok){if(!ok)throw new AssertionError();}
  public static void main(String[]args)throws Exception {
  android.content.SharedPreferences prefs=new android.content.SharedPreferences();java.lang.reflect.Field f=MorpheSettingsStore.class.getDeclaredField("cachedPrefs");f.setAccessible(true);f.set(null,prefs);
+ MorpheSettingsStore.setMutedPinWords("private preference");
  MorpheSettingsStore.setStartupTab("PROFILE");String exported=MorpheSettingsBackup.export(new android.content.Context());
+ check(!exported.contains("private preference"));
  check("PROFILE".equals(new org.json.JSONObject(exported).getJSONObject("settings").getString("startup_tab")));
  MorpheSettingsStore.setStartupTab("HOME");MorpheSettingsBackup.apply(exported);check("PROFILE".equals(MorpheSettingsStore.startupTab()));
  MorpheSettingsBackup.apply("{\\"settings\\":{\\"hide_video_pins\\":false}}");check("PROFILE".equals(MorpheSettingsStore.startupTab()));
