@@ -97,9 +97,9 @@ def verify_installed_apk(apk):
         raise RuntimeError("installed Pinterest does not match the candidate APK")
 
 
-def download_image(args, expected=None):
+def download_image(args, expected=None, menu_point=None):
     before = files_for(args.pin_id)
-    menu = wait_for(lambda: bounds_for(args.menu), 30)
+    menu = menu_point or wait_for(lambda: bounds_for(args.menu), 30)
     if menu is None:
         raise RuntimeError("Pin menu did not appear")
     tap(menu)
@@ -144,6 +144,16 @@ def run(args):
         swipe((x2, y2, x1, y1))
         download_image(args, first)
         print("PASS carousel first, second, first")
+        if args.visual_search:
+            swipe(args.swipe)
+            lens = wait_for(lambda: bounds_for(args.visual_search), 20)
+            if lens is None:
+                raise RuntimeError("carousel visual search control did not appear")
+            tap(lens)
+            if wait_for(lambda: bounds_for(args.visual_screen), 20) is None:
+                raise RuntimeError("visual search screen did not appear")
+            download_image(args, second, args.visual_menu_tap)
+            print("PASS visual search downloads the selected second image")
     else:
         if args.swipe:
             if wait_for(lambda: bounds_for(args.menu), 30) is None:
@@ -160,6 +170,11 @@ def main():
     parser.add_argument("--download", required=True, help="exact resource ID, text or accessibility label")
     parser.add_argument("--swipe", nargs=4, type=int, metavar=("X1", "Y1", "X2", "Y2"))
     parser.add_argument("--carousel", action="store_true", help="check first, second, then first page")
+    parser.add_argument("--visual-search", help="selector for the carousel visual search control")
+    parser.add_argument("--visual-screen", default="com.pinterest:id/visual_search_compose_root",
+                        help="selector confirming the visual search screen has opened")
+    parser.add_argument("--visual-menu-tap", nargs=2, type=int, metavar=("X", "Y"),
+                        help="visual search menu coordinates when the control has no accessibility selector")
     parser.add_argument("--sha256", help="expected image hash for the current download quality setting")
     parser.add_argument("--timeout", type=int, default=60, help="seconds allowed after tapping Download")
     args = parser.parse_args()
@@ -169,6 +184,9 @@ def main():
         parser.error("expected SHA-256 must use 64 lowercase hexadecimal characters")
     if args.carousel and not args.swipe:
         parser.error("--carousel requires the forward --swipe coordinates")
+    if (args.visual_search or args.visual_menu_tap) and not (
+            args.carousel and args.visual_search and args.visual_menu_tap):
+        parser.error("visual search requires --carousel, --visual-search and --visual-menu-tap")
     if args.swipe and not args.carousel and not args.sha256:
         parser.error("a carousel swipe requires the selected page's expected SHA-256")
     if args.timeout <= 0:

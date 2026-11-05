@@ -2,12 +2,16 @@
 set -euo pipefail
 
 firebase=()
-if [[ "${1:-}" == --firebase-registration ]]; then
-    firebase=(--firebase-registration)
+microg=()
+while [[ "${1:-}" == --firebase-registration || "${1:-}" == --microg ]]; do
+    case "$1" in
+        --firebase-registration) firebase=(--firebase-registration) ;;
+        --microg) microg=(--microg) ;;
+    esac
     shift
-fi
+done
 if [[ $# != 6 ]]; then
-    echo 'Usage: bash tests/pinterest/verify_apk.sh [--firebase-registration] VERSION ORIGINAL.apk PATCHED.apk PATCH.log MORPHE_CLI.jar APKSIGNER' >&2
+    echo 'Usage: bash tests/pinterest/verify_apk.sh [--firebase-registration] [--microg] VERSION ORIGINAL.apk PATCHED.apk PATCH.log MORPHE_CLI.jar APKSIGNER' >&2
     exit 2
 fi
 
@@ -28,7 +32,7 @@ for file in "$original" "$patched" "$log" "$cli"; do
     [[ -f "$file" ]] || { printf 'Required input missing: %s\n' "$file" >&2; exit 2; }
 done
 
-python3 "$checks/check_patch_log.py" --version "$version" "${firebase[@]}" "$log"
+python3 "$checks/check_patch_log.py" --version "$version" "${firebase[@]}" "${microg[@]}" "$log"
 "$apksigner" verify "$patched"
 printf 'PASS APK signature\n'
 
@@ -37,6 +41,10 @@ for check in CheckHomeRefreshDex CheckSaveTooltipDex CheckStartupTabDex CheckVid
 done
 if [[ ${#firebase[@]} != 0 ]]; then
     java -cp "$cli" "$checks/CheckFirebaseRegistrationDex.java" "$original" "$patched" "$version"
+fi
+
+if [[ ${#microg[@]} != 0 ]]; then
+    java -cp "$cli" "$checks/CheckMicroGRouteDex.java" "$original" "$patched"
 fi
 
 printf 'PASS Pinterest %s static checks. Android behavior requires a separate device run.\n' "$version"

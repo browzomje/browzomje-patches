@@ -58,6 +58,7 @@ def main():
     parser.add_argument("log", type=Path)
     parser.add_argument("--firebase-registration", action="store_true", help="expect the optional Firebase repair")
     parser.add_argument("--version", choices=("14.39.0", "14.43.0"), help="require this Pinterest version in the log")
+    parser.add_argument("--microg", action="store_true", help="expect the optional microG routes")
     args = parser.parse_args()
     log = args.log.read_text()
     targets = re.findall(r"Filtering patches for com\.pinterest v(\S+)\.\.\.", log)
@@ -71,10 +72,13 @@ def main():
     expected = Counter(PATCHES)
     if args.firebase_registration:
         expected["Repair Firebase registration"] = 1
+    if args.microg:
+        expected["GmsCore support for Pinterest"] = 1
     errors = [f"missing patch: {name}" for name in expected - applied]
     errors.extend(f"unexpected or repeated patch: {name}" for name in applied - expected)
     hooks = [line for line in log.splitlines() if "[morphe]" in line and ": hooked to " in line]
     expected_hooks = {**HOOKS, "restore the Firebase Installations certificate header": int(args.firebase_registration)}
+    expected_hooks["route credential provider and messaging to microG-RE"] = int(args.microg)
     for marker, count in expected_hooks.items():
         actual = sum(marker in line for line in hooks)
         if actual != count:

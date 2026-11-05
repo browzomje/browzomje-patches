@@ -5,13 +5,12 @@ import android.content.Intent;
 import android.net.Uri;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,33 +90,15 @@ public final class UrlSanitizer {
 
     // endregion
 
-    // region Espressioni regolari: dove cercare i link dentro un testo libero
+    private static final Set<String> AUTH_PARAMS = new HashSet<>(Arrays.asList(
+            "signature", "sig", "token", "access_token", "auth", "authorization", "code",
+            "id_token", "refresh_token", "state", "oauth_signature", "x-amz-signature", "x-goog-signature"));
 
-    /** {@code https://pin.it/<slug>}. */
-    private static final Pattern PIN_IT_PATTERN =
-            Pattern.compile("https?://pin\\.it/[A-Za-z0-9_-]+", Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Accorciatore lato server: {@code https://<qualcosa>pinterest.<tld>/url_shortener/<slug>/redirect/}.
-     * Porta un'impronta per-condivisione nello slug, esattamente come {@code pin.it}.
-     */
-    private static final Pattern URL_SHORTENER_PATTERN = Pattern.compile(
-            "https?://[a-z0-9.-]*pinterest\\.[a-z.]{2,10}/url_shortener/[A-Za-z0-9_-]+/redirect/?",
-            Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Qualunque URL http(s), non solo di Pinterest. Serve a {@link #stripToUrls(String)}: il testo
-     * di condivisione può contenere il link al sito d'origine del pin, che va tenuto.
-     */
-    private static final Pattern ANY_URL_PATTERN =
-            Pattern.compile("https?://[^\\s]+", Pattern.CASE_INSENSITIVE);
-
-    /** Qualunque URL pinterest.* (qualsiasi TLD, sottodominio, percorso). */
-    private static final Pattern PINTEREST_URL_PATTERN =
-            Pattern.compile("https?://[a-z0-9.-]*pinterest\\.[a-z.]{2,10}/[^\\s]*",
-                    Pattern.CASE_INSENSITIVE);
-
-    // endregion
+    private static final Pattern ANY_URL_PATTERN = Pattern.compile("https?://[^\\s]+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PINTEREST_WEB_HOST = Pattern.compile(
+            "(?:[a-z0-9-]+\\.)*pinterest\\.(?:com|co\\.uk|com\\.au|ca|de|es|fr|it|jp)");
+    private static final Pattern PIN_IT_PATH = Pattern.compile("/[A-Za-z0-9_-]+/?");
+    private static final Pattern SHORTENER_PATH = Pattern.compile("/url_shortener/[A-Za-z0-9_-]+/redirect/?");
 
     // region Risolutore HTTP
 
@@ -143,24 +124,7 @@ public final class UrlSanitizer {
 
     private static final int CACHE_MAX_ENTRIES = 256;
 
-    /**
-     * L'accorciatore {@code /url_shortener/<slug>/redirect/} risponde {@code 200 OK} e fa il
-     * redirect vero via JavaScript quando lo si interroga su {@code www.pinterest.com}: con una
-     * HEAD non si arriva da nessuna parte. Sullo stesso percorso ma sull'host {@code api.} il
-     * server risponde invece con un {@code 302} il cui header {@code Location} è già l'URL del pin.
-     * Prima di partire riscriviamo quindi l'host.
-     */
-    private static final Pattern URL_SHORTENER_REWRITE_TARGET = Pattern.compile(
-            "^(https?://)([a-z0-9.-]*)(pinterest\\.[a-z.]{2,10}/url_shortener/[A-Za-z0-9_-]+/redirect/?)$",
-            Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Prefisso {@code /pin/<id>} nel percorso risolto. Pinterest ci accoda spesso {@code /sent/} e
-     * una query ({@code ?invite_code=…&sender=…&sfo=1}) che sono impronte per-condivisione: si
-     * butta via tutto quello che viene dopo l'id.
-     */
-    private static final Pattern PIN_PATH_PATTERN =
-            Pattern.compile("^(/pin/[0-9]+)/?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PIN_PATH_PATTERN = Pattern.compile("(/pin/[0-9]+)(?:/sent)?/?");
 
     private static final ExecutorService RESOLVER = Executors.newSingleThreadExecutor(runnable -> {
         Thread t = new Thread(runnable, "morphe-url-resolver");
@@ -168,200 +132,145 @@ public final class UrlSanitizer {
         return t;
     });
 
-    /**
-     * Segue la catena di redirect dello short link con richieste {@code HEAD} successive, finché non
-     * arriva una risposta non-3xx o finché non si esauriscono i {@link #MAX_REDIRECT_HOPS} salti.
-     *
-     * @return il link canonico {@code https://pinterest.com/pin/<id>/} se ci si è arrivati, oppure
-     *     lo short link originale in ogni altro caso (rete assente, timeout, destinazione che non è
-     *     un pin, …).
-     */
-    private static String resolveShortUrl(final String shortUrl) {
-        String cached = RESOLVED_CACHE.get(shortUrl);
-        if (cached != null) {
-            return cached;
-        }
-
-        // Scorciatoia senza rete: se l'utente ha appena aperto il menu "…" di un pin, il suo id è
-        // già in memoria e il link canonico si scrive direttamente. È il caso normale — si copia il
-        // link subito dopo aver aperto il menu — e fa la differenza fra istantaneo e un secondo e
-        // mezzo di attesa. Fuori da quella finestra {@link CurrentPin} restituisce null e si passa
-        // alla risoluzione via rete, che è lenta ma non tira a indovinare.
-        String local = CurrentPin.canonicalUrl();
-        if (local != null) {
-            MorpheLog.d(MorpheLog.SHARE_LINK, "short link risolto in locale, senza rete");
-            return local;
-        }
-
-        String resolved = shortUrl;
+    private static URI parse(String url) {
         try {
-            Future<String> future = RESOLVER.submit(new Callable<String>() {
-                @Override
-                public String call() {
-                    String current = shortUrl;
-                    Matcher rewrite = URL_SHORTENER_REWRITE_TARGET.matcher(current);
-                    if (rewrite.matches()) {
-                        current = rewrite.group(1) + "api." + rewrite.group(3);
-                    }
-
-                    for (int hop = 0; hop < MAX_REDIRECT_HOPS; hop++) {
-                        HttpURLConnection conn = null;
-                        try {
-                            conn = (HttpURLConnection) new URL(current).openConnection();
-                            conn.setInstanceFollowRedirects(false);
-                            conn.setConnectTimeout(RESOLVE_TIMEOUT_MS);
-                            conn.setReadTimeout(RESOLVE_TIMEOUT_MS);
-                            conn.setRequestMethod("HEAD");
-                            // Uno user agent da browser normale: con quello di un'app Android
-                            // Pinterest risponde con un deep link che aprirebbe l'app sul telefono
-                            // di chi riceve, invece della pagina web.
-                            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                            conn.setRequestProperty("Accept", "*/*");
-
-                            int status = conn.getResponseCode();
-                            if (status >= 300 && status < 400) {
-                                String location = conn.getHeaderField("Location");
-                                if (location == null || location.isEmpty()) {
-                                    break;
-                                }
-                                current = location;
-                                continue;
-                            }
-                            break;
-                        } catch (Throwable ignored) {
-                            break;
-                        } finally {
-                            if (conn != null) {
-                                try {
-                                    conn.disconnect();
-                                } catch (Throwable ignored) {
-                                    // niente da fare
-                                }
-                            }
-                        }
-                    }
-
-                    try {
-                        Uri terminal = Uri.parse(current);
-                        String host = terminal.getHost();
-                        if (host == null || !host.toLowerCase(java.util.Locale.ROOT).contains("pinterest")) {
-                            return shortUrl;
-                        }
-                        String path = terminal.getEncodedPath();
-                        if (path == null) {
-                            return shortUrl;
-                        }
-                        Matcher pinMatch = PIN_PATH_PATTERN.matcher(path);
-                        if (!pinMatch.find()) {
-                            return shortUrl;
-                        }
-                        return "https://pinterest.com" + pinMatch.group(1) + "/";
-                    } catch (Throwable ignored) {
-                        return shortUrl;
-                    }
-                }
-            });
-
-            resolved = future.get(TOTAL_BUDGET_MS, TimeUnit.MILLISECONDS);
-        } catch (Throwable t) {
-            // Timeout o errore: si tiene il link originale e non si mette nulla in cache, così il
-            // prossimo tentativo (magari con la rete tornata) ci riprova.
-            MorpheLog.d(MorpheLog.COPY_LINK, "short link non risolto, resta l'originale: " + t);
-            return shortUrl;
+            return URI.create(url);
+        } catch (IllegalArgumentException ignored) {
+            return null;
         }
-
-        if (RESOLVED_CACHE.size() < CACHE_MAX_ENTRIES) {
-            RESOLVED_CACHE.put(shortUrl, resolved);
-        }
-        return resolved;
     }
 
-    // endregion
+    private static String trustedHost(URI uri) {
+        if (uri == null || !"https".equalsIgnoreCase(uri.getScheme()) || uri.getRawUserInfo() != null
+                || uri.getPort() != -1 || uri.getHost() == null) return "";
+        String host = uri.getHost().toLowerCase(Locale.ROOT);
+        return "pin.it".equals(host) || "pinterest.com".equals(host)
+                || "www.pinterest.com".equals(host) || "api.pinterest.com".equals(host) ? host : "";
+    }
 
-    // region Sanificatori
+    static URI trustedRedirect(URI from, String location) {
+        if (location == null || location.isEmpty()) return null;
+        URI target = parse(location);
+        if (target == null) return null;
+        URI resolved = from.resolve(target);
+        return trustedHost(resolved).isEmpty() || hasAuthQuery(resolved) ? null : resolved;
+    }
 
-    /** @return {@code url} senza i parametri di tracciamento. Gli altri parametri restano. */
+    private static boolean isShortLink(URI uri, String host) {
+        String path = uri.getRawPath();
+        return path != null && ("pin.it".equals(host)
+                ? PIN_IT_PATH.matcher(path).matches() : SHORTENER_PATH.matcher(path).matches());
+    }
+
+    private static String queryName(String pair) {
+        int equals = pair.indexOf('=');
+        return Uri.decode(equals < 0 ? pair : pair.substring(0, equals)).toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean hasAuthQuery(URI uri) {
+        String query = uri.getRawQuery();
+        if (query == null) return false;
+        for (String pair : query.split("&", -1)) {
+            if (AUTH_PARAMS.contains(queryName(pair))) return true;
+        }
+        return false;
+    }
+
+    private static String canonicalPin(URI uri, String host) {
+        if (host.isEmpty() || "pin.it".equals(host) || uri.getRawPath() == null) return null;
+        Matcher pin = PIN_PATH_PATTERN.matcher(uri.getRawPath());
+        return pin.matches() ? "https://pinterest.com" + pin.group(1) + "/" : null;
+    }
+
+    private static String resolveShortUrl(URI source) {
+        String original = source.toString();
+        String cached = RESOLVED_CACHE.get(original);
+        if (cached != null) return cached;
+
+        Future<String> future = RESOLVER.submit(() -> {
+            URI current = "pin.it".equals(trustedHost(source)) ? source
+                    : URI.create("https://api.pinterest.com" + source.getRawPath()
+                            + (source.getRawQuery() == null ? "" : "?" + source.getRawQuery()));
+            for (int hop = 0; hop < MAX_REDIRECT_HOPS && !Thread.currentThread().isInterrupted(); hop++) {
+                String host = trustedHost(current);
+                String canonical = canonicalPin(current, host);
+                if (canonical != null) return canonical;
+                if (host.isEmpty() || !isShortLink(current, host)) return original;
+                HttpURLConnection connection = (HttpURLConnection) current.toURL().openConnection();
+                try {
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setConnectTimeout(RESOLVE_TIMEOUT_MS);
+                    connection.setReadTimeout(RESOLVE_TIMEOUT_MS);
+                    connection.setRequestMethod("HEAD");
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+                    int status = connection.getResponseCode();
+                    if (status < 300 || status >= 400) return original;
+                    current = trustedRedirect(current, connection.getHeaderField("Location"));
+                    if (current == null) return original;
+                } finally {
+                    connection.disconnect();
+                }
+            }
+            String canonical = canonicalPin(current, trustedHost(current));
+            return canonical == null ? original : canonical;
+        });
+        try {
+            String resolved = future.get(TOTAL_BUDGET_MS, TimeUnit.MILLISECONDS);
+            if (!resolved.equals(original) && RESOLVED_CACHE.size() < CACHE_MAX_ENTRIES) {
+                RESOLVED_CACHE.put(original, resolved);
+            }
+            return resolved;
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException ignored) {
+            // Preserve the source link if the lookup fails.
+        } finally {
+            future.cancel(true);
+        }
+        return original;
+    }
+
+    /** Strip known tracking keys while retaining the exact encoding and order of other pairs. */
     public static String stripTrackingParams(String url) {
-        if (url == null || url.isEmpty() || url.indexOf('?') < 0) {
-            return url;
+        if (url == null || url.indexOf('?') < 0) return url;
+        URI uri = parse(url);
+        if (uri == null || uri.getRawQuery() == null || hasAuthQuery(uri)) return url;
+        java.util.ArrayList<String> retained = new java.util.ArrayList<>();
+        String[] pairs = uri.getRawQuery().split("&", -1);
+        for (String pair : pairs) {
+            if (!TRACKING_PARAMS.contains(queryName(pair))) retained.add(pair);
         }
-        try {
-            Uri uri = Uri.parse(url);
-            String query = uri.getQuery();
-            if (query == null || query.isEmpty()) {
-                return url;
-            }
-
-            Uri.Builder builder = uri.buildUpon().clearQuery();
-            boolean modified = false;
-
-            for (String key : uri.getQueryParameterNames()) {
-                if (TRACKING_PARAMS.contains(key.toLowerCase(java.util.Locale.ROOT))) {
-                    modified = true;
-                    continue;
-                }
-                List<String> values = uri.getQueryParameters(key);
-                if (values.isEmpty()) {
-                    builder.appendQueryParameter(key, "");
-                } else {
-                    for (String value : values) {
-                        builder.appendQueryParameter(key, value);
-                    }
-                }
-            }
-
-            return modified ? builder.build().toString() : url;
-        } catch (Throwable ignored) {
-            return url;
-        }
+        if (retained.size() == pairs.length) return url;
+        String fragment = uri.getRawFragment();
+        return url.substring(0, url.indexOf('?')) + (retained.isEmpty() ? "" : "?" + android.text.TextUtils.join("&", retained))
+                + (fragment == null ? "" : "#" + fragment);
     }
 
-    /**
-     * Ripulisce un testo libero, che può contenere o meno dei link.
-     *
-     * <ol>
-     *   <li>ogni short link trovato viene risolto nella sua forma canonica;
-     *   <li>a ogni URL pinterest.* rimasto vengono tolti i parametri di tracciamento.
-     * </ol>
-     */
     public static String sanitizeText(String text) {
-        if (text == null || text.isEmpty()) {
-            return text;
-        }
-
-        String result = text;
-
-        // Gli short link si deduplicano prima di risolverli: se lo stesso slug compare due volte
-        // nel testo, la richiesta di rete resta una sola.
-        Set<String> shortUrls = new HashSet<>();
-        Matcher pinItMatcher = PIN_IT_PATTERN.matcher(text);
-        while (pinItMatcher.find()) {
-            shortUrls.add(pinItMatcher.group());
-        }
-        Matcher shortenerMatcher = URL_SHORTENER_PATTERN.matcher(text);
-        while (shortenerMatcher.find()) {
-            shortUrls.add(shortenerMatcher.group());
-        }
-        for (String shortUrl : shortUrls) {
-            String resolved = resolveShortUrl(shortUrl);
-            if (!resolved.equals(shortUrl)) {
-                result = result.replace(shortUrl, resolved);
+        if (text == null || text.isEmpty()) return text;
+        Matcher urls = ANY_URL_PATTERN.matcher(text);
+        StringBuffer result = new StringBuffer();
+        Map<String, String> shortLinks = new java.util.HashMap<>();
+        while (urls.find()) {
+            String original = urls.group();
+            URI uri = parse(original);
+            String host = trustedHost(uri);
+            String replacement = original;
+            if (uri != null && !hasAuthQuery(uri)) {
+                if (!host.isEmpty() && isShortLink(uri, host)) {
+                    replacement = shortLinks.get(original);
+                    if (replacement == null) {
+                        replacement = resolveShortUrl(uri);
+                        shortLinks.put(original, replacement);
+                    }
+                } else if (uri.getHost() != null && uri.getRawUserInfo() == null && uri.getPort() == -1
+                        && PINTEREST_WEB_HOST.matcher(uri.getHost().toLowerCase(Locale.ROOT)).matches()) {
+                    replacement = stripTrackingParams(original);
+                }
             }
+            urls.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
-
-        Set<String> pinterestUrls = new HashSet<>();
-        Matcher pinterestMatcher = PINTEREST_URL_PATTERN.matcher(result);
-        while (pinterestMatcher.find()) {
-            pinterestUrls.add(pinterestMatcher.group());
-        }
-        for (String pinterestUrl : pinterestUrls) {
-            String cleaned = stripTrackingParams(pinterestUrl);
-            if (!cleaned.equals(pinterestUrl)) {
-                result = result.replace(pinterestUrl, cleaned);
-            }
-        }
-
-        return result;
+        return urls.appendTail(result).toString();
     }
 
     /**
@@ -446,13 +355,14 @@ public final class UrlSanitizer {
      * non-URL degli appunti (testo di ricerca, bozza di commento, …) non pagano nulla.
      */
     public static ClipData sanitizeClipData(ClipData data) {
-        if (data == null || data.getItemCount() == 0 || !MorpheSettingsStore.isLinkSanitizerEnabled()) {
+        if (data == null || data.getItemCount() != 1 || !MorpheSettingsStore.isLinkSanitizerEnabled()) {
             return data;
         }
         try {
             ClipData.Item item = data.getItemAt(0);
             CharSequence text = item == null ? null : item.getText();
-            if (text == null || text.length() == 0) {
+            if (text == null || text.length() == 0 || item.getUri() != null
+                    || item.getIntent() != null || item.getHtmlText() != null) {
                 return data;
             }
             String original = text.toString();
@@ -461,11 +371,8 @@ public final class UrlSanitizer {
                 return data;
             }
 
-            String label = data.getDescription() != null && data.getDescription().getLabel() != null
-                    ? data.getDescription().getLabel().toString()
-                    : "Text";
             MorpheLog.hookFired(MorpheLog.SHARE_LINK, "link copiato ripulito");
-            return ClipData.newPlainText(label, cleaned);
+            return new ClipData(data.getDescription(), new ClipData.Item(cleaned));
         } catch (Throwable t) {
             MorpheLog.w(MorpheLog.SHARE_LINK, "sanificazione degli appunti non riuscita", t);
             return data;

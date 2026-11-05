@@ -96,7 +96,7 @@ public final class ExternalBrowser {
                     + "leaving the in-app browser alone");
             return;
         }
-        MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "in-app browser was asked to open " + url);
+        MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "in-app browser navigation requested");
 
         if (isPinterestOwnUrl(url)) {
             // Il browser interno serve anche a pagine di Pinterest — accesso, centro assistenza,
@@ -107,8 +107,7 @@ public final class ExternalBrowser {
         }
 
         if (isDuplicate(url)) {
-            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "already redirected " + url
-                    + " a moment ago: not doing it again (did the in-app browser fail to close?)");
+            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "duplicate browser navigation skipped");
             return;
         }
 
@@ -118,7 +117,7 @@ public final class ExternalBrowser {
             // ereditare i parametri di tracciamento che Pinterest attacca all'indirizzo.
             String stripped = UrlSanitizer.stripTrackingParams(url);
             if (stripped != null && !stripped.equals(url)) {
-                MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "tracking parameters stripped: " + stripped);
+                MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "tracking parameters stripped");
                 finalUrl = stripped;
             }
         }
@@ -146,7 +145,7 @@ public final class ExternalBrowser {
      *         deve uscire immediatamente con return-void); false se CCT deve procedere normalmente.
      */
     public static boolean redirectCct(Object cctManager, String url) {
-        MorpheLog.hookFired(MorpheLog.EXTERNAL_BROWSER, "ChromeCustomTabs requested, url = " + url);
+        MorpheLog.hookFired(MorpheLog.EXTERNAL_BROWSER, "Chrome Custom Tab requested");
 
         if (!MorpheSettingsStore.isExternalBrowserEnabled()) {
             MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "switch is off: keeping Pinterest's own browser/CCT");
@@ -159,7 +158,7 @@ public final class ExternalBrowser {
         }
 
         if (!isHttpUrl(url)) {
-            MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "non-web link (" + url + "): keeping default handling");
+            MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "non-web link: keeping default handling");
             return false;
         }
 
@@ -182,8 +181,7 @@ public final class ExternalBrowser {
         PinterestUtils.rememberActivityFrom(context);
 
         if (isDuplicate(url)) {
-            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "already redirected CCT " + url
-                    + " a moment ago: skipping to avoid duplicate launches");
+            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "duplicate Custom Tab navigation skipped");
             return true;
         }
 
@@ -191,7 +189,7 @@ public final class ExternalBrowser {
         if (MorpheSettingsStore.isLinkSanitizerEnabled()) {
             String stripped = UrlSanitizer.stripTrackingParams(url);
             if (stripped != null && !stripped.equals(url)) {
-                MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "tracking parameters stripped: " + stripped);
+                MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "tracking parameters stripped");
                 finalUrl = stripped;
             }
         }
@@ -255,8 +253,7 @@ public final class ExternalBrowser {
             // pacchetti è filtrata e resolveActivity restituirebbe null anche con un browser
             // installato, a meno di dichiarare una <queries> nel manifest. Provare e raccogliere
             // l'eccezione dà la risposta giusta senza toccare il manifest.
-            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "no app could open " + url
-                    + ": keeping Pinterest's own browser", t);
+            MorpheLog.w(MorpheLog.EXTERNAL_BROWSER, "external browser launch failed: " + t.getClass().getSimpleName());
             return false;
         }
     }
@@ -283,7 +280,7 @@ public final class ExternalBrowser {
             return host.equals("pinterest.com") || host.endsWith(".pinterest.com")
                     || host.contains(".pinterest.");
         } catch (Throwable t) {
-            MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "could not parse " + url + ": " + t);
+            MorpheLog.d(MorpheLog.EXTERNAL_BROWSER, "could not parse the navigation URL");
             return false;
         }
     }

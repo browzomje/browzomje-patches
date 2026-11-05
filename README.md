@@ -35,6 +35,20 @@ image to retry. On Android 10 and later, the five most recent saved images can s
 14.39.0 and 14.43.0. Push delivery was confirmed on a patched 14.43.0 build.
 The patch can be excluded from the patch selection in Morphe Manager.
 
+### Signing in to a re-signed Pinterest build
+
+Google sign-in with stock Play services can fail after re-signing because the
+Android OAuth client is tied to a signing certificate. Use your Pinterest email
+and password, or set a Pinterest password through the account recovery flow.
+Firebase registration repair covers push registration. Google sign-in on a
+re-signed build has separate requirements.
+
+**GmsCore support for Pinterest** is an opt-in patch for Pinterest 14.43.0 with
+a configured microG-RE installation (`app.revanced.android.gms`). It routes
+Google sign-in and Firebase Messaging to that provider. Add the Google account
+to microG-RE before testing. With stock Play services, leave this patch
+unselected to retain the stock messaging route.
+
 ### Pinterest device testing
 
 The 14.43.0 candidate has passed startup and single-image download on Android.

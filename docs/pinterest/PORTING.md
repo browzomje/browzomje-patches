@@ -27,6 +27,9 @@
    `tests/pinterest/android_image_smoke.py`. Use `--carousel` with a forward
    `--swipe` to verify first, second and first again in one run. Supply the
    second image's `--sha256` when the fixture and quality setting are pinned.
+   To cover visual search, also pass `--visual-search SELECTOR` and
+   `--visual-menu-tap X Y`. The test waits for the visual search screen and
+   compares its download with the second image from the Pin menu.
 5. Keep a short coverage record by feature and entry point. Record a missing
    experiment, account or fixture as skipped. A passed bytecode check and a
    passed device test are separate results.
@@ -35,3 +38,26 @@ For new hooks, start with negative fixtures for ambiguous matches and changed
 register layouts. Keep device automation opt-in and bind every result to the
 installed APK. Use synthetic or deliberately public inputs and leave raw
 device output in the private workspace.
+
+## Link and sign-in regressions
+
+- Use synthetic links in JVM tests. Check that known tracking pairs are removed
+  without re-encoding the remaining query, and that signed URLs, relative
+  redirects and rejected redirect destinations follow their expected paths.
+- Before publishing, copy and share a public Pin, verify the destination against
+  the Pin opened in the app and repeat with the cleaner switched off. Exercise
+  rich clipboard content and external browser navigation separately from Pin
+  sharing.
+- Treat Google sign-in and Firebase push registration as separate flows.
+  Compare stock and re-signed builds with the same account type and notification
+  settings on an isolated test profile. A microG build needs its own run that
+  verifies provider availability, account selection, Pinterest session creation
+  and delivery of a real notification in the background.
+
+For an opt-in microG candidate, run `verify_apk.sh` with
+`--firebase-registration --microg`. The verifier also checks the identity
+and messaging routes in DEX. Check the installed provider's
+package, the manifest's messaging permissions and receiver action, and the
+presence of the original signer fingerprint metadata. The default build
+should retain the stock provider routes. A successful patch run only
+establishes that the expected routes were rewritten.
