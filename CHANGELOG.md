@@ -1,3 +1,9 @@
+## [1.16.1](https://github.com/browzomje/browzomje-patches/compare/v1.16.0...v1.16.1) (2026-11-05)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** add Google sign-in through microG ([8720ee5](https://github.com/browzomje/browzomje-patches/commit/8720ee587014bf55dcc6d1c6b7c13a8e739b52dd))
+
 ## [1.16.0](https://github.com/browzomje/browzomje-patches/compare/v1.15.0...v1.16.0) (2026-11-05)
 
 ### 🐛 Bug Fixes

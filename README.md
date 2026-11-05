@@ -60,9 +60,9 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.16.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.16.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;40 patches total
+> **[v1.16.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.16.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;41 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;35 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;36 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -85,6 +85,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 | [Download pin from long press](#download-pin-from-long-press) | Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it. |  |
 | [Download video](#download-video) | Adds a "Download video" option to the pin menu, saving the clip to the Downloads folder. |  |
 | [Filter pin menu actions](#filter-pin-menu-actions) | Hides selected native pin menu actions by their localized labels, one per line. |  |
+| [GmsCore support for Pinterest](#gmscore-support-for-pinterest) | Routes Google sign-in and push registration to microG-RE. Select only with a configured microG-RE installation. |  |
 | [Hide Create nav button](#hide-create-nav-button) | Hides the "+" (create Pin) navigation button, when enabled in Morphe settings. |  |
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hides the notifications navigation button, when enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hides the search navigation button, when enabled in Morphe settings. |  |
