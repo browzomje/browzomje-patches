@@ -45,11 +45,11 @@ final class PinDownloadQueue {
         if(!images.isEmpty()) schedule(context);
     }
     static void resume(Context context) {
-        for (String key : prefs(context).getAll().keySet()) {
-            if (key.startsWith("task_")) {
-                schedule(context);
-                return;
-            }
+        if (!hasPendingDownloads(context)) return;
+        try {
+            schedule(context, true);
+        } catch (RuntimeException failure) {
+            MorpheLog.w(MorpheLog.BOARD, "could not resume image downloads", failure);
         }
     }
     private static void schedule(Context context) {
@@ -127,13 +127,17 @@ final class PinDownloadQueue {
                 MorpheLog.w(MorpheLog.BOARD,"image queue resolution failed (attempt "+failures+")",error);
             }
         }
-        // New entries may have been added while a snapshot was being drained.
-        for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) try {
-            if (entry.getKey().startsWith("task_")
-                    && new JSONObject((String)entry.getValue()).optLong("manager",0)==0) retry=true;
-        } catch(Exception ignored) {}
-        return retry;
+        return retry || hasPendingDownloads(context);
     }
+
+    // Reconcile with DownloadManager again if its completion broadcast is delayed or missed.
+    private static boolean hasPendingDownloads(Context context) {
+        for (Map.Entry<String, ?> entry : prefs(context).getAll().entrySet()) {
+            if (entry.getKey().startsWith("task_") && entry.getValue() instanceof String) return true;
+        }
+        return false;
+    }
+
     static void completed(Context context,long id) {
         for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) try {
             if (!entry.getKey().startsWith("task_")) continue;
@@ -219,6 +223,15 @@ final class PinDownloadQueue {
         java.util.Collections.sort(entries, (first, second) ->
                 Long.compare(second.sortTime(), first.sortTime()));
         return entries;
+    }
+
+    static synchronized boolean clearHistory(Context context) {
+        SharedPreferences store = prefs(context);
+        SharedPreferences.Editor edit = store.edit();
+        for (String key : store.getAll().keySet()) {
+            if (key.startsWith("history_")) edit.remove(key);
+        }
+        return edit.commit();
     }
 
     static synchronized void retry(Context context, HistoryEntry entry) throws Exception {

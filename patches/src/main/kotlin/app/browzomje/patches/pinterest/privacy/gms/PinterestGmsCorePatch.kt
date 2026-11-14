@@ -4,6 +4,7 @@ import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.forceReturn
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
@@ -108,14 +109,14 @@ private data class FieldRoute(val owner: String, val name: String, val value: St
 @Suppress("unused")
 val pinterestGmsCorePatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Routes Google sign-in and push registration to microG-RE. Select only with a configured microG-RE installation.",
-    default = false,
+    description = "Enables Google sign-in and push registration through microG-RE when available. Email sign-in remains available.",
+    default = true,
 ) {
     compatibleWith(Compatibility(
         name = "Pinterest",
         packageName = "com.pinterest",
         apkFileType = COMPATIBILITY_PINTEREST.apkFileType,
-        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version == "14.43.0" },
+        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.43.0", "14.44.0") },
     ))
     dependsOn(microGManifestPatch)
     extendWith("extensions/extension.mpe")
@@ -124,6 +125,7 @@ val pinterestGmsCorePatch = bytecodePatch(
         val routes = mutableListOf<Route>()
         val fields = mutableListOf<FieldRoute>()
         val availability = mutableListOf<Method>()
+        val googleClicks = mutableListOf<Method>()
         val frameworkProviders = mutableListOf<Method>()
         val rewrittenNames = mutableSetOf<String>()
         classDefForEach { owner ->
@@ -146,6 +148,9 @@ val pinterestGmsCorePatch = bytecodePatch(
                     }
                     val value = ((instruction as ReferenceInstruction).reference as StringReference).string
                     anchors?.add(value)
+                    if (value == "gplus_button_continue_click" &&
+                        owner.type.startsWith("Lcom/pinterest/identity/authentication/fragment/") &&
+                        method.returnType == "V" && method.parameterTypes.isEmpty()) googleClicks += method
                     val target = microGName(value) ?: return@forEachIndexed
                     routes += Route(method, index, target)
                     rewrittenNames += value
@@ -185,13 +190,29 @@ val pinterestGmsCorePatch = bytecodePatch(
             (target.initialValue as MutableStringEncodedValue).value = field.value
         }
 
-        // Use the redirected provider instead of Android 14's stock framework provider.
-        for (method in listOf(availabilityMethod, frameworkMethod)) {
-            val target = mutableClassDefBy(method.definingClass).methods.single {
-                it.name == method.name && it.returnType == method.returnType && it.parameterTypes == method.parameterTypes
-            }
-            target.forceReturn("const/4 v0, 0x0\nreturn v0")
+        val availabilityTarget = mutableClassDefBy(availabilityMethod.definingClass).methods.single {
+            it.name == availabilityMethod.name && it.returnType == "I" && it.parameterTypes == availabilityMethod.parameterTypes
         }
+        availabilityTarget.forceReturn("const/4 v0, 0x0\nreturn v0")
+
+        val click = googleClicks.distinct().single()
+        val googleClick = mutableClassDefBy(click.definingClass).methods.single {
+            it.name == click.name && it.returnType == "V" && it.parameterTypes.isEmpty()
+        }
+        check(googleClick.implementation!!.registerCount >= 2)
+        googleClick.addInstructions(0, """
+            invoke-static {}, Lapp/browzomje/extension/pinterest/MicroGSignIn;->canStart()Z
+            move-result v0
+            if-nez v0, :morphe_google_continue
+            return-void
+            :morphe_google_continue
+            nop
+        """.trimIndent())
+        // Android's framework credential provider would route Google sign-in back to stock services.
+        val frameworkTarget = mutableClassDefBy(frameworkMethod.definingClass).methods.single {
+            it.name == frameworkMethod.name && it.parameterTypes.isEmpty() && it.returnType == "Z"
+        }
+        frameworkTarget.forceReturn("const/4 v0, 0x0\nreturn v0")
         val pickerCallback = mutableClassDefBy(
             "Landroidx/credentials/playservices/HiddenActivity\$handleGetSignInIntent\$1\$1;",
         ).methods.single {

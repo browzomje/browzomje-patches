@@ -43,11 +43,12 @@ and password, or set a Pinterest password through the account recovery flow.
 Firebase registration repair covers push registration. Google sign-in on a
 re-signed build has separate requirements.
 
-**GmsCore support for Pinterest** is an opt-in patch for Pinterest 14.43.0 with
-a configured microG-RE installation (`app.revanced.android.gms`). It routes
-Google sign-in and Firebase Messaging to that provider. Add the Google account
-to microG-RE before testing. With stock Play services, leave this patch
-unselected to retain the stock messaging route.
+**GmsCore support for Pinterest** is enabled by default on 14.43.0 and
+14.44.0. Google sign-in on the main sign-in screen uses microG-RE
+(`app.revanced.android.gms`). If the service is missing, tapping Google explains
+how to set it up. Add a Google account in microG-RE before signing in. Email and password remain
+available without microG-RE. The patch also routes Firebase Messaging to
+microG-RE. Deselect it if you need the stock messaging route.
 
 ### Pinterest device testing
 
@@ -85,7 +86,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 | [Download pin from long press](#download-pin-from-long-press) | Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it. |  |
 | [Download video](#download-video) | Adds a "Download video" option to the pin menu, saving the clip to the Downloads folder. |  |
 | [Filter pin menu actions](#filter-pin-menu-actions) | Hides selected native pin menu actions by their localized labels, one per line. |  |
-| [GmsCore support for Pinterest](#gmscore-support-for-pinterest) | Routes Google sign-in and push registration to microG-RE. Select only with a configured microG-RE installation. |  |
+| [GmsCore support for Pinterest](#gmscore-support-for-pinterest) | Enables Google sign-in and push registration through microG-RE when available. Email sign-in remains available. |  |
 | [Hide Create nav button](#hide-create-nav-button) | Hides the "+" (create Pin) navigation button, when enabled in Morphe settings. |  |
 | [Hide Notifications nav button](#hide-notifications-nav-button) | Hides the notifications navigation button, when enabled in Morphe settings. |  |
 | [Hide Search nav button](#hide-search-nav-button) | Hides the search navigation button, when enabled in Morphe settings. |  |

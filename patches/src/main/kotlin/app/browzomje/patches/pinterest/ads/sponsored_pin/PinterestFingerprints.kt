@@ -106,33 +106,38 @@ object LegacyFeedItemsFingerprint : Fingerprint(
 )
 
 // Filter input before queued operations capture lists and indices. These obfuscated
-// entry points are verified separately on 14.39.0 and 14.43.0.
+// entry points are verified separately on 14.39.0, 14.43.0 and 14.44.0.
 object DynamicGridAppendFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Ljava/util/List;", "Z"),
     custom = { method, owner ->
         (owner.type == "Ltu1/g0;" && method.name == "A") ||
-            (owner.type == "Lsw1/l0;" && method.name == "z")
+            (owner.type == "Lsw1/l0;" && method.name == "z") ||
+            (owner.type == "Ldx1/o0;" && method.name == "y")
     },
 )
 object DynamicGridReplaceFingerprint : Fingerprint(
-    name = "j0", returnType = "V",
+    returnType = "V",
     parameters = listOf("Ljava/util/List;", "Z"),
-    custom = { _, owner -> owner.type == "Ltu1/g0;" || owner.type == "Lsw1/l0;" },
+    custom = { method, owner ->
+        (method.name == "j0" && owner.type in setOf("Ltu1/g0;", "Lsw1/l0;")) ||
+            (owner.type == "Ldx1/o0;" && method.name == "g0")
+    },
 )
 object DynamicGridInsertFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("I", "Ljava/util/List;"),
     custom = { method, owner ->
         (owner.type == "Ltu1/g0;" && method.name == "Y") ||
-            (owner.type == "Lsw1/l0;" && method.name == "X")
+            (owner.type == "Lsw1/l0;" && method.name == "X") ||
+            (owner.type == "Ldx1/o0;" && method.name == "U")
     },
 )
 
 object RawGridAppendFingerprint : Fingerprint(
     name = "b", returnType = "V",
     parameters = listOf("Ljava/util/List;"),
-    custom = { _, owner -> owner.type == "Ltu1/p;" || owner.type == "Lsw1/r;" },
+    custom = { _, owner -> owner.type in setOf("Ltu1/p;", "Lsw1/r;", "Ldx1/s;") },
 )
 
 private object RawGridResponseClassFingerprint : Fingerprint(

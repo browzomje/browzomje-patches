@@ -6,6 +6,7 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.InlineSmaliCompiler
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
+import app.browzomje.patches.shared.inputRegisterCount
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -111,6 +112,16 @@ val morpheSettingsEntryPatch = bytecodePatch(
         PatchLog.info(PATCH_NAME, "row class resolved from dex: $rowClassName")
 
         if (packageMetadata.versionName == "14.44.0") {
+            val rowBinder = mutableClassDefBy(
+                "Lyn1/o;",
+            ).methods.single {
+                it.returnType == "V" && it.parameterTypes.map { type -> type.toString() } ==
+                    listOf("${SETTINGS_ROW_PACKAGE}n1;")
+            }
+            check(rowBinder.inputRegisterCount() == 2)
+            rowBinder.addInstructions(0, "invoke-static/range {p0 .. p0}, " +
+                "Lapp/browzomje/extension/pinterest/AccountMenuIcons;->schedule(Landroid/view/View;)V")
+
             val switchRow = instructions.indexOfFirst { instruction ->
                 val field = (instruction as? ReferenceInstruction)?.reference as? FieldReference
                 instruction.opcode == Opcode.SGET_OBJECT &&

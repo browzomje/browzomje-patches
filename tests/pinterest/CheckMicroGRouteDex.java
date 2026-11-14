@@ -20,7 +20,7 @@ class CheckMicroGRouteDex {
             "com.google.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTER", "com.google.iid.TOKEN_REQUEST");
 
-    private record Result(Map<String, Integer> routes, int frameworkProviders, int disabledProviders, int pickerBridges) {}
+    private record Result(Map<String, Integer> routes, int frameworkProviders, int disabledProviders, int pickerBridges, int clickGuards) {}
 
     private static Result read(String apk) throws Exception {
         var dex = DexFileFactory.loadDexContainer(new File(apk), Opcodes.getDefault());
@@ -28,6 +28,7 @@ class CheckMicroGRouteDex {
         int providers = 0;
         int disabled = 0;
         int pickerBridges = 0;
+        int clickGuards = 0;
         for (String entry : dex.getDexEntryNames()) {
             for (var type : dex.getEntry(entry).getDexFile().getClasses()) {
                 if (type.getType().startsWith("Lapp/browzomje/extension/")) continue;
@@ -49,6 +50,13 @@ class CheckMicroGRouteDex {
                         if (first instanceof NarrowLiteralInstruction literal && literal.getNarrowLiteral() == 0
                                 && iterator.next().getOpcode() == Opcode.RETURN) disabled++;
                     }
+                    var first = instructions.iterator().next();
+                    if (first.getOpcode() == Opcode.INVOKE_STATIC
+                            && first instanceof ReferenceInstruction reference
+                            && reference.getReference().toString().equals(
+                                    "Lapp/browzomje/extension/pinterest/MicroGSignIn;->canStart()Z")) {
+                        clickGuards++;
+                    }
                     for (Instruction instruction : instructions) {
                         if (type.getType().startsWith("Landroidx/credentials/playservices/HiddenActivity$")
                                 && instruction.getOpcode() == Opcode.INVOKE_STATIC_RANGE
@@ -64,7 +72,7 @@ class CheckMicroGRouteDex {
                 }
             }
         }
-        return new Result(counts, providers, disabled, pickerBridges);
+        return new Result(counts, providers, disabled, pickerBridges, clickGuards);
     }
 
     private static void record(Map<String, Integer> counts, String value) {
@@ -88,6 +96,7 @@ class CheckMicroGRouteDex {
                 && after.frameworkProviders() == 1 && after.disabledProviders() == 1,
                 "only the selected build disables Android's framework provider");
         check(before.pickerBridges() == 0 && after.pickerBridges() == 1, "one credential picker launch bridge");
+        check(before.clickGuards() == 0 && after.clickGuards() == 1, "one microG click guard");
         System.out.println("PASS microG DEX routes for Google identity, account type and Firebase Messaging");
     }
 }

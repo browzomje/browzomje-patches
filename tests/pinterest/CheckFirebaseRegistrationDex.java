@@ -54,6 +54,7 @@ class CheckFirebaseRegistrationDex {
         String owner = switch (args[2]) {
             case "14.39.0" -> "Lap/c;";
             case "14.43.0" -> "Ldp/c;";
+            case "14.44.0" -> "Lnp/c;";
             default -> throw new IllegalArgumentException("Unsupported fixture");
         };
         var original = headers(args[0], owner);

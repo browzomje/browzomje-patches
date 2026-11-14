@@ -38,7 +38,7 @@ val keepHomeFeedPatch = bytecodePatch(
         name = "Pinterest",
         packageName = "com.pinterest",
         apkFileType = COMPATIBILITY_PINTEREST.apkFileType,
-        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.39.0", "14.43.0") },
+        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.39.0", "14.43.0", "14.44.0") },
     ))
     extendWith("extensions/extension.mpe")
     execute {
@@ -116,17 +116,27 @@ val keepHomeFeedPatch = bytecodePatch(
         // refreshes through a separate presenter callback, without posting an event.
         val reselect = HomeReselectionFingerprint.method
         val owner = mutableClassDefBy(reselect.definingClass)
+        val presenterPackage = "Lcom/pinterest/feature/home/mainfeed/"
         val refreshCall = reselect.calls().single { (_, ref) ->
-            ref.returnType == "V" && ref.parameterTypes.isEmpty() &&
-                ref.definingClass.startsWith("Lcom/pinterest/feature/home/mainfeed/") &&
-                ref.definingClass != owner.type
+            ref.returnType == "V" && ref.definingClass.startsWith(presenterPackage) &&
+                ref.definingClass != owner.type &&
+                (ref.parameterTypes.isEmpty() || ref.parameterTypes.map { it.toString() } ==
+                    listOf(ref.definingClass, "Ljava/util/HashMap;", "I"))
         }
         val presenterRefresh = refreshCall.second
         val nativeStateCall = reselect.calls().single { (_, ref) ->
             ref.definingClass == owner.type && ref.returnType == "V" && ref.parameterTypes.isEmpty()
         }
-        val presenterRegister = (reselect.implementation!!.instructions[refreshCall.first]
-            as FiveRegisterInstruction).registerC
+        val originalInvoke = reselect.implementation!!.instructions[refreshCall.first] as FiveRegisterInstruction
+        val isStatic = originalInvoke.opcode == Opcode.INVOKE_STATIC
+        check(isStatic || originalInvoke.opcode == Opcode.INVOKE_VIRTUAL)
+        val presenterParameters = if (isStatic) presenterRefresh.parameterTypes.map { it.toString() }
+            else listOf(presenterRefresh.definingClass)
+        check(originalInvoke.registerCount == presenterParameters.size)
+        val callerRegisters = listOf(originalInvoke.registerC, originalInvoke.registerD, originalInvoke.registerE)
+            .take(originalInvoke.registerCount)
+        val bridgeArguments = presenterParameters.indices.joinToString(", ") { "p${it + 1}" }
+        val originalOpcode = if (isStatic) "invoke-static" else "invoke-virtual"
         val fragmentRegister = (reselect.implementation!!.instructions[nativeStateCall.first]
             as FiveRegisterInstruction).registerC
         val recyclerGetter = owner.methods.filter { it.implementation != null }
@@ -139,10 +149,9 @@ val keepHomeFeedPatch = bytecodePatch(
                 owner.type, "morpheHomeReselection",
                 listOf(
                     ImmutableMethodParameter(owner.type, emptySet(), null),
-                    ImmutableMethodParameter(presenterRefresh.definingClass, emptySet(), null),
-                ),
+                ) + presenterParameters.map { ImmutableMethodParameter(it, emptySet(), null) },
                 "V", AccessFlags.PUBLIC.value or AccessFlags.STATIC.value,
-                emptySet(), emptySet(), MutableMethodImplementation(3),
+                emptySet(), emptySet(), MutableMethodImplementation(2 + presenterParameters.size),
             ),
         )
         reselectBridge.addInstructions(
@@ -151,14 +160,14 @@ val keepHomeFeedPatch = bytecodePatch(
                 invoke-static {}, $EXTENSION->shouldKeepFeed()Z
                 move-result v0
                 if-nez v0, :keep
-                invoke-virtual {p1}, $presenterRefresh
+                $originalOpcode {$bridgeArguments}, $presenterRefresh
                 return-void
                 :keep
                 invoke-virtual {p0}, $recyclerGetter
                 move-result-object v0
                 if-eqz v0, :done
-                const/4 v1, 0x0
-                invoke-virtual {v0, v1}, $scrollToPosition
+                const/4 p0, 0x0
+                invoke-virtual {v0, p0}, $scrollToPosition
                 :done
                 return-void
             """.trimIndent(),
@@ -166,8 +175,8 @@ val keepHomeFeedPatch = bytecodePatch(
         owner.methods.add(reselectBridge)
         reselect.replaceInstruction(
             refreshCall.first,
-            "invoke-static {v$fragmentRegister, v$presenterRegister}, " +
-                "${owner.type}->morpheHomeReselection(${owner.type}${presenterRefresh.definingClass})V",
+            "invoke-static {${(listOf(fragmentRegister) + callerRegisters).joinToString(", ") { "v$it" }}}, " +
+                "${owner.type}->morpheHomeReselection(${owner.type}${presenterParameters.joinToString("")})V",
         )
         PatchLog.hooked(PATCH_NAME, reselect, "reselection refresh replaced with scroll-to-position(0); native state retained")
         mutableClassDefBy(EXTENSION).methods.single { it.name == "isAvailable" }.forceReturn(

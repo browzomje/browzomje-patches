@@ -26,7 +26,7 @@ val pinterestAdsPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        if (packageMetadata.versionName == "14.43.0") {
+        if (packageMetadata.versionName in setOf("14.43.0", "14.44.0")) {
             // Resolve the vendor check from the SDK configuration path. Other enums also
             // define META_AUDIENCE_NETWORK, so the field name alone is insufficient.
             val references = ThirdPartyAdConfigFingerprint.originalMethod.implementation!!.instructions
@@ -46,7 +46,7 @@ val pinterestAdsPatch = bytecodePatch(
             )) { "Meta ads consent check has no free local register" }
             PatchLog.hooked(PATCH_NAME, method, "gate Meta Audience Network consent")
         }
-        if (packageMetadata.versionName in setOf("14.39.0", "14.43.0")) for ((fingerprint, parameter) in listOf(
+        if (packageMetadata.versionName in setOf("14.39.0", "14.43.0", "14.44.0")) for ((fingerprint, parameter) in listOf(
             RawGridResponseFingerprint to "p2",
             RawGridAppendFingerprint to "p1",
             DynamicGridAppendFingerprint to "p1",

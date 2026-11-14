@@ -24,7 +24,7 @@ apksigner=$6
 checks=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 case "$version" in
-    14.39.0|14.43.0) ;;
+    14.39.0|14.43.0|14.44.0) ;;
     *) printf 'No complete DEX check inventory for Pinterest %s\n' "$version" >&2; exit 2 ;;
 esac
 

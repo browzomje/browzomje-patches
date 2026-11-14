@@ -74,7 +74,11 @@ class DownloadHistoryTest {
                 "completion keeps the file handle without retaining the URL");
         for (int i = 0; i < 110; i++) finish(context, "task_" + i, task(), true);
         check(history(context).size() == 100, "bounded history");
-        System.out.println("PASS download history, bounded retention, and atomic retry");
+        context.store.values.put("task_pending", task().toString());
+        check(clearHistory(context), "history clear succeeds");
+        check(context.store.values.keySet().equals(Set.of("task_pending")),
+                "clearing history preserves pending work");
+        System.out.println("PASS download history, bounded retention, atomic retry and clear");
     }
 """ + history + "\n}"
 with tempfile.TemporaryDirectory(prefix="pinterest-history-test-") as work:

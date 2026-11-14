@@ -7,10 +7,14 @@ import tempfile
 source = (Path(__file__).resolve().parents[2]
           / "extensions/extension/src/main/java/app/template/extension/pinterest/PinDownloadQueue.java")
 text = source.read_text()
-methods = text[text.index("    private static void schedule("):text.index("    static boolean drain(")]
+methods = text[text.index("    static void resume("):text.index("    static boolean drain(")]
 
-fixture = """
+methods += text[text.index("    private static boolean hasPendingDownloads("):
+                text.index("    static void completed(")]
+
+fixture = r"""
 import java.util.List;
+import java.util.Map;
 
 class ScheduleTest {
     static final int JOB_ID = 123;
@@ -19,7 +23,14 @@ class ScheduleTest {
     }
     static class PinDownloadJob {}
     record ComponentName(Context context, Class<?> service) {}
+    static class MorpheLog {
+        static final String BOARD = "board";
+        static void w(String tag, String message, Exception failure) {}
+    }
+    record Preferences(Map<String, ?> getAll) {}
+    static Preferences prefs(Context context) { return new Preferences(context.records); }
     static class Context {
+        Map<String, ?> records = Map.of();
         static final String JOB_SCHEDULER_SERVICE = "jobscheduler";
         JobScheduler scheduler = new JobScheduler();
         Object getSystemService(String service) { return scheduler; }
@@ -76,6 +87,16 @@ class ScheduleTest {
         schedule(board);
         check(board.scheduler.scheduled.equals(List.of(new JobInfo(JOB_ID, false, true, true))),
             "board work uses a regular job");
+
+        Context recovered = new Context();
+        recovered.records = Map.of("history_saved", "{}", "task_invalid", 1);
+        resume(recovered);
+        check(recovered.scheduler.scheduled.isEmpty(), "history and invalid records do not keep a job alive");
+        recovered.records = Map.of("task_previous", "{\"manager\":123}");
+        check(hasPendingDownloads(recovered), "handed-off downloads still need reconciliation");
+        resume(recovered);
+        check(recovered.scheduler.scheduled.equals(List.of(new JobInfo(JOB_ID, true, true, true))),
+            "opening history can restart work for an existing download");
 
         Build.VERSION.SDK_INT = 30;
         Context older = new Context();

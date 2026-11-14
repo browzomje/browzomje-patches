@@ -17,7 +17,7 @@ val startupTabPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(Compatibility(name = "Pinterest", packageName = "com.pinterest",
-        apkFileType = ApkFileType.APK, targets = listOf(AppTarget(version = "14.39.0"), AppTarget(version = "14.43.0"))))
+        apkFileType = ApkFileType.APK, targets = listOf(AppTarget(version = "14.39.0"), AppTarget(version = "14.43.0"), AppTarget(version = "14.44.0"))))
     extendWith("extensions/extension.mpe")
     execute {
         // Require the native router before exposing the setting. No obfuscated method names.

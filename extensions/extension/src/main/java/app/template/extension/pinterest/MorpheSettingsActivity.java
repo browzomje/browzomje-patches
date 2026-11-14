@@ -641,7 +641,11 @@ public final class MorpheSettingsActivity extends Activity {
     private void showSettingsSheet(android.app.Dialog dialog, LinearLayout card) {
         ScrollView scroll = new ScrollView(this);
         scroll.addView(card);
-        dialog.setContentView(scroll);
+        showSettingsSheet(dialog, scroll, ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void showSettingsSheet(android.app.Dialog dialog, View content, int height) {
+        dialog.setContentView(content);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
@@ -649,25 +653,34 @@ public final class MorpheSettingsActivity extends Activity {
             window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
         dialog.show();
-        if (window != null) window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if (window != null) window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, height);
     }
 
-    private void addSheetAction(LinearLayout card, String label, Runnable action) {
+    private Button addSheetAction(LinearLayout card, String label, Runnable action) {
         Button button = newButton(label);
         button.setOnClickListener(view -> action.run());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.topMargin = dp(8);
         card.addView(button, params);
+        return button;
     }
 
     private void showImageDownloadHistory() {
         android.app.Dialog dialog = new android.app.Dialog(this);
         LinearLayout card = newSettingsSheet(dialog, MorpheStrings.get("image_download_history"));
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(list);
+        card.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
+        PinDownloadQueue.resume(this);
         java.util.List<PinDownloadQueue.HistoryEntry> entries = PinDownloadQueue.history(this);
         java.util.List<PinDownloadQueue.HistoryEntry> previews = new java.util.ArrayList<>();
         java.util.List<ImageView> thumbnails = new java.util.ArrayList<>();
-        if (entries.isEmpty()) addNote(card, MorpheStrings.get("image_download_empty"));
+        boolean hasHistory = false;
+        if (entries.isEmpty()) addNote(list, MorpheStrings.get("image_download_empty"));
         for (PinDownloadQueue.HistoryEntry entry : entries) {
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
@@ -691,19 +704,44 @@ public final class MorpheSettingsActivity extends Activity {
             labels.addView(menuText(status, 13, TEXT_SECONDARY, false));
             row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
             if (!entry.pending()) {
+                hasHistory = true;
                 row.setFocusable(true);
                 row.setBackground(new android.graphics.drawable.RippleDrawable(
                         android.content.res.ColorStateList.valueOf(DIVIDER), null, null));
                 row.addView(menuText("›", 24, TEXT_SECONDARY, false));
                 row.setOnClickListener(view -> showHistoryActions(dialog, entry));
             }
-            card.addView(row);
+            list.addView(row);
         }
-        addSheetAction(card, MorpheStrings.get(MorpheStrings.BUTTON_CANCEL), dialog::dismiss);
-        showSettingsSheet(dialog, card);
+        int clearLabel = getResources().getIdentifier("clear", "string", getPackageName());
+        Button clear = addHistoryAction(card, clearLabel != 0 ? getString(clearLabel) : "Clear", "ic_vr_trash_can_gestalt", () -> {
+            if (PinDownloadQueue.clearHistory(this)) {
+                dialog.dismiss();
+                showImageDownloadHistory();
+            } else {
+                Toast.makeText(this, PinterestUtils.getString("download_failed"), Toast.LENGTH_SHORT).show();
+            }
+        });
+        clear.setEnabled(hasHistory);
+        clear.setAlpha(clear.isEnabled() ? 1f : 0.5f);
+        addHistoryAction(card, MorpheStrings.get(MorpheStrings.BUTTON_CANCEL), "ic_vr_close_gestalt", dialog::dismiss);
+        showSettingsSheet(dialog, card, ViewGroup.LayoutParams.MATCH_PARENT);
         if (android.os.Build.VERSION.SDK_INT >= 29 && !previews.isEmpty()) {
             loadHistoryThumbnails(dialog, previews, thumbnails);
         }
+    }
+
+    private Button addHistoryAction(LinearLayout card, String label, String iconName, Runnable action) {
+        Button button = addSheetAction(card, label, action);
+        Drawable icon = pinterestIcon(iconName);
+        if (icon != null) {
+            icon = icon.mutate();
+            icon.setTint(button.getCurrentTextColor());
+            icon.setBounds(0, 0, dp(20), dp(20));
+            button.setCompoundDrawablesRelative(icon, null, null, null);
+        }
+        button.setCompoundDrawablePadding(dp(8));
+        return button;
     }
 
     @android.annotation.TargetApi(29)

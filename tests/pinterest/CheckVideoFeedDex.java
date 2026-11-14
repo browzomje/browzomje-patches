@@ -21,13 +21,15 @@ class CheckVideoFeedDex {
   check(b.get(1).getOpcode()==Opcode.MOVE_RESULT_OBJECT&&((OneRegisterInstruction)b.get(1)).getRegisterA()==call.getStartRegister(),"filtered list becomes setter input");}
  }
  String version=args.length>2?args[2]:"14.39.0";
- check(List.of("14.39.0","14.43.0").contains(version),"supported test version");
- boolean current=version.equals("14.43.0");
- String dynamic=current?"Lsw1/l0;":"Ltu1/g0;";
- String response=current?"Lsw1/m;":"Ltu1/k;";
- String append=current?"Lsw1/r;":"Ltu1/p;";
- String insertMethod=current?"X":"Y";
- var dynamicMethods=List.of(current?"z":"A","j0",insertMethod);
+ var targets=switch(version) {
+  case "14.39.0" -> List.of("Ltu1/g0;", "Ltu1/k;", "Ltu1/p;", "A", "j0", "Y");
+  case "14.43.0" -> List.of("Lsw1/l0;", "Lsw1/m;", "Lsw1/r;", "z", "j0", "X");
+  case "14.44.0" -> List.of("Ldx1/o0;", "Ldx1/n;", "Ldx1/s;", "y", "g0", "U");
+  default -> throw new IllegalArgumentException("Unsupported test version: "+version);
+ };
+ String dynamic=targets.get(0), response=targets.get(1), append=targets.get(2);
+ String insertMethod=targets.get(5);
+ var dynamicMethods=targets.subList(3,6);
  for(String grid : List.of(dynamic,response,append)) {
   var before=load(args[0],grid);var after=load(args[1],grid);int changed=0;
   for(Method source:before.getMethods()) {
