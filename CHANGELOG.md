@@ -1,3 +1,10 @@
+## [1.17.0](https://github.com/browzomje/browzomje-patches/compare/v1.16.1...v1.17.0) (2026-11-14)
+
+### ✨ New Features
+
+* **Pinterest:** expose the native account switcher ([2c0a751](https://github.com/browzomje/browzomje-patches/commit/2c0a751aac938a7135aba20107aa512953d29946))
+* **Pinterest:** support 14.44.0 and improve account access ([7835b07](https://github.com/browzomje/browzomje-patches/commit/7835b0767d65d232655fac388e7c98085c58ff90))
+
 ## [1.16.1](https://github.com/browzomje/browzomje-patches/compare/v1.16.0...v1.16.1) (2026-11-05)
 
 ### 🐛 Bug Fixes

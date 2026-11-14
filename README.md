@@ -61,15 +61,15 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.16.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.16.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;41 patches total
+> **[v1.17.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.17.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;41 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;36 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.39.0 | 14.43.0 |
-| :---: | :---: |
+| 14.39.0 | 14.43.0 | 14.44.0 |
+| :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
