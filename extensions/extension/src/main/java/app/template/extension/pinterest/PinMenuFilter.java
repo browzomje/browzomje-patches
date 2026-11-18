@@ -37,7 +37,7 @@ final class PinMenuFilter {
         return new HashSet<>(java.util.Arrays.asList(
             "grid_actions_report_pin", "overflow_menu_add_to_collage", "pin_overflow_follow_user",
             "pin_overflow_unfollow_user", "overflow_menu_pin_boost", "overflow_menu_remix_collage",
-            "overflow_menu_see_more", "overflow_menu_see_less", "overflow_menu_see_more_ai", "overflow_menu_see_less_ai"));
+            "overflow_menu_see_more", "overflow_menu_see_more_ai"));
     }
     private static final String PREFIX = "@resource:";
 
