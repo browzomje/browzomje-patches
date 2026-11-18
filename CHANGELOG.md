@@ -1,3 +1,9 @@
+## [1.17.1](https://github.com/browzomje/browzomje-patches/compare/v1.17.0...v1.17.1) (2026-11-18)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** keep See less actions visible by default ([0e37277](https://github.com/browzomje/browzomje-patches/commit/0e37277279f213bc9f0beb7a704ca724de06c62d))
+
 ## [1.17.0](https://github.com/browzomje/browzomje-patches/compare/v1.16.1...v1.17.0) (2026-11-14)
 
 ### ✨ New Features
