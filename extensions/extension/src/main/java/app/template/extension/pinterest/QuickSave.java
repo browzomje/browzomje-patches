@@ -24,7 +24,7 @@ public final class QuickSave {
     private static final Map<View, Object> MODULE_PINS = new WeakHashMap<>();
     private static final Map<String, Membership> MEMBERSHIPS = new LinkedHashMap<>(32, .75f, true);
     private static final Map<String, PendingRead> READS = new HashMap<>();
-    private static final Map<String, Membership> WRITES = new HashMap<>();
+    private static final Map<String, PendingWrite> WRITES = new HashMap<>();
     private static final long CACHE_MS = 60_000;
 
     private static final class Membership {
@@ -66,6 +66,26 @@ public final class QuickSave {
     }
     private static final class PendingRead {
         Tap tap;
+    }
+
+    private static final class PendingWrite {
+        final Membership confirmed;
+        final boolean sent;
+        boolean desired;
+
+        PendingWrite(Membership confirmed, boolean desired) {
+            this.confirmed = confirmed;
+            this.sent = desired;
+            this.desired = desired;
+        }
+
+        Membership visible() {
+            return new Membership(desired, confirmed.boards, confirmed.checked);
+        }
+
+        boolean needsFollowUp() {
+            return desired != sent;
+        }
     }
 
     private QuickSave() {}
@@ -142,8 +162,8 @@ public final class QuickSave {
         View.OnClickListener click = target -> toggle(target, binding);
         if (plainClick) view.setOnClickListener(click);
         else view.getClass().getMethod("c", View.OnClickListener.class).invoke(view, click);
-        Membership visible = WRITES.get(key);
-        if (visible == null) visible = known;
+        PendingWrite pending = WRITES.get(key);
+        Membership visible = pending == null ? known : pending.visible();
         if (visible != null) render(view, binding, visible);
     }
 
@@ -180,7 +200,12 @@ public final class QuickSave {
             Object account = account();
             if (account == null) return;
             String key = key(account, binding.pin);
-            if (WRITES.containsKey(key)) return;
+            PendingWrite pending = WRITES.get(key);
+            if (pending != null) {
+                pending.desired = !pending.desired;
+                renderBound(key, pending.visible());
+                return;
+            }
             Membership known = MEMBERSHIPS.get(key);
             if (isFresh(known) && !READS.containsKey(key)) {
                 change(view, binding, key, known);
@@ -188,7 +213,7 @@ public final class QuickSave {
             }
             refresh(key, binding.pin);
             PendingRead read = READS.get(key);
-            if (read.tap == null) read.tap = new Tap(view, binding);
+            read.tap = read.tap == null ? new Tap(view, binding) : null;
         } catch (ReflectiveOperationException | RuntimeException error) {
             failure(view);
         }
@@ -200,42 +225,50 @@ public final class QuickSave {
             openBoardPicker(view, binding.model);
             return;
         }
-        boolean desired = !known.profile;
-        long started = android.os.SystemClock.elapsedRealtime();
-        Membership pending = new Membership(desired, known.boards, started);
+        write(view, binding.pin, key, known, !known.profile);
+    }
+
+    private static void write(View view, String pin, String key, Membership known, boolean desired)
+            throws ReflectiveOperationException {
+        PendingWrite pending = new PendingWrite(known, desired);
         WRITES.put(key, pending);
-        renderBound(key, pending);
         WeakReference<View> anchor = new WeakReference<>(view);
         try {
-            request("reconcilePinBoards",
-                    new Object[]{binding.pin, null, null, desired, null}, (data) -> {
-                        WRITES.remove(key);
-                        View target = anchor.get();
-                        try {
-                            if (!sameAccount(key, binding.pin)) return;
-                            if (data == null || !"success".equals(call(data, "h"))
-                                    || !Boolean.valueOf(desired).equals(call(data, "f"))) {
-                                renderBound(key, known);
-                                if (target != null) failure(target);
-                                return;
-                            }
-                            remember(key, new Membership(desired, known.boards,
-                                    android.os.SystemClock.elapsedRealtime()));
-                            MorpheLog.d(MorpheLog.BOARD, "profile " + (desired ? "save" : "remove")
-                                    + " confirmed in " + (android.os.SystemClock.elapsedRealtime() - started) + " ms");
-                        } catch (ReflectiveOperationException | RuntimeException error) {
-                            try {
-                                renderBound(key, known);
-                            } catch (ReflectiveOperationException ignored) {
-                                // No active account to render against.
-                            }
-                            if (target != null) failure(target);
-                        }
-                    });
+            renderBound(key, pending.visible());
+            request("reconcilePinBoards", new Object[]{pin, null, null, desired, null},
+                    data -> finishWrite(anchor.get(), pin, key, pending, data));
         } catch (ReflectiveOperationException | RuntimeException error) {
             WRITES.remove(key);
+            MEMBERSHIPS.remove(key);
             renderBound(key, known);
             throw error;
+        }
+    }
+
+    private static void finishWrite(View view, String pin, String key, PendingWrite pending, Object data) {
+        WRITES.remove(key);
+        try {
+            if (!sameAccount(key, pin)) return;
+            boolean succeeded = data != null && "success".equals(call(data, "h"))
+                    && Boolean.valueOf(pending.sent).equals(call(data, "f"));
+            Membership confirmed = pending.confirmed;
+            if (succeeded) {
+                confirmed = new Membership(pending.sent, confirmed.boards, android.os.SystemClock.elapsedRealtime());
+            }
+            if (pending.needsFollowUp()) {
+                // The earlier reply may be ambiguous. Send the latest explicit state even
+                // if it equals the last confirmed value.
+                write(view, pin, key, confirmed, pending.desired);
+            } else if (succeeded) {
+                remember(key, confirmed);
+            } else {
+                MEMBERSHIPS.remove(key);
+                renderBound(key, confirmed);
+                if (view != null) failure(view);
+            }
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            MEMBERSHIPS.remove(key);
+            if (view != null) failure(view);
         }
     }
 
@@ -278,7 +311,7 @@ public final class QuickSave {
                     view.setContentDescription(view.getResources().getText(label));
                 }
             } else {
-                String name = known.profile || known.boards ? "saved" : "save";
+                String name = known.profile ? "remove" : known.boards ? "saved" : "save";
                 int label = resource(view, name, "string");
                 TextView text = PinterestUtils.findTextView(view);
                 if (label != 0 && text != null) {

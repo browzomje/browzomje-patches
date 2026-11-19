@@ -36,8 +36,9 @@ image to retry. On Android 10 and later, the five most recent saved images can s
 The patch can be excluded from the patch selection in Morphe Manager.
 
 **Quick save to profile** is an optional patch for Pinterest 14.44.0. Enable it
-in Morphe Manager when patching the APK. Tap **Save** to add or remove a Pin
-from your profile. Press and hold **Save** on an open Pin to choose a board.
+in Morphe Manager when patching the APK. Tap **Save** to add a Pin to your
+profile or **Remove** to take it off your profile. Press and hold the button
+on an open Pin to choose a board.
 
 ### Signing in to a re-signed Pinterest build
 
