@@ -66,9 +66,9 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.18.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.18.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;43 patches total
+> **[v1.19.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.19.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;44 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;38 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;39 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -108,6 +108,7 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 | [Morphe settings screen (manifest)](#morphe-settings-screen-manifest) | Registers the Morphe settings Activity in the manifest, with an intent-filter for the morphe:// scheme. |  |
 | [Neutralize advertising ID](#neutralize-advertising-id) | Returns an empty Google Advertising ID and forces "limit ad tracking", without crashing the app. |  |
 | [Open links in the default browser](#open-links-in-the-default-browser) | Opens links in the phone's default browser instead of Pinterest's in-app browser, when the matching Morphe setting is enabled. |  |
+| [Quick save to profile](#quick-save-to-profile) | Tap Save to add or remove a Pin from your profile. Press and hold Save on an open Pin to choose a board. |  |
 | [Repair Firebase registration](#repair-firebase-registration) | Uses the original Pinterest certificate fingerprint in Firebase Installations requests to help a re-signed app register for push notifications. |  |
 | [Sanitize copied links](#sanitize-copied-links) | Turns the pin.it link that "Copy link" copies, whose slug identifies who shared it, into the plain pin link. Switchable from Morphe settings. |  |
 | [Sanitize shared links](#sanitize-shared-links) | Strips tracking parameters from the link on the Android share sheet and resolves pin.it short links to the plain pin link. Switchable from Morphe settings. |  |

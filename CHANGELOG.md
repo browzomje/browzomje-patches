@@ -1,3 +1,13 @@
+## [1.19.0](https://github.com/browzomje/browzomje-patches/compare/v1.18.0...v1.19.0) (2026-11-19)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** queue rapid profile save changes ([a13c770](https://github.com/browzomje/browzomje-patches/commit/a13c7706df803ecbb20fedc150a2f6b2bb2814b2))
+
+### ✨ New Features
+
+* **Pinterest:** add optional quick save and removal ([e155909](https://github.com/browzomje/browzomje-patches/commit/e155909848045f7a31141a02ccac7fc908e74642))
+
 ## [1.18.0](https://github.com/browzomje/browzomje-patches/compare/v1.17.1...v1.18.0) (2026-11-19)
 
 ### ✨ New Features
