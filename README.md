@@ -61,9 +61,9 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.17.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.17.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;41 patches total
+> **[v1.18.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.18.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;43 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;36 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;38 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -107,6 +107,8 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 | [Sanitize copied links](#sanitize-copied-links) | Turns the pin.it link that "Copy link" copies, whose slug identifies who shared it, into the plain pin link. Switchable from Morphe settings. |  |
 | [Sanitize shared links](#sanitize-shared-links) | Strips tracking parameters from the link on the Android share sheet and resolves pin.it short links to the plain pin link. Switchable from Morphe settings. |  |
 | [Set pin as wallpaper](#set-pin-as-wallpaper) | Adds a "Set as wallpaper" option to the pin menu, which downloads the image and sets it as the device wallpaper. |  |
+| [Show Create in the bottom bar](#show-create-in-the-bottom-bar) | Moves Pinterest's Create button from the Home header to the bottom navigation. |  |
+| [Show Messages in the bottom bar](#show-messages-in-the-bottom-bar) | Moves Pinterest's Inbox from the Home header to the bottom navigation. |  |
 | [Show pin image information](#show-pin-image-information) | Shows optional image dimensions and format below the image or instead of like/comment actions. |  |
 | [Use the system share sheet](#use-the-system-share-sheet) | Opens the Android system share sheet instead of Pinterest's in-app share sheet, when the matching Morphe setting is enabled. |  |
 

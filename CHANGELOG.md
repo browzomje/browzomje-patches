@@ -1,3 +1,9 @@
+## [1.18.0](https://github.com/browzomje/browzomje-patches/compare/v1.17.1...v1.18.0) (2026-11-19)
+
+### ✨ New Features
+
+* **Pinterest:** add optional bottom-bar Messages and Create ([f8cb5ef](https://github.com/browzomje/browzomje-patches/commit/f8cb5efef813035d2aa6c8fe5651742b9a4b4f91))
+
 ## [1.17.1](https://github.com/browzomje/browzomje-patches/compare/v1.17.0...v1.17.1) (2026-11-18)
 
 ### 🐛 Bug Fixes
