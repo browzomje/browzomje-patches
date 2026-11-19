@@ -61,6 +61,7 @@ def main():
     parser.add_argument("--microg", action="store_true", help="expect the optional microG routes")
     parser.add_argument("--bottom-bar-messages", action="store_true", help="expect the optional Messages tab")
     parser.add_argument("--bottom-bar-create", action="store_true", help="expect the optional Create button")
+    parser.add_argument("--quick-save", action="store_true", help="expect the optional quick save patch")
     args = parser.parse_args()
     log = args.log.read_text()
     targets = re.findall(r"Filtering patches for com\.pinterest v(\S+)\.\.\.", log)
@@ -80,11 +81,16 @@ def main():
         expected["Show Messages in the bottom bar"] = 1
     if args.bottom_bar_create:
         expected["Show Create in the bottom bar"] = 1
+    if args.quick_save:
+        expected["Quick save to profile"] = 1
     errors = [f"missing patch: {name}" for name in expected - applied]
     errors.extend(f"unexpected or repeated patch: {name}" for name in applied - expected)
     hooks = [line for line in log.splitlines() if "[morphe]" in line and ": hooked to " in line]
     expected_hooks = {**HOOKS, "restore the Firebase Installations certificate header": int(args.firebase_registration)}
     expected_hooks["route credential provider and messaging to microG-RE"] = int(args.microg)
+    for marker in ("bind profile toggle and board picker", "bind profile toggle to legacy close-up modules",
+                   "bind profile toggle to radial pin"):
+        expected_hooks[marker] = int(args.quick_save)
     for marker, count in expected_hooks.items():
         actual = sum(marker in line for line in hooks)
         if actual != count:
