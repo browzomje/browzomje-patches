@@ -890,6 +890,14 @@ public final class PinterestUtils {
      */
     private static final String HEADER_NEWSHUB_ID = "home_feed_greeting_header_newshub_icon";
 
+    private static boolean isInboxInBottomBar() {
+        return false;
+    }
+
+    private static boolean shouldHideHeaderInbox() {
+        return isInboxInBottomBar() || MorpheSettingsStore.isNotificationsButtonHidden();
+    }
+
     /**
      * Nasconde i tasti "+" (Crea) e Posta/Notifiche dell'intestazione del feed (issue #24).
      *
@@ -914,7 +922,7 @@ public final class PinterestUtils {
     public static void hideGreetingHeaderButtons(final View root) {
         try {
             boolean hideCreate = MorpheSettingsStore.isCreateButtonHidden();
-            boolean hideNewsHub = MorpheSettingsStore.isNotificationsButtonHidden();
+            boolean hideNewsHub = shouldHideHeaderInbox();
             MorpheLog.hookFired(MorpheLog.HEADER,
                     "create=" + hideCreate + ", inbox/notifications=" + hideNewsHub);
 
@@ -956,7 +964,7 @@ public final class PinterestUtils {
             if (MorpheSettingsStore.isCreateButtonHidden()) {
                 hideHeaderButton(root, HEADER_CREATE_ID, "tasto Crea (+)");
             }
-            if (MorpheSettingsStore.isNotificationsButtonHidden()) {
+            if (shouldHideHeaderInbox()) {
                 hideHeaderButton(root, HEADER_NEWSHUB_ID, "tasto Posta/Notifiche");
             }
         } catch (Throwable t) {

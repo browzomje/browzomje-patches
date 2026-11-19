@@ -59,6 +59,8 @@ def main():
     parser.add_argument("--firebase-registration", action="store_true", help="expect the optional Firebase repair")
     parser.add_argument("--version", choices=("14.39.0", "14.43.0", "14.44.0"), help="require this Pinterest version in the log")
     parser.add_argument("--microg", action="store_true", help="expect the optional microG routes")
+    parser.add_argument("--bottom-bar-messages", action="store_true", help="expect the optional Messages tab")
+    parser.add_argument("--bottom-bar-create", action="store_true", help="expect the optional Create button")
     args = parser.parse_args()
     log = args.log.read_text()
     targets = re.findall(r"Filtering patches for com\.pinterest v(\S+)\.\.\.", log)
@@ -74,6 +76,10 @@ def main():
         expected["Repair Firebase registration"] = 1
     if args.microg:
         expected["GmsCore support for Pinterest"] = 1
+    if args.bottom_bar_messages:
+        expected["Show Messages in the bottom bar"] = 1
+    if args.bottom_bar_create:
+        expected["Show Create in the bottom bar"] = 1
     errors = [f"missing patch: {name}" for name in expected - applied]
     errors.extend(f"unexpected or repeated patch: {name}" for name in applied - expected)
     hooks = [line for line in log.splitlines() if "[morphe]" in line and ": hooked to " in line]
