@@ -1,69 +1,10 @@
-# 🧩 browzomje's Morphe Patches
+# browzomje's Morphe Patches
 
-A collection of patches for Android applications, designed for the [Morphe](https://morphe.software) patcher.
+[Morphe](https://morphe.software) patches for Pinterest and Easy Sudoku on Android.
 
-[Pinterest 14.39.0 verification checklist](docs/pinterest/VERIFICATION_14.39.0.md)
+[Add to Morphe Manager](https://morphe.software/add-source?github=browzomje/browzomje-patches) · [Releases](https://github.com/browzomje/browzomje-patches/releases)
 
-## ❓ About
-
-This repository provides custom enhancements and modifications for Android apps, currently supporting: 
-- **Pinterest** 
-
-These patches allow you to remove advertisements, block tracking, and add new utility features directly to the apps.
-
-The optional **Hide video pins** setting is off by default. It filters video Pins in feeds and search, including Story Pins identified by their video duration. Pages containing only videos may become empty; search suggestions and their thumbnails remain visible. Pinterest has several feed formats, so broader device coverage is still needed.
-
-**Hide AI-labeled Pins** is enabled by default and in the recommended preset. It filters Pins that carry a Pinterest AI disclosure.
-
-The **Choose startup tab** patch (Pinterest 14.39.0 and 14.43.0) adds Home, Search and Saved
-choices in Morphe settings, with native icons. Home is the default. The choice
-applies to fresh launches from the app icon; links and restored sessions keep
-their destination. Hidden Search falls back to Home.
-
-External video downloads open YTDLnis directly when installed, then Seal.
-Android's share chooser is the fallback when neither supported app is available.
-
-**Muted words** hides Pins whose title or description contains a listed word or
-phrase. Add one entry per line in Morphe settings. An empty list leaves the feed
-unchanged. The list stays on the device and is excluded from settings exports.
-
-**Image download history** shows queued and recent completed or failed image
-downloads started by Morphe. Select a saved image to copy or share the file, or a failed
-image to retry. On Android 10 and later, the five most recent saved images can show a thumbnail.
-
-**Repair Firebase registration** is enabled by default for re-signed Pinterest
-14.39.0 and 14.43.0. Push delivery was confirmed on a patched 14.43.0 build.
-The patch can be excluded from the patch selection in Morphe Manager.
-
-**Quick save to profile** is an optional patch for Pinterest 14.44.0. Enable it
-in Morphe Manager when patching the APK. Tap **Save** to add a Pin to your
-profile or **Remove** to take it off your profile. Press and hold the button
-on an open Pin to choose a board.
-
-### Signing in to a re-signed Pinterest build
-
-Google sign-in with stock Play services can fail after re-signing because the
-Android OAuth client is tied to a signing certificate. Use your Pinterest email
-and password, or set a Pinterest password through the account recovery flow.
-Firebase registration repair covers push registration. Google sign-in on a
-re-signed build has separate requirements.
-
-**GmsCore support for Pinterest** is enabled by default on 14.43.0 and
-14.44.0. Google sign-in on the main sign-in screen uses microG-RE
-(`app.revanced.android.gms`). If the service is missing, tapping Google explains
-how to set it up. Add a Google account in microG-RE before signing in. Email and password remain
-available without microG-RE. The patch also routes Firebase Messaging to
-microG-RE. Deselect it if you need the stock messaging route.
-
-### Pinterest device testing
-
-The 14.43.0 candidate has passed startup and single-image download on Android.
-The carousel regression test passed on Android by downloading the first image,
-the second image, and the first image again.
-
-See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validation and Android regression tests.
-
-## 🩹 Patches list
+## Patch list
 
 <!-- PATCHES_START EXPANDED -->
 > **[v1.19.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.19.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;44 patches total
@@ -141,22 +82,22 @@ See [Pinterest porting checks](docs/pinterest/PORTING.md) for bytecode validatio
 
 <!-- PATCHES_END -->
 
-#### How to use these patches
+## Installation
 
-Click here to add these patches to Morphe: https://morphe.software/add-source?github=browzomje/browzomje-patches
+Add this repository as a patch source in Morphe Manager. Choose a supported app
+version from the list above, select the patches you want, then patch and install
+the APK.
 
-Or manually add this repository url as a patch source in Morphe: https://github.com/browzomje/browzomje-patches
+For Pinterest, email and password sign-in works without microG-RE. To use Google
+sign-in, enable **GmsCore support for Pinterest** and add your Google account to
+microG-RE first.
 
-### 📙 Contributing
+## Development
 
-Thank you for considering contributing to browzomje Morphe Patches.  
-You can find the contribution guidelines [here](CONTRIBUTING.md).
+- [Contributing and reporting issues](CONTRIBUTING.md)
+- [Pinterest porting and verification](docs/pinterest/PORTING.md)
+- [Morphe build documentation](https://github.com/MorpheApp/morphe-documentation)
 
-### 🛠️ Building
+## License
 
-To build browzomje Morphe Patches,
-you can follow the [Morphe documentation](https://github.com/MorpheApp/morphe-documentation).
-
-## 📜 License
-
-browzomje Morphe Patches are licensed under the [GNU General Public License v3.0](LICENSE)
+[GNU General Public License v3.0](LICENSE)
