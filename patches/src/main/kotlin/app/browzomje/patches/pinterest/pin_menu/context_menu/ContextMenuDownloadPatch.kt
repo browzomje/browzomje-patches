@@ -31,6 +31,13 @@ internal object ContextMenuItemsFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
 )
 
+private object ContextMenuShowFingerprint : Fingerprint(
+    definingClass = "Lcom/pinterest/ui/menu/ContextMenuView;",
+    returnType = "V",
+    parameters = listOf("Lq80/d;", "Lde/b;"),
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+)
+
 /**
  * Aggiunge un tasto "scarica" al menu circolare che compare tenendo premuto un pin, così l'immagine
  * si salva senza doverlo aprire.
@@ -65,10 +72,21 @@ val contextMenuDownloadPatch = bytecodePatch(
 
         // p0 è il menu, p1 la lista dei tasti. Si scrivono per nome: in testa al metodo sono
         // certamente ancora i parametri, e calcolarne l'indice è il modo di sbagliare in silenzio.
+        val bindsSelection = packageMetadata.versionName == "14.44.0"
+        val addItem = if (bindsSelection) "addBoundContextMenuDownloadItem" else "addContextMenuDownloadItem"
+        if (bindsSelection) {
+            val show = ContextMenuShowFingerprint.method
+            show.addInstructions(
+                0,
+                "invoke-static/range { p0 .. p1 }, " +
+                    "$EXTENSION_CLASS->bindContextMenuDownloadSelection(Ljava/lang/Object;Ljava/lang/Object;)V",
+            )
+            PatchLog.hooked(PATCH_NAME, show, "bind the native long-press selection")
+        }
         method.addInstructions(
             0,
             "invoke-static/range { p0 .. p1 }, " +
-                "$EXTENSION_CLASS->addContextMenuDownloadItem(Ljava/lang/Object;Ljava/util/List;)V",
+                "$EXTENSION_CLASS->$addItem(Ljava/lang/Object;Ljava/util/List;)V",
         )
         PatchLog.hooked(PATCH_NAME, method, "long-press menu items")
     }

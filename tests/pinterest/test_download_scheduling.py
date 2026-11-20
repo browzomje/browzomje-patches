@@ -7,6 +7,7 @@ import tempfile
 source = (Path(__file__).resolve().parents[2]
           / "extensions/extension/src/main/java/app/template/extension/pinterest/PinDownloadQueue.java")
 text = source.read_text()
+enqueue = text[text.index("    static void add("):text.index("    static void addBoard(")]
 methods = text[text.index("    static void resume("):text.index("    static boolean drain(")]
 
 methods += text[text.index("    private static boolean hasPendingDownloads("):
@@ -18,6 +19,20 @@ import java.util.Map;
 
 class ScheduleTest {
     static final int JOB_ID = 123;
+    static final Map<String, Runnable> CALLBACKS = new java.util.HashMap<>();
+    static final java.util.Queue<Runnable> work = new java.util.ArrayDeque<>();
+    static final java.util.concurrent.Executor INTERACTIVE = work::add;
+    interface Active { boolean get(); }
+    static String safe(String folder) { return folder; }
+    static void drain(Context context, Active active, String key) {
+        check(active.get(), "interactive worker is active");
+        check(context.records.containsKey(key), "worker sees the persisted request");
+        context.drained.add(key);
+    }
+    static class JSONObject {
+        JSONObject put(String key, Object value) { return this; }
+        public String toString() { return "{}"; }
+    }
     static class Build {
         static class VERSION { static int SDK_INT = 34; }
     }
@@ -25,12 +40,27 @@ class ScheduleTest {
     record ComponentName(Context context, Class<?> service) {}
     static class MorpheLog {
         static final String BOARD = "board";
+        static void i(String tag, String message) {}
         static void w(String tag, String message, Exception failure) {}
     }
-    record Preferences(Map<String, ?> getAll) {}
-    static Preferences prefs(Context context) { return new Preferences(context.records); }
+    record Preferences(Context context) {
+        Map<String, ?> getAll() { return context.records; }
+        Editor edit() { return new Editor(context); }
+    }
+    record Editor(Context context) {
+        Editor putString(String key, String value) {
+            var updated = new java.util.HashMap<String, Object>(context.records);
+            updated.put(key, value);
+            context.records = updated;
+            return this;
+        }
+        boolean commit() { return true; }
+    }
+    static Preferences prefs(Context context) { return new Preferences(context); }
     static class Context {
         Map<String, ?> records = Map.of();
+        final java.util.List<String> drained = new java.util.ArrayList<>();
+        Context getApplicationContext() { return this; }
         static final String JOB_SCHEDULER_SERVICE = "jobscheduler";
         JobScheduler scheduler = new JobScheduler();
         Object getSystemService(String service) { return scheduler; }
@@ -65,7 +95,7 @@ class ScheduleTest {
         }
     }
     static void check(boolean ok, String detail) { if (!ok) throw new AssertionError(detail); }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Context fast = new Context();
         schedule(fast, true);
         check(fast.scheduler.scheduled.equals(List.of(new JobInfo(JOB_ID, true, true, true))),
@@ -82,6 +112,14 @@ class ScheduleTest {
         pending.scheduler.pending = List.of(new JobInfo(JOB_ID, false, true, true));
         schedule(pending, true);
         check(pending.scheduler.scheduled.isEmpty(), "never replace the queue's existing job");
+
+        pending.records = Map.of("task_previous", "{}");
+        add(pending, "123", "https://example.test/image.jpg", 100, 100, "Pins", true, null);
+        check(pending.scheduler.scheduled.isEmpty(), "leave a waiting job in place");
+        check(work.size() == 1, "start a new foreground request while a previous job is pending");
+        work.remove().run();
+        check(pending.drained.size() == 1 && !pending.drained.contains("task_previous"),
+            "foreground worker handles only the new request");
 
         Context board = new Context();
         schedule(board);
@@ -115,5 +153,5 @@ class ScheduleTest {
 """
 with tempfile.TemporaryDirectory() as work:
     java = Path(work) / "ScheduleTest.java"
-    java.write_text(fixture + methods + "}\n")
+    java.write_text(fixture + enqueue + methods + "}\n")
     subprocess.run(["java", str(java)], check=True, timeout=20)

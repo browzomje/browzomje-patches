@@ -20,6 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
 final class PinDownloadQueue {
     static final int JOB_ID=0x4d50494e;
     private static final Map<String,Runnable> CALLBACKS=new ConcurrentHashMap<>();
+    // Claim one request across both workers without holding a lock during metadata I/O.
+    private static final java.util.Set<String> ACTIVE_REQUESTS = java.util.Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Object HANDOFF_LOCK = new Object();
+    private static final java.util.concurrent.Executor INTERACTIVE =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+
     interface Active { boolean get(); }
     private PinDownloadQueue() {}
     private static SharedPreferences prefs(Context context) { return context.getSharedPreferences("morphe_image_queue",0); }
@@ -30,7 +36,13 @@ final class PinDownloadQueue {
                 .put("hq",hq).put("attempt",0).put("manager",0);
         if(!prefs(context).edit().putString(key,task.toString()).commit()) throw new java.io.IOException("cannot persist download");
         if(completion!=null) CALLBACKS.put(key,completion);
-        schedule(context, "Pins".equals(folder));
+        boolean interactive = "Pins".equals(folder);
+        schedule(context, interactive);
+        if (interactive) {
+            Context application = context.getApplicationContext();
+            // A persisted job may already be waiting on backoff for an older task.
+            INTERACTIVE.execute(() -> drain(application, () -> true, key));
+        }
         MorpheLog.i(MorpheLog.BOARD,"durable image request queued");
     }
     static void addBoard(Context context,java.util.List<String[]> images,String folder,boolean hq) throws Exception {
@@ -75,15 +87,33 @@ final class PinDownloadQueue {
             throw new IllegalStateException("cannot schedule downloads");
         }
     }
-    static boolean drain(Context context,Active active) {
+    static boolean drain(Context context, Active active) {
+        return drain(context, active, null);
+    }
+
+    private static boolean drain(Context context, Active active, String onlyKey) {
         boolean retry=false;
-        for(Map.Entry<String,?> entry:prefs(context).getAll().entrySet()) {
-            if(!active.get()) return true;
-            if(!entry.getKey().startsWith("task_") || !(entry.getValue() instanceof String)) continue;
-            JSONObject task=null;
+        Iterable<String> keys = onlyKey == null ? prefs(context).getAll().keySet()
+                : java.util.Collections.singleton(onlyKey);
+        for (String key : keys) {
+            if (!active.get()) return true;
+            if (!key.startsWith("task_") || !ACTIVE_REQUESTS.add(key)) continue;
+            JSONObject task = null;
             try {
-                task=new JSONObject((String)entry.getValue());
-                if(task.optLong("manager",0)!=0) { check(context,entry.getKey(),task);continue; }
+                String raw;
+                try {
+                    raw = prefs(context).getString(key, null);
+                } catch (ClassCastException malformed) {
+                    continue;
+                }
+                if (raw == null) continue;
+                task = new JSONObject(raw);
+                if (task.optLong("manager", 0) != 0) {
+                    if (onlyKey == null) check(context, key, task);
+                    continue;
+                }
+                // The scheduled job already tried this request. Keep its retry timing.
+                if (onlyKey != null && task.optInt("failures", 0) > 0) continue;
                 boolean quality=task.getBoolean("hq") && task.getInt("attempt")==0;
                 PinImageResolver.Result selected=PinImageResolver.resolve(context,task.getString("source"),task.getInt("width"),task.getInt("height"),quality);
                 if(!active.get()) return true;
@@ -97,34 +127,39 @@ final class PinDownloadQueue {
                     BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;
                     BitmapFactory.decodeFile(existing.getAbsolutePath(),bounds);
                     if(bounds.outWidth>=selected.width && bounds.outHeight>=selected.height) {
-                        prefs(context).edit().remove(entry.getKey()).commit();continue;
+                        prefs(context).edit().remove(key).commit();continue;
                     }
                 }
-                int suffix=1;
-                while(new java.io.File(directory,filename).exists() || reserved(context,task.getString("folder"),filename))
-                    filename=task.getString("id")+" ("+(suffix++)+")."+selected.extension;
-                DownloadManager.Request request=new DownloadManager.Request(Uri.parse(selected.url));
-                request.setTitle(filename).setDescription("Pinterest — "+task.getString("folder"));
-                request.setMimeType(selected.mime).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
-                        "Pinterest/"+task.getString("folder")+"/"+filename);
-                long managerId=manager.enqueue(request);
-                task.put("manager",managerId).put("filename",filename).put("selected",selected.json());
-                prefs(context).edit().putString(entry.getKey(),task.toString()).commit();
+                long managerId;
+                synchronized (HANDOFF_LOCK) {
+                    int suffix=1;
+                    while(new java.io.File(directory,filename).exists() || reserved(context,task.getString("folder"),filename))
+                        filename=task.getString("id")+" ("+(suffix++)+")."+selected.extension;
+                    DownloadManager.Request request=new DownloadManager.Request(Uri.parse(selected.url));
+                    request.setTitle(filename).setDescription("Pinterest — "+task.getString("folder"));
+                    request.setMimeType(selected.mime).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                            "Pinterest/"+task.getString("folder")+"/"+filename);
+                    managerId=manager.enqueue(request);
+                    task.put("manager",managerId).put("filename",filename).put("selected",selected.json());
+                    prefs(context).edit().putString(key,task.toString()).commit();
+                }
                 MorpheLog.i(MorpheLog.BOARD,"system image download "+managerId+" "+selected.describe()+" original="+selected.original);
                 if(!selected.original && task.getBoolean("hq") && "Pins".equals(task.getString("folder"))) toast(context,MorpheStrings.get(MorpheStrings.IMAGE_DOWNLOAD_FALLBACK));
             } catch(Exception error) {
                 int failures=task==null?3:task.optInt("failures",0)+1;
                 if(task!=null && failures<3) {
-                    try { task.put("failures",failures);prefs(context).edit().putString(entry.getKey(),task.toString()).commit(); }
+                    try { task.put("failures",failures);prefs(context).edit().putString(key,task.toString()).commit(); }
                     catch(Exception ignored) {}
                     retry=true;
                 } else {
-                    finish(context, entry.getKey(), task, false);
-                    CALLBACKS.remove(entry.getKey());
+                    finish(context, key, task, false);
+                    CALLBACKS.remove(key);
                     toast(context,PinterestUtils.getString("download_failed"));
                 }
                 MorpheLog.w(MorpheLog.BOARD,"image queue resolution failed (attempt "+failures+")",error);
+            } finally {
+                ACTIVE_REQUESTS.remove(key);
             }
         }
         return retry || hasPendingDownloads(context);

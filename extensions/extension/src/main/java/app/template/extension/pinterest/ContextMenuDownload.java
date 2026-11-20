@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Il tasto "scarica" nel menu circolare che compare tenendo premuto un pin.
@@ -37,6 +39,21 @@ final class ContextMenuDownload {
 
     /** L'icona di download del set Gestalt, la stessa usata nel menu "…" del pin. */
     private static final String ICON = "ic_vr_download_gestalt";
+    private static final Map<Object, Object> MENU_PINS = new WeakHashMap<>();
+
+    static void bindSelection(Object menuView, Object selection) {
+        MENU_PINS.remove(menuView);
+        if (selection == null || !MorpheSettingsStore.isLongPressDownloadEnabled()) return;
+        try {
+            // q80.d exposes the selected grid model through a() on Pinterest 14.44.0.
+            Object pin = selection.getClass().getMethod("a").invoke(selection);
+            if (pin != null && AdDetector.isCandidateModel(pin.getClass())) {
+                MENU_PINS.put(menuView, pin);
+            }
+        } catch (ReflectiveOperationException failure) {
+            MorpheLog.w(MorpheLog.BOARD, "could not bind the long-press selection", failure);
+        }
+    }
 
     /**
      * Accoda il tasto alla lista dei tasti del menu.
@@ -48,7 +65,7 @@ final class ContextMenuDownload {
      * @param items la lista dei tasti, modificata sul posto
      */
     @SuppressWarnings("unchecked")
-    static void addItem(Object menuView, List<Object> items) {
+    static void addItem(Object menuView, List<Object> items, boolean boundSelection) {
         if (!(menuView instanceof View) || items == null) {
             return;
         }
@@ -57,6 +74,7 @@ final class ContextMenuDownload {
             return;
         }
 
+        if (boundSelection) MENU_PINS.remove(menuView);
         final Context context = ((View) menuView).getContext();
         try {
             int layoutId = context.getResources()
@@ -74,20 +92,16 @@ final class ContextMenuDownload {
             // L'ordine conta: il tasto applica cerchio e icona solo quando ha un'etichetta —
             // senza, esce dal proprio metodo di aggiornamento senza disegnare niente.
             setLabel(item, PinterestUtils.getString("download_image_label"));
-            applyAppearance(context, item, items);
+            if (!applyAppearance(context, item, items)) {
+                return;
+            }
 
-            // Il pin si cerca al **click**, non adesso.
-            //
-            // Quando questo metodo gira il menu sta ancora raccogliendo i propri tasti e non è
-            // ancora legato al pin: cercandolo qui non si trovava niente e il tasto non veniva
-            // nemmeno aggiunto. Al click invece il menu è montato e collegato, e la stessa visita
-            // del grafo lo trova. In più il costo si paga solo quando l'utente scarica davvero,
-            // invece che a ogni pressione prolungata.
+            // The native show call supplies the selection after the item list is built.
             final Object menu = menuView;
             item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Object pin = CurrentPin.findPinIn(menu);
+                    Object pin = boundSelection ? MENU_PINS.get(menu) : CurrentPin.findPinIn(menu);
                     if (pin == null) {
                         MorpheLog.w(MorpheLog.BOARD, "long-press download: pin not found in "
                                 + menu.getClass().getName());
@@ -126,20 +140,36 @@ final class ContextMenuDownload {
      * <p>I campi che puntano a delle view non si copiano mai: farlo significherebbe far disegnare
      * il nostro tasto dentro quello del vicino.
      */
-    private static void applyAppearance(Context context, View item, List<Object> siblings) {
+    private static boolean applyAppearance(Context context, View item, List<Object> siblings) {
         ImageView ourIcon = PinterestUtils.findImageView(item);
         Drawable icon = loadIcon(context);
-        if (ourIcon != null && icon != null) {
-            ourIcon.setImageDrawable(icon);
+        if (ourIcon == null || icon == null) {
+            return false;
         }
+        // Pinterest redraws from its stored icon. A sibling can display an alternate
+        // resource, so comparing its current drawable cannot identify this field.
+        try {
+            Field iconField = null;
+            for (Field field : item.getClass().getDeclaredFields()) {
+                if (field.getType() == Drawable.class && !Modifier.isStatic(field.getModifiers())) {
+                    if (iconField != null) return false;
+                    iconField = field;
+                }
+            }
+            if (iconField == null) return false;
+            iconField.setAccessible(true);
+            iconField.set(item, icon);
+        } catch (ReflectiveOperationException failure) {
+            return false;
+        }
+        ourIcon.setImageDrawable(icon);
 
         View sibling = firstSibling(siblings);
         if (sibling == null) {
             MorpheLog.d(MorpheLog.BOARD, "no sibling button to copy the look from");
-            return;
+            return true;
         }
         ImageView siblingIcon = PinterestUtils.findImageView(sibling);
-        Drawable siblingDrawable = siblingIcon == null ? null : siblingIcon.getDrawable();
 
         try {
             for (Field field : item.getClass().getDeclaredFields()) {
@@ -149,13 +179,8 @@ final class ContextMenuDownload {
                 field.setAccessible(true);
                 Class<?> type = field.getType();
 
-                if (Drawable.class.isAssignableFrom(type)) {
-                    Object theirs = field.get(sibling);
-                    // Il campo che nel fratello contiene proprio l'icona disegnata è quello
-                    // dell'icona: lì ci va la nostra, in tutti gli altri (gli sfondi dei vari
-                    // stati) si copia il valore del fratello.
-                    boolean isTheIconField = theirs != null && theirs == siblingDrawable;
-                    field.set(item, isTheIconField ? icon : theirs);
+                if (type != Drawable.class && Drawable.class.isAssignableFrom(type)) {
+                    field.set(item, field.get(sibling));
                 } else if (type == boolean.class) {
                     // Interruttori di presentazione: quale colore usare da evidenziato, se
                     // l'icona va rimpicciolita, e simili.
@@ -182,6 +207,7 @@ final class ContextMenuDownload {
             // scura su tema scuro e chiara su tema chiaro — esattamente l'opposto delle altre.
             ourIcon.setColorFilter(siblingIcon.getColorFilter());
         }
+        return true;
     }
 
     /**

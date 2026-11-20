@@ -88,6 +88,8 @@ def main():
     hooks = [line for line in log.splitlines() if "[morphe]" in line and ": hooked to " in line]
     expected_hooks = {**HOOKS, "restore the Firebase Installations certificate header": int(args.firebase_registration)}
     expected_hooks["route credential provider and messaging to microG-RE"] = int(args.microg)
+    expected_hooks["long-press menu items"] = 1
+    expected_hooks["bind the native long-press selection"] = int(targets[0] == "14.44.0")
     for marker in ("bind profile toggle and board picker", "bind profile toggle to legacy close-up modules",
                    "bind profile toggle to radial pin"):
         expected_hooks[marker] = int(args.quick_save)

@@ -319,10 +319,19 @@ public final class PinterestUtils {
         MorpheLog.hookFired(MorpheLog.BOARD,
                 "long-press menu " + (menuView == null ? "null" : menuView.getClass().getName()));
         try {
-            ContextMenuDownload.addItem(menuView, (java.util.List<Object>) items);
+            ContextMenuDownload.addItem(menuView, (java.util.List<Object>) items, false);
         } catch (Throwable t) {
             MorpheLog.e(MorpheLog.BOARD, "could not add the long-press download button", t);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void addBoundContextMenuDownloadItem(Object menuView, java.util.List<?> items) {
+        ContextMenuDownload.addItem(menuView, (java.util.List<Object>) items, true);
+    }
+
+    public static void bindContextMenuDownloadSelection(Object menuView, Object selection) {
+        ContextMenuDownload.bindSelection(menuView, selection);
     }
 
     /**
