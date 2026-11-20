@@ -7,7 +7,7 @@
 ## Patch list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.19.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.19.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;44 patches total
+> **[v1.19.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.19.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;44 patches total
 <details open>
 <summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;39 patches</summary>
 <br>

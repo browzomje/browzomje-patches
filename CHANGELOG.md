@@ -1,3 +1,9 @@
+## [1.19.1](https://github.com/browzomje/browzomje-patches/compare/v1.19.0...v1.19.1) (2026-11-20)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** start image downloads promptly and restore radial icons ([57f71dd](https://github.com/browzomje/browzomje-patches/commit/57f71dded23e0433410baeacbc8812f735e4f62c))
+
 ## [1.19.0](https://github.com/browzomje/browzomje-patches/compare/v1.18.0...v1.19.0) (2026-11-19)
 
 ### 🐛 Bug Fixes
