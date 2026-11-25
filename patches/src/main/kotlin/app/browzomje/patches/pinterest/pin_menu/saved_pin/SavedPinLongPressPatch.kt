@@ -42,13 +42,10 @@ val hideRepinOnSavedLongPressPatch = bytecodePatch(
         constructor.addInstructions(last, """
             move-object/from16 v1, p16
             move/from16 v2, p21
-            invoke-static {v1, v2, p9}, Lapp/browzomje/extension/pinterest/SavedPinMenu;->hideSave(Ljava/lang/Enum;ZZ)Z
+            iget-boolean v3, p0, Lia3/s0;->a:Z
+            invoke-static {v3, v1, v2, p9}, Lapp/browzomje/extension/pinterest/SavedPinMenu;->canRepin(ZLjava/lang/Enum;ZZ)Z
             move-result v1
-            if-eqz v1, :morphe_keep_repin
-            const/4 v1, 0x0
             iput-boolean v1, p0, Lia3/s0;->a:Z
-            :morphe_keep_repin
-            nop
         """.trimIndent())
         PatchLog.hooked("Hide repeat Save in saved pin menus", constructor, "shared saved pin long-press options")
     }

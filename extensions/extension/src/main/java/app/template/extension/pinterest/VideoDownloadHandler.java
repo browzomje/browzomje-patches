@@ -23,6 +23,8 @@ class VideoDownloadHandler {
     /** Pin UID → direct MP4 URL */
     private static final Map<String, String> VIDEO_URL_BY_PIN = new ConcurrentHashMap<String, String>();
 
+    private static final Map<String, Integer> SOLE_STORY_VIDEO_PAGE = new ConcurrentHashMap<>();
+
     /** Pin UID → HLS/DASH streaming URL (fallback for yt-dlp) */
     private static final Map<String, String> VIDEO_STREAMING_URL_BY_PIN = new ConcurrentHashMap<String, String>();
 
@@ -75,6 +77,28 @@ class VideoDownloadHandler {
         }
     }
 
+    private static void captureStoryPages(Object pin, String pinId) {
+        Object story = AdDetector.fieldValueBySerializedName(pin, "story_pin_data");
+        if (story == null) return;
+        Object pages = AdDetector.fieldValueBySerializedName(story, "pages");
+        Object preview = AdDetector.fieldValueBySerializedName(story, "pages_preview");
+        Integer index = PinVideoTracks.soleVideoPage(pages, preview, VideoDownloadHandler::hasVideoBlock);
+        if (index != null) {
+            SOLE_STORY_VIDEO_PAGE.put(pinId, index);
+        } else {
+            SOLE_STORY_VIDEO_PAGE.remove(pinId);
+        }
+    }
+
+    private static boolean hasVideoBlock(Object page) throws ReflectiveOperationException {
+        if (page == null || !page.getClass().getName().equals("com.pinterest.api.model.kl0")) {
+            throw new IllegalArgumentException("Unrecognized story page");
+        }
+        // Same native predicate as the closeup's story video builder.
+        Class<?> pageTypes = Class.forName("com.pinterest.api.model.vl0");
+        return Boolean.TRUE.equals(pageTypes.getMethod("c", page.getClass()).invoke(null, page));
+    }
+
     public static void setCurrentVideoPin(Object pin) {
         if (pin == null) {
             return;
@@ -98,6 +122,9 @@ class VideoDownloadHandler {
             MorpheLog.d(MorpheLog.VIDEO, "current video pin: " + uid);
             final String pinPageUrl = "https://www.pinterest.com/pin/" + uid + "/";
             PIN_PAGE_URL_BY_PIN.put(uid, pinPageUrl);
+            if (pin.getClass().getName().equals("com.pinterest.api.model.uu")) {
+                captureStoryPages(pin, uid);
+            }
 
             // Correla l'hash della cover al pin, così possiamo ritrovare il pin
             // selezionato da currentPinImageUrl quando il match per UID fallisce.
@@ -147,6 +174,7 @@ class VideoDownloadHandler {
             }
 
             final View row = rowHolder[0];
+            final String selectedMp4 = selectedMp4(menuContainer);
             row.setEnabled(false);
             row.setAlpha(0.5f);
 
@@ -179,7 +207,7 @@ class VideoDownloadHandler {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final VideoResolutionResult resResult = resolveVideoUrlWithDiagnostics(menuContainer);
+                    final VideoResolutionResult resResult = resolveVideoUrlWithDiagnostics(menuContainer, selectedMp4);
 
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
@@ -213,10 +241,12 @@ class VideoDownloadHandler {
                                 //    scaricare con DownloadManager, si delega a yt-dlp. La voce
                                 //    ha senso perché un video c'è davvero.
                                 row.setVisibility(View.VISIBLE);
+                                String externalLabel = PinterestUtils.getString("download_video_external_label");
                                 TextView tvLabel = PinterestUtils.findTextView(row);
                                 if (tvLabel != null) {
-                                    tvLabel.setText(PinterestUtils.getString("download_video_external_label"));
+                                    tvLabel.setText(externalLabel);
                                 }
+                                row.setContentDescription(externalLabel);
                                 row.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -300,6 +330,27 @@ class VideoDownloadHandler {
     // -------------------------------------------------------------------------
     // Resolution logic
     // -------------------------------------------------------------------------
+
+    private static String selectedMp4(Object menu) {
+        // This menu stores the Pin ID used by analytics in j and GridActionsViewParams in g.
+        // An indexed track is used when the native Pin identifies a single video.
+        if (!menu.getClass().getName().equals("g61.w")) return null;
+        try {
+            String pinId = (String) menu.getClass().getDeclaredField("j").get(menu);
+            Object actions = menu.getClass().getDeclaredField("g").get(menu);
+            if (actions == null || !actions.getClass().getName().equals("o61.k")) return null;
+            boolean isVideo = actions.getClass().getDeclaredField("l").getBoolean(actions);
+            boolean isStory = actions.getClass().getDeclaredField("m").getBoolean(actions);
+            Integer page = pinId == null ? null : SOLE_STORY_VIDEO_PAGE.get(pinId);
+            if (!isStory && isVideo && page == null) page = 0;
+            String selected = PinVideoTracks.selectedMp4(VIDEO_URL_BY_PIN, pinId, page);
+            MorpheLog.d(MorpheLog.VIDEO, "native video selection: story=" + isStory
+                    + ", hasKnownPage=" + (page != null) + ", hasDirectTrack=" + (selected != null));
+            return selected;
+        } catch (ReflectiveOperationException | RuntimeException failure) {
+            return null;
+        }
+    }
 
     private static String resolveVideoUrlForMenu(Object menu) {
         if (menu == null || VIDEO_URL_BY_PIN.isEmpty()) {
@@ -475,8 +526,12 @@ class VideoDownloadHandler {
         return IMAGE_HASH_TO_PIN_URL.get(hash);
     }
 
-    private static VideoResolutionResult resolveVideoUrlWithDiagnostics(final Object menuContainer) {
+    private static VideoResolutionResult resolveVideoUrlWithDiagnostics(Object menuContainer, String selectedMp4) {
         VideoResolutionResult result = new VideoResolutionResult();
+        if (selectedMp4 != null) {
+            result.videoUrl = selectedMp4;
+            return result;
+        }
         DiagnosticScanner scanner = new DiagnosticScanner();
 
         // 1. Deep scan of the menu object graph.

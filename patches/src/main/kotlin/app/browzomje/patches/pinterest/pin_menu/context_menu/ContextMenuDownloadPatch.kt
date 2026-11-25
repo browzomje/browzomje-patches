@@ -2,6 +2,8 @@ package app.browzomje.patches.pinterest.pin_menu.context_menu
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patcher.patch.bytecodePatch
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
@@ -144,15 +146,13 @@ val contextMenuDownloadPatch = bytecodePatch(
                 it.opcode == Opcode.SGET_OBJECT && (it as? ReferenceInstruction)?.reference.toString() ==
                     "Lkotlin/Unit;->a:Lkotlin/Unit;"
             }.first() as ReferenceInstruction
-            action.addInstructions(repin, """
+            action.addInstructionsWithLabels(repin, """
                 invoke-static {v${option.registerA}, v${pin.registerA}}, $COMPOSE_DOWNLOAD->download(Ljava/lang/Object;Ljava/lang/Object;)Z
                 move-result v$scratch
                 if-eqz v$scratch, :morphe_native_option
                 sget-object v$scratch, ${unit.reference}
                 return-object v$scratch
-                :morphe_native_option
-                nop
-            """.trimIndent())
+            """.trimIndent(), ExternalLabel("morphe_native_option", actionCode[repin]))
             PatchLog.hooked(PATCH_NAME, action, "Compose long-press selected pin")
         }
     }

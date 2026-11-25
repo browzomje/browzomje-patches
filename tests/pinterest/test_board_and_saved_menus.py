@@ -51,6 +51,9 @@ public class MenuTest {
         for (Surface surface : new Surface[]{Surface.HOMEFEED, Surface.SEARCH, Surface.BOARD_IDEAS}) {
             check(!SavedPinMenu.hideSave(surface, true, true), "discovery surface " + surface);
         }
+        check(!SavedPinMenu.canRepin(false, Surface.HOMEFEED, true, true), "native refusal stays in force");
+        check(SavedPinMenu.canRepin(true, Surface.HOMEFEED, true, true), "native Home save stays available");
+        check(!SavedPinMenu.canRepin(true, Surface.BOARD, true, true), "saved board pin cannot repin from this menu");
         check(!SavedPinMenu.hideSave(null, true, true), "unknown surface fallback");
         System.out.println("PASS board option labels, native icons, and saved-pin menu scope");
     }

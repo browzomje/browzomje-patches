@@ -7,6 +7,7 @@ import com.android.tools.smali.dexlib2.Opcode;
 import com.android.tools.smali.dexlib2.Opcodes;
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction;
+import com.android.tools.smali.dexlib2.iface.instruction.OffsetInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction;
 
@@ -54,9 +55,10 @@ class CheckMenusDex {
         check(rowCtor.getStartRegister() == 9 && rowCtor.getRegisterCount() == 12, "native board row arguments");
 
         var saved = method(after, "Lia3/s0;", "<init>");
-        int saveGate = find(saved, EXTENSION + "SavedPinMenu;->hideSave");
-        check(saveGate >= 0 && saved.get(saveGate + 2).getOpcode() == Opcode.IF_EQZ
-                && saved.get(saveGate + 4).getOpcode() == Opcode.IPUT_BOOLEAN, "conditional repin capability");
+        int saveGate = find(saved, EXTENSION + "SavedPinMenu;->canRepin");
+        check(saveGate >= 0 && saved.get(saveGate - 1).getOpcode() == Opcode.IGET_BOOLEAN
+                && saved.get(saveGate + 1).getOpcode() == Opcode.MOVE_RESULT
+                && saved.get(saveGate + 2).getOpcode() == Opcode.IPUT_BOOLEAN, "native repin capability transformation");
 
         var list = method(after, "Lja3/u0;", "l");
         var append = (RegisterRangeInstruction) list.get(find(list, EXTENSION + "ComposePinDownload;->append"));
@@ -69,7 +71,10 @@ class CheckMenusDex {
                 "selected option and Pin model registers");
         check(effect.get(download + 2).getOpcode() == Opcode.IF_EQZ
                 && effect.get(download + 4).getOpcode() == Opcode.RETURN_OBJECT
-                && effect.get(download + 6).getOpcode() == Opcode.SGET_OBJECT, "native action branch retained");
+                && effect.get(download + 5).getOpcode() == Opcode.SGET_OBJECT, "native action branch retained");
+        var jump = (OffsetInstruction) effect.get(download + 2);
+        int nativeTarget = effect.subList(download + 2, download + 5).stream().mapToInt(Instruction::getCodeUnits).sum();
+        check(jump.getCodeOffset() == nativeTarget, "branch reaches the original native option instruction");
         System.out.println("PASS native board row, saved-pin capability, and Compose selection DEX");
     }
 }
