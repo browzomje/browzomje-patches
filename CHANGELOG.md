@@ -1,3 +1,13 @@
+## [1.20.0](https://github.com/browzomje/browzomje-patches/compare/v1.19.1...v1.20.0) (2026-11-25)
+
+### 🐛 Bug Fixes
+
+* **Pinterest:** restore direct video downloads and long-press menus ([3018b5f](https://github.com/browzomje/browzomje-patches/commit/3018b5f43a480746cd01a412c1405369aa4048b2))
+
+### ✨ New Features
+
+* **Pinterest:** support 14.45.0 and improve saved Pin menus ([19022a0](https://github.com/browzomje/browzomje-patches/commit/19022a0205e46d1527de272b4e896ecb69bf5f6c))
+
 ## [1.19.1](https://github.com/browzomje/browzomje-patches/compare/v1.19.0...v1.19.1) (2026-11-20)
 
 ### 🐛 Bug Fixes

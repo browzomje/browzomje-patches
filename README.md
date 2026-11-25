@@ -7,15 +7,15 @@
 ## Patch list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.19.1](https://github.com/browzomje/browzomje-patches/releases/tag/v1.19.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;44 patches total
+> **[v1.20.0](https://github.com/browzomje/browzomje-patches/releases/tag/v1.20.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;45 patches total
 <details open>
-<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;39 patches</summary>
+<summary>📦 Pinterest&nbsp;&nbsp;•&nbsp;&nbsp;40 patches</summary>
 <br>
 
 **🎯 Supported versions:**
 
-| 14.39.0 | 14.43.0 | 14.44.0 |
-| :---: | :---: | :---: |
+| 14.39.0 | 14.43.0 | 14.44.0 | 14.45.0 |
+| :---: | :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -29,7 +29,7 @@
 | [Disable third-party trackers](#disable-third-party-trackers) | Turns off the embedded advertising and telemetry SDKs (AdMob, Bugsnag, Firebase, Privacy Sandbox) and strips the Advertising ID permission. This patch leaves Firebase Messaging enabled. |  |
 | [Download board](#download-board) | Adds an option to the board's "…" menu to bulk download the images and videos of the loaded pins. |  |
 | [Download images in highest available quality](#download-images-in-highest-available-quality) | Checks for an original image before downloading, with automatic fallback to the largest available app variant. |  |
-| [Download pin from long press](#download-pin-from-long-press) | Adds a download button to the circular menu you get by long-pressing a pin, so the image can be saved without opening it. |  |
+| [Download pin from long press](#download-pin-from-long-press) | Adds a download action to the long-press pin menu, including the list layout on Pinterest 14.45.0. |  |
 | [Download video](#download-video) | Adds a "Download video" option to the pin menu, saving the clip to the Downloads folder. |  |
 | [Filter pin menu actions](#filter-pin-menu-actions) | Hides selected native pin menu actions by their localized labels, one per line. |  |
 | [GmsCore support for Pinterest](#gmscore-support-for-pinterest) | Enables Google sign-in and push registration through microG-RE when available. Email sign-in remains available. |  |
@@ -39,6 +39,7 @@
 | [Hide ad views](#hide-ad-views) | Collapses Pinterest's ad-only views, so no ad chrome is drawn even if the app builds one. Follows the "Disable ads" switch. |  |
 | [Hide comments](#hide-comments) | Hides the pin comments section, the comment preview and the comments button, when the matching Morphe setting is enabled. |  |
 | [Hide greeting header buttons](#hide-greeting-header-buttons) | Hides the create and inbox buttons in the home feed header, when the matching Morphe settings are enabled. |  |
+| [Hide repeat Save in saved pin menus](#hide-repeat-save-in-saved-pin-menus) | Hides Save on long press for pins already on a board you own or collaborate on when viewing saved pins. Open the pin to save it to another board. |  |
 | [Hide save for later tooltip](#hide-save-for-later-tooltip) | Always hides the save-for-later education popup without disabling the Save button. |  |
 | [Hide screenshot share menu](#hide-screenshot-share-menu) | Removes the panel Pinterest opens after a screenshot, and stops it watching for screenshots where possible. |  |
 | [Hide search history](#hide-search-history) | Hides the "Recent searches" section on the search screen and below the search bar. Pinterest still logs searches server-side. |  |
