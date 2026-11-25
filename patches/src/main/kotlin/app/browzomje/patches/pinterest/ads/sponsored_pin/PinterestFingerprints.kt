@@ -3,6 +3,8 @@ package app.browzomje.patches.pinterest
 import app.morphe.patcher.Fingerprint
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
 
 // Le tre risposte di rete che portano pin nel feed — e, come si è scoperto per l'issue #30, anche
 // i moduli della schermata di ricerca, che viaggiano sulla stessa ModelListWithBookmark.
@@ -113,7 +115,8 @@ object DynamicGridAppendFingerprint : Fingerprint(
     custom = { method, owner ->
         (owner.type == "Ltu1/g0;" && method.name == "A") ||
             (owner.type == "Lsw1/l0;" && method.name == "z") ||
-            (owner.type == "Ldx1/o0;" && method.name == "y")
+            (owner.type == "Ldx1/o0;" && method.name == "y") ||
+            (owner.type == "Lu12/i0;" && method.name == "w")
     },
 )
 object DynamicGridReplaceFingerprint : Fingerprint(
@@ -121,7 +124,7 @@ object DynamicGridReplaceFingerprint : Fingerprint(
     parameters = listOf("Ljava/util/List;", "Z"),
     custom = { method, owner ->
         (method.name == "j0" && owner.type in setOf("Ltu1/g0;", "Lsw1/l0;")) ||
-            (owner.type == "Ldx1/o0;" && method.name == "g0")
+            (method.name == "g0" && owner.type in setOf("Ldx1/o0;", "Lu12/i0;"))
     },
 )
 object DynamicGridInsertFingerprint : Fingerprint(
@@ -130,14 +133,14 @@ object DynamicGridInsertFingerprint : Fingerprint(
     custom = { method, owner ->
         (owner.type == "Ltu1/g0;" && method.name == "Y") ||
             (owner.type == "Lsw1/l0;" && method.name == "X") ||
-            (owner.type == "Ldx1/o0;" && method.name == "U")
+            (method.name == "U" && owner.type in setOf("Ldx1/o0;", "Lu12/i0;"))
     },
 )
 
 object RawGridAppendFingerprint : Fingerprint(
     name = "b", returnType = "V",
     parameters = listOf("Ljava/util/List;"),
-    custom = { _, owner -> owner.type in setOf("Ltu1/p;", "Lsw1/r;", "Ldx1/s;") },
+    custom = { _, owner -> owner.type in setOf("Ltu1/p;", "Lsw1/r;", "Ldx1/s;", "Lu12/p;") },
 )
 
 private object RawGridResponseClassFingerprint : Fingerprint(
@@ -153,11 +156,13 @@ object RawGridResponseFingerprint : Fingerprint(
 )
 
 internal object ThirdPartyAdConfigFingerprint : Fingerprint(
-    strings = listOf("android_ads_3p_config_consent"),
     custom = { method, _ ->
-        method.implementation?.instructions?.any { instruction ->
-            val field = (instruction as? ReferenceInstruction)?.reference as? FieldReference
-            field?.name == "META_AUDIENCE_NETWORK" && field.type == field.definingClass
-        } == true
+        val refs = method.implementation?.instructions
+            ?.mapNotNull { (it as? ReferenceInstruction)?.reference }.orEmpty()
+        refs.any { it is FieldReference && it.name == "META_AUDIENCE_NETWORK" && it.type == it.definingClass } &&
+            refs.any {
+                it is StringReference && it.string == "android_ads_3p_config_consent" ||
+                    it is MethodReference && it.name == "getThirdPartyAdConfigForSdksSuspend"
+            }
     },
 )

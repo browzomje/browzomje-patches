@@ -1,6 +1,11 @@
 package app.browzomje.patches.pinterest.board.download_board
 
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import app.browzomje.patches.shared.addReturnValueTransform
@@ -53,6 +58,31 @@ val downloadBoardPatch = bytecodePatch(
 
         val method = mutableClassDefBy(builderClass).methods
             .first { it.isBoardOptionsMenuBuilder(optionsEnum.type) }
+
+        if (packageMetadata.versionName == "14.45.0") {
+            val instructions = method.implementation!!.instructions
+            val rowConstructor = instructions.indices.single { index ->
+                val instruction = instructions[index]
+                val ref = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                instruction.opcode == Opcode.INVOKE_DIRECT_RANGE && ref?.toString() ==
+                    "Lt93/y;-><init>(IILt93/b0;Ljava/lang/String;Ljava/lang/String;Lt93/u;" +
+                    "Ljava/lang/Integer;Ljava/lang/String;Ll72/t;Ld52/o0;I)V"
+            }
+            val range = instructions[rowConstructor] as RegisterRangeInstruction
+            check(range.startRegister == 9 && range.registerCount == 12 && optionsEnum.type == "Ldy0/a;")
+            // v3 is the BoardOption enum. v5 is dead after the title ID is copied to v10.
+            // Clear the constructor's default-icon bit after supplying the native Gestalt icon.
+            method.addInstructions(rowConstructor, """
+                const-class v5, Ld52/o0;
+                invoke-static {v3, v5}, Lapp/browzomje/extension/pinterest/BoardMenuRowFactory;->boardOptionIcon(Ljava/lang/Enum;Ljava/lang/Class;)Ljava/lang/Object;
+                move-result-object v19
+                check-cast v19, Ld52/o0;
+                move/from16 v5, v20
+                and-int/lit16 v5, v5, -0x1001
+                move/from16 v20, v5
+            """.trimIndent())
+            PatchLog.hooked(PATCH_NAME, method, "native board option icons")
+        }
 
         val exits = method.addReturnValueTransform(
             "$EXTENSION_CLASS->decorateBoardOptionsMenu(Ljava/lang/Object;)Ljava/lang/Object;",

@@ -24,7 +24,7 @@ apksigner=$6
 checks=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 case "$version" in
-    14.39.0|14.43.0|14.44.0) ;;
+    14.39.0|14.43.0|14.44.0|14.45.0) ;;
     *) printf 'No complete DEX check inventory for Pinterest %s\n' "$version" >&2; exit 2 ;;
 esac
 
@@ -39,6 +39,9 @@ printf 'PASS APK signature\n'
 for check in CheckHomeRefreshDex CheckSaveTooltipDex CheckStartupTabDex CheckVideoFeedDex; do
     java -cp "$cli" "$checks/$check.java" "$original" "$patched" "$version"
 done
+if [[ "$version" == 14.45.0 ]]; then
+    java -cp "$cli" "$checks/CheckMenusDex.java" "$original" "$patched"
+fi
 if [[ ${#firebase[@]} != 0 ]]; then
     java -cp "$cli" "$checks/CheckFirebaseRegistrationDex.java" "$original" "$patched" "$version"
 fi

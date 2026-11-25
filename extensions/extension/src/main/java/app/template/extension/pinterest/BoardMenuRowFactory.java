@@ -15,7 +15,7 @@ import java.util.List;
  * (null / 0) a tutti tranne quelli che servono, e si verifica il risultato rileggendo l'oggetto
  * appena creato dai suoi stessi getter. Se non torna, si prova la combinazione successiva.
  */
-final class BoardMenuRowFactory {
+public final class BoardMenuRowFactory {
 
     /**
      * `getIndex()` è l'unico metodo dell'interfaccia delle voci che R8 non rinomina, essendo un
@@ -80,7 +80,7 @@ final class BoardMenuRowFactory {
                 arguments[titlePosition] = titleResource;
                 arguments[indexPosition] = index;
                 applyIcon(arguments, parameterTypes);
-                copyStyleFrom(template, arguments, parameterTypes);
+                copyTypographyFrom(template, arguments, parameterTypes);
 
                 try {
                     Object row = constructor.newInstance(arguments);
@@ -131,47 +131,51 @@ final class BoardMenuRowFactory {
                 + ": the entry stays without an icon");
     }
 
-    /**
-     * Ricopia dalla voce modello i valori non nulli dei parametri che non stiamo impostando noi.
-     *
-     * <p>Serve per la <b>variante tipografica</b>: senza, la nostra riga usciva con un carattere
-     * diverso da quello delle voci accanto, perché quel parametro restava null e la view cadeva
-     * sul proprio default. Copiandolo dalla voce sorella la riga diventa indistinguibile dalle
-     * altre — che è esattamente il motivo per cui si clona invece di costruire da zero.
-     *
-     * <p>In questo menu l'unico valore non nullo è appunto quello: le altre voci non hanno né
-     * icona né sottotitolo. Se una versione futura ne aggiungesse, al più erediteremmo qualcosa
-     * di cosmetico da una voce vicina — visibile subito e mai un crash.
-     */
-    private static void copyStyleFrom(Object template, Object[] arguments, Class<?>[] parameterTypes) {
-        for (int i = 0; i < parameterTypes.length; i++) {
-            if (arguments[i] != null || parameterTypes[i].isPrimitive()) {
-                continue; // già impostato da noi, oppure è un numero/booleano
-            }
-            Object value = firstNonNullValueOfType(template, parameterTypes[i]);
-            if (value != null) {
-                arguments[i] = value;
+    private static void copyTypographyFrom(Object template, Object[] arguments, Class<?>[] parameterTypes) {
+        for (int index = 0; index < parameterTypes.length; index++) {
+            Class<?> type = parameterTypes[index];
+            if (arguments[index] != null || !type.isEnum()) continue;
+            Object[] constants = type.getEnumConstants();
+            if (constants == null || !containsEnumConstant(constants, "UI_300")) continue;
+            for (Method method : template.getClass().getDeclaredMethods()) {
+                if (method.getParameterCount() != 0 || method.getReturnType() != type) continue;
+                try {
+                    method.setAccessible(true);
+                    arguments[index] = method.invoke(template);
+                } catch (ReflectiveOperationException ignored) {
+                    // Pinterest can render the row with its default typography.
+                }
+                break;
             }
         }
     }
 
-    /**
-     * @return il valore restituito dal primo getter senza argomenti del modello il cui tipo di
-     *     ritorno è esattamente {@code type}, se non è null.
-     */
-    private static Object firstNonNullValueOfType(Object template, Class<?> type) {
-        for (Method method : template.getClass().getDeclaredMethods()) {
-            if (method.getParameterTypes().length != 0 || method.getReturnType() != type) {
-                continue;
-            }
-            try {
-                method.setAccessible(true);
-                Object value = method.invoke(template);
-                if (value != null) {
-                    return value;
-                }
-            } catch (Throwable ignored) {
-                // Getter non invocabile: si prova il prossimo.
+    private static boolean containsEnumConstant(Object[] constants, String name) {
+        for (Object constant : constants) {
+            if (name.equals(((Enum<?>) constant).name())) return true;
+        }
+        return false;
+    }
+
+    public static Object boardOptionIcon(Enum<?> option, Class<?> iconType) {
+        String name;
+        switch (option.name()) {
+            case "Edit": name = "PENCIL"; break;
+            case "Send":
+            case "Share": name = "SHARE_ANDROID"; break;
+            case "Archive": name = "BOX"; break;
+            case "Unarchive": name = "ARROW_UP"; break;
+            case "Merge": name = "ARROWS_HORIZONTAL"; break;
+            case "Follow": name = "PERSON_PLUS"; break;
+            case "Unfollow": name = "PERSON_MINUS"; break;
+            case "Report": name = "FLAG"; break;
+            case "PreviewBoard": name = "EYE"; break;
+            default: return null;
+        }
+        Object[] constants = iconType.getEnumConstants();
+        if (constants != null) {
+            for (Object constant : constants) {
+                if (name.equals(((Enum<?>) constant).name())) return constant;
             }
         }
         return null;

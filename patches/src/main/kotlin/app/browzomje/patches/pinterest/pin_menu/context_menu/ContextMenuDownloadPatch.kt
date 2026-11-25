@@ -6,6 +6,10 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.browzomje.patches.shared.Constants.COMPATIBILITY_PINTEREST
 import app.browzomje.patches.shared.PatchLog
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 
 private const val PATCH_NAME = "Download pin from long press"
 private const val EXTENSION_CLASS = "Lapp/browzomje/extension/pinterest/PinterestUtils;"
@@ -34,9 +38,29 @@ internal object ContextMenuItemsFingerprint : Fingerprint(
 private object ContextMenuShowFingerprint : Fingerprint(
     definingClass = "Lcom/pinterest/ui/menu/ContextMenuView;",
     returnType = "V",
-    parameters = listOf("Lq80/d;", "Lde/b;"),
+    custom = { method, _ ->
+        method.name == "n" && method.parameterTypes.map(CharSequence::toString) in setOf(
+            listOf("Lq80/d;", "Lde/b;"),
+            listOf("Lb90/d;", "Lgp1/c;"),
+        )
+    },
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
 )
+
+private object ComposePinMenu : Fingerprint(
+    definingClass = "Lja3/u0;",
+    returnType = "V",
+    parameters = listOf("Landroid/app/Activity;", "Lrd2/z;", "Ll22/e;"),
+)
+
+private object ComposePinAction : Fingerprint(
+    definingClass = "Lja3/g;",
+    name = "invokeSuspend",
+    parameters = listOf("Ljava/lang/Object;"),
+    returnType = "Ljava/lang/Object;",
+)
+
+private const val COMPOSE_DOWNLOAD = "Lapp/browzomje/extension/pinterest/ComposePinDownload;"
 
 /**
  * Aggiunge un tasto "scarica" al menu circolare che compare tenendo premuto un pin, così l'immagine
@@ -53,8 +77,7 @@ private object ContextMenuShowFingerprint : Fingerprint(
 @Suppress("unused")
 val contextMenuDownloadPatch = bytecodePatch(
     name = PATCH_NAME,
-    description = "Adds a download button to the circular menu you get by long-pressing a pin, " +
-        "so the image can be saved without opening it.",
+    description = "Adds a download action to the long-press pin menu, including the list layout on Pinterest 14.45.0.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_PINTEREST)
@@ -72,7 +95,7 @@ val contextMenuDownloadPatch = bytecodePatch(
 
         // p0 è il menu, p1 la lista dei tasti. Si scrivono per nome: in testa al metodo sono
         // certamente ancora i parametri, e calcolarne l'indice è il modo di sbagliare in silenzio.
-        val bindsSelection = packageMetadata.versionName == "14.44.0"
+        val bindsSelection = packageMetadata.versionName in setOf("14.44.0", "14.45.0")
         val addItem = if (bindsSelection) "addBoundContextMenuDownloadItem" else "addContextMenuDownloadItem"
         if (bindsSelection) {
             val show = ContextMenuShowFingerprint.method
@@ -89,5 +112,48 @@ val contextMenuDownloadPatch = bytecodePatch(
                 "$EXTENSION_CLASS->$addItem(Ljava/lang/Object;Ljava/util/List;)V",
         )
         PatchLog.hooked(PATCH_NAME, method, "long-press menu items")
+
+        if (packageMetadata.versionName == "14.45.0") {
+            val compose = ComposePinMenu.method
+            val code = compose.implementation!!.instructions
+            val nativeOptions = code.indexOfFirst {
+                it.opcode == Opcode.INVOKE_VIRTUAL && (it as? ReferenceInstruction)?.reference.toString() ==
+                    "Lh82/a;->q(Lia3/s0;)Ljava/util/ArrayList;"
+            }
+            check(nativeOptions >= 0 && code[nativeOptions + 1].opcode == Opcode.MOVE_RESULT_OBJECT)
+            val listRegister = (code[nativeOptions + 1] as OneRegisterInstruction).registerA
+            compose.addInstructions(nativeOptions + 2, """
+                invoke-static/range {v$listRegister .. v$listRegister}, $COMPOSE_DOWNLOAD->append(Ljava/util/ArrayList;)V
+            """.trimIndent())
+            PatchLog.hooked(PATCH_NAME, compose, "Compose long-press download item")
+
+            val action = ComposePinAction.method
+            val actionCode = action.implementation!!.instructions
+            val repin = actionCode.indexOfFirst {
+                it.opcode == Opcode.SGET_OBJECT && (it as? ReferenceInstruction)?.reference.toString() ==
+                    "Lia3/r0;->REPIN:Lia3/r0;"
+            }
+            check(repin >= 0 && actionCode[repin + 2].opcode == Opcode.IF_NE)
+            val pin = actionCode[repin - 4] as TwoRegisterInstruction
+            check(pin.opcode == Opcode.IGET_OBJECT && (pin as ReferenceInstruction).reference.toString() ==
+                "Lia3/a;->a:Lcom/pinterest/api/model/uu;")
+            val option = actionCode[repin + 2] as TwoRegisterInstruction
+            val scratch = (actionCode[repin] as OneRegisterInstruction).registerA
+            check(option.registerB == scratch)
+            val unit = actionCode.filter {
+                it.opcode == Opcode.SGET_OBJECT && (it as? ReferenceInstruction)?.reference.toString() ==
+                    "Lkotlin/Unit;->a:Lkotlin/Unit;"
+            }.first() as ReferenceInstruction
+            action.addInstructions(repin, """
+                invoke-static {v${option.registerA}, v${pin.registerA}}, $COMPOSE_DOWNLOAD->download(Ljava/lang/Object;Ljava/lang/Object;)Z
+                move-result v$scratch
+                if-eqz v$scratch, :morphe_native_option
+                sget-object v$scratch, ${unit.reference}
+                return-object v$scratch
+                :morphe_native_option
+                nop
+            """.trimIndent())
+            PatchLog.hooked(PATCH_NAME, action, "Compose long-press selected pin")
+        }
     }
 }

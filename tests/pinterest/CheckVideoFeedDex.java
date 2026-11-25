@@ -24,6 +24,7 @@ class CheckVideoFeedDex {
  var targets=switch(version) {
   case "14.39.0" -> List.of("Ltu1/g0;", "Ltu1/k;", "Ltu1/p;", "A", "j0", "Y");
   case "14.43.0" -> List.of("Lsw1/l0;", "Lsw1/m;", "Lsw1/r;", "z", "j0", "X");
+  case "14.45.0" -> List.of("Lu12/i0;", "Lu12/k;", "Lu12/p;", "w", "g0", "U");
   case "14.44.0" -> List.of("Ldx1/o0;", "Ldx1/n;", "Ldx1/s;", "y", "g0", "U");
   default -> throw new IllegalArgumentException("Unsupported test version: "+version);
  };

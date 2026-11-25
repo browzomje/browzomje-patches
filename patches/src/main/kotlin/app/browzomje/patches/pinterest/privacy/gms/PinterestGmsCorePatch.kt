@@ -116,7 +116,7 @@ val pinterestGmsCorePatch = bytecodePatch(
         name = "Pinterest",
         packageName = "com.pinterest",
         apkFileType = COMPATIBILITY_PINTEREST.apkFileType,
-        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.43.0", "14.44.0") },
+        targets = COMPATIBILITY_PINTEREST.targets!!.filter { it.version in setOf("14.43.0", "14.44.0", "14.45.0") },
     ))
     dependsOn(microGManifestPatch)
     extendWith("extensions/extension.mpe")
@@ -149,7 +149,8 @@ val pinterestGmsCorePatch = bytecodePatch(
                     val value = ((instruction as ReferenceInstruction).reference as StringReference).string
                     anchors?.add(value)
                     if (value == "gplus_button_continue_click" &&
-                        owner.type.startsWith("Lcom/pinterest/identity/authentication/fragment/") &&
+                        (owner.type.startsWith("Lcom/pinterest/identity/authentication/fragment/") ||
+                            method.toString() == "Lza2/h;->ba()V" && packageMetadata.versionName == "14.45.0") &&
                         method.returnType == "V" && method.parameterTypes.isEmpty()) googleClicks += method
                     val target = microGName(value) ?: return@forEachIndexed
                     routes += Route(method, index, target)
